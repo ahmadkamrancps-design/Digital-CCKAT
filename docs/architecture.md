@@ -1,0 +1,146 @@
+# Application architecture through Milestone 5
+
+The repository contains a React/TypeScript/Vite frontend, a Python/FastAPI backend,
+and PostgreSQL infrastructure. Domain management and the backend attempt engine
+and the live candidate interface are implemented, including persistent answer
+recovery and reconnection in Milestone 5.
+
+```text
+cck-digital-test/
+├── backend/
+│   ├── app/
+│   │   ├── main.py, config.py, cli.py, expiry_worker.py
+│   │   ├── api/dependencies.py, api/routes/
+│   │   ├── core/
+│   │   ├── db/
+│   │   ├── models/
+│   │   ├── schemas/
+│   │   └── services/
+│   ├── alembic/versions/
+│   ├── tests/
+│   ├── pyproject.toml, requirements.lock, requirements-dev.lock
+│   ├── alembic.ini, .env.example, Dockerfile
+├── frontend/
+│   ├── public/assets/cck/
+│   ├── src/components/, data/, features/, pages/, services/, storage/, types/
+│   ├── src/App.tsx, main.tsx, index.css
+│   ├── tests/, e2e/, playwright.config.ts
+│   ├── package.json, package-lock.json, .env.example, Dockerfile
+├── docs/
+├── docker-compose.yml, .env.example, .gitignore, README.md
+└── .github/workflows/checks.yml
+```
+
+Alembic lives in one place, `backend/alembic/`; there is no second migration
+directory under `app/db/`. Directories for future features will be created when
+their milestone begins rather than adding empty modules.
+
+The frontend includes presentational exam components, a protected live candidate
+workflow in `features/exam/`, and an interactive development-only exam preview. Preview answers exist only in
+page memory, its timer is paused, and Finish changes local UI state. It does not
+implement backend attempts, timing, persistence, or scoring. See
+[frontend structure](frontend-structure.md) for the complete source tree, route
+behavior, and the three PNG assets.
+
+The live workflow uses explicit typed contracts in `types/attempt.ts` and a
+same-origin candidate API client in `services/exam.ts`. A per-account session
+provider retains answer queues and monotonic deadline anchors across app navigation.
+Queues debounce and serialize full revisioned answer/review snapshots, preserve
+edits made during requests, and require an explicit choice after a stale-answer
+conflict. Ambiguous network failures retry the exact original payload before a
+newer edit. No local grades or browser deadlines are sent to the server.
+
+The displayed timer uses `expires_at - server_time`, anchored to `performance.now()`.
+Response transit time is conservatively deducted; revalidation cannot extend an
+existing local anchor. The server remains authoritative. The client disables
+edits at zero and polls authoritative attempt state before showing expiry receipts.
+Submission flushes pending saves, requests closure, then reloads a server-confirmed
+receipt. Result scores remain withheld/unimplemented. Milestone 5 uses native
+IndexedDB and Web Locks without adding runtime dependencies or a PostgreSQL migration.
+Playwright and fake-indexeddb are development test dependencies.
+
+`storage/recovery.ts` journals confirmed revisions, local drafts, and exact pending
+requests by verified user/attempt/subject. Each edit queues a local transaction;
+network writes await its completion. A Web Lock gives one tab ownership of a
+subject. Journal generations reject stale local writers; an account epoch prevents
+open writers from recreating records after explicit logout clears them.
+
+`createSession.ts` validates recovery data against fresh authenticated paper data.
+The queue recognizes lost acknowledgements, restores eligible drafts, and surfaces
+conflicts with newer server answers. Transient failures retry with exponential
+backoff and jitter, capped at 30 seconds. Deadline and account checks precede each
+send, including after a slow storage transaction. Cold reload requires network
+access to restore authentication and server state; no offline authentication or
+persisted client deadline is introduced. See [Milestone 5](milestone-5.md).
+
+FastAPI routes coordinate typed requests and explicitly constructed responses.
+Services perform credential verification, account linking, eligibility checks,
+session creation, and exam-domain management. `admin_domain.py` coordinates routes;
+`exam_domain_service.py` enforces draft-only editing, paper assembly, question
+compatibility, and transactions. `exam_domain.py` schemas explicitly separate
+administrator requests/responses from ORM models. `attempt_service.py` implements
+assignment eligibility, one logical attempt, ordered subject starts, deadlines,
+revision checks, submission, and expiry. Candidate routes use separate allowlisted
+question/answer schemas. Backend dependencies provide authentication and role checks.
+SQLAlchemy's synchronous PostgreSQL driver runs in FastAPI's worker thread pool.
+There is no need for an async data layer for this foundation.
+
+Browser → Google Identity Services popup → ID token → backend verification →
+approved account lookup → opaque session cookie → protected `/api/me` → dashboard.
+React retains the profile and CSRF token in memory; it reloads `/me` on refresh.
+Authentication tokens are not stored in browser persistent storage.
+
+```mermaid
+sequenceDiagram
+    participant Candidate
+    participant React
+    participant Google
+    participant FastAPI
+    participant PostgreSQL
+    Candidate->>React: Sign in
+    React->>Google: Identity Services popup
+    Google-->>React: ID token
+    React->>FastAPI: POST /api/auth/google
+    FastAPI->>Google: Fetch public verification certificates
+    FastAPI->>FastAPI: Verify signature, audience, issuer, expiry
+    FastAPI->>PostgreSQL: Check approved account and candidate
+    alt Approved
+        FastAPI->>PostgreSQL: Bind stable identity and rotate session
+        FastAPI-->>React: HttpOnly cookie and public profile
+        React-->>Candidate: Protected dashboard
+    else Not approved
+        FastAPI-->>React: Access denied
+        React-->>Candidate: Contact admissions
+    end
+```
+
+For development, Vite proxies `/api` to FastAPI. Cookies and requests use the
+frontend origin. Future production hosting must preserve this same-origin model
+with an HTTPS reverse proxy. Docker Compose currently provides PostgreSQL only;
+backend and frontend Dockerfiles are development building blocks, not a completed
+production deployment.
+
+There is one explicit role per user initially: CANDIDATE, ADMIN, PROCTOR, EXAMINER.
+Only trusted local provisioning can create approved users. Milestone 2 adds
+ADMIN-only exam-domain APIs with Origin/CSRF protection on mutations. Staff
+portals remain later milestones. Candidate approval grants dashboard access;
+exam access also requires an active assignment and administrator start authorization.
+Schedules gate starts and impose a hard end when configured.
+
+PostgreSQL's current clock supplies deadlines and timestamps. The engine reads
+`clock_timestamp()` after obtaining row locks; transaction-start time would be
+stale after lock waits. Candidate writes serialize per assignment/attempt, without
+locking the whole exam for every answer. Initial exam/subject starts lock the exam
+configuration, while existing attempts freeze edits. Shared subject catalog rows
+are locked in UUID order during validation to avoid conflicting lock orders.
+
+The expiry worker uses `FOR UPDATE SKIP LOCKED` on due exam attempts, then closes
+their subjects. Multiple workers can coexist with candidate requests. API requests
+also reconcile expiry; worker failure never extends write deadlines. The worker
+must be supervised separately from the FastAPI process. The design uses PostgreSQL's
+[row locking](https://www.postgresql.org/docs/current/explicit-locking.html) and
+[current clock functions](https://www.postgresql.org/docs/current/functions-datetime.html).
+
+Milestone sequence remains: foundation → exam domain → attempt engine → candidate
+test UI → resilience → admin portal → proctors → grading/results → hardening →
+production readiness. Proceed to the next milestone only on the project owner's instruction.

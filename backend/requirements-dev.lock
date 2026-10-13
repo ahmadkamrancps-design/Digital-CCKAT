@@ -1,0 +1,16 @@
+# Resolved dependency versions for Linux/WSL (Python 3.12+).
+# Source constraints: pyproject.toml. Update deliberately and rerun checks.
+-r requirements.lock
+httpcore==1.0.9
+httpx==0.28.1
+iniconfig==2.3.0
+librt==0.16.0
+mypy==1.20.2
+mypy-extensions==1.1.0
+packaging==26.3
+pathspec==1.1.1
+pluggy==1.6.0
+pygments==2.21.0
+pytest==9.1.1
+ruff==0.16.10
+types-requests==2.33.0.20260906

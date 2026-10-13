@@ -1,0 +1,101 @@
+# Authentication and authorization foundation
+
+Google Identity Services provides an ID token through its JavaScript popup callback.
+The backend uses `google-auth` to verify Google's signature, token expiry/issued-at,
+issuer, and the configured OAuth audience. It requires `email_verified` to be true.
+Google certificate requests have a five-second timeout. Provider failures return
+a safe 503; invalid credentials return 401. No OAuth client secret is needed for
+this ID-token flow.
+
+Google authentication alone never creates a user or approves a candidate. Accounts
+are preprovisioned through the trusted local CLI. The backend checks user activity
+and candidate status before issuing a session and on every authenticated request.
+Backend dependencies enforce roles; frontend routing is only a usability feature.
+
+The stable Google `sub` is the identity key. If an approved record has no sub,
+first login can bind by approved email only for a Gmail address or verified Google
+Workspace identity (`hd` claim). Google's verification guidance cautions that other
+email addresses do not establish current third-party mailbox ownership. For those,
+admissions must approve an independently verified sub through the CLI. Never ask
+candidates to email raw ID tokens, and never paste them into public token decoders.
+A bound subject is never replaced automatically by another account with the same
+email. Subsequent logins use the stable subject even if Google email changes; the
+registered contact email remains administration-controlled.
+
+Session credentials are opaque random values delivered only in HttpOnly cookies,
+scoped to `/api`, with SameSite=Lax. PostgreSQL stores hashes, not raw cookie
+credentials. New sign-in revokes the previous session. Logout revokes the database
+record and clears the cookie. Production validation requires Secure cookies,
+HTTPS frontend origin, configured Google client ID, and separate database credentials.
+No app signing secret is required because these sessions are database-backed,
+not signed self-contained tokens.
+
+The app uses exact Origin validation for login, logout, administrator mutations,
+and candidate attempt/answer mutations. The login endpoint accepts
+JSON only; cross-origin JSON requires a browser CORS preflight. CORS permits only
+the configured origin. This callback-to-JSON approach differs from Google's direct
+form-POST delivery; Google's form-specific `g_csrf_token` is not used here. Every
+authenticated mutation must also require the synchronizer CSRF token returned by
+`/me`, sent in `X-CSRF-Token`. Logout, domain, and attempt mutations use this protection. Never exempt future
+admin/exam mutation routes from Origin/CSRF checks.
+
+The frontend stores session profile/CSRF state in memory. `/me` restores it on
+refresh and revalidates it when the tab becomes visible or connectivity returns.
+Initial network errors block protected pages with a retry message. Once a session
+has been verified, a failed background network check preserves the in-memory profile
+and drafts and displays a warning. A server 401/403 removes the profile and disposes
+its exam queues. Every API request still requires current backend authorization;
+an old profile never authorizes exam access. Authentication responses include `Cache-Control: no-store`.
+Validation errors do not echo credential input. Database/unexpected errors return
+safe messages; diagnostic logs record only error type. Auth logs include user ID
+and role for success, not tokens, answers, database credentials, or Google claims.
+
+SQLAlchemy parameterizes application queries; the frontend uses React text
+rendering, `<bdi>` for mixed direction identifiers, and local `dir="rtl"` for Urdu.
+There is no arbitrary HTML rendering. Answer keys, accepted values, and grading
+configuration are delivered only by ADMIN-protected question endpoints. CANDIDATE,
+PROCTOR, EXAMINER, and anonymous requests cannot use these endpoints. Candidate
+APIs expose only the owning candidate's assignments, attempt metadata, safe started
+paper content, and that candidate's saved answers. Future subjects' questions are
+withheld until their subject has been started. An attempt UUID is never sufficient
+authorization: assignment and candidate ownership are checked server-side.
+Assigned subject summaries expose only paper ID, subject name, duration, and order.
+The live renderer interprets prompts/options/answers as text, with local Urdu
+direction. There is no executable administrator HTML. CSRF state exists only in
+memory. Recovery drafts are scoped to the verified account in IndexedDB, with
+attempt/subject IDs, revisions, and exact pending requests. No credentials, profile
+details, prompts, keys, or timer authority are persisted there. Recovery data is
+validated against fresh server paper data before use. Local storage never grants
+access or makes an expired write valid.
+
+Web Locks prevent simultaneous same-subject writers in one browser profile;
+transactional generations protect local records and server revisions protect the
+authoritative answers across devices. Explicit logout deletes that user's local
+copies and increments an epoch to revoke existing writers. Involuntary session
+expiry disposes in-memory queues but preserves drafts for approved reauthentication.
+Closed unsynchronized drafts are retained locally and never uploaded late.
+IndexedDB is not an encrypted vault: browser-profile access or same-origin script
+compromise can expose local answers. Managed-device cleanup and production XSS/CSP
+hardening remain necessary operational work.
+The development frontend preview
+contains synthetic questions with no keys and never grants backend privileges.
+No submitted or expired subject accepts answer/review edits. A stale revision
+returns a conflict containing only that candidate's current answer. Retries with
+an identical payload do not add revisions or duplicate logical answers. Browser
+timestamps are rejected, and server-clock expiry is checked after lock waits.
+Revoked assignments deny subsequent candidate access while expiry continues;
+reauthorizing restores the same attempt and deadline, not a retake.
+The CLI runs only for operators with database credentials and must not be exposed
+as a web service.
+
+Unfinished hardening: distributed rate limiting, certificate caching, an append-only
+audit store, OAuth replay/nonce policy, expired-session cleanup, security monitoring,
+production reverse proxy/CSP/HSTS configuration, dependency review, and concurrent
+login stress testing. Trusted-host and CORS settings are not substitutes for these.
+This milestone is not production-ready and does not authorize real examinations.
+
+Primary references:
+
+- [Google token verification](https://developers.google.com/identity/gsi/web/guides/verify-google-id-token)
+- [Google web-client setup](https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid)
+- [Google sign-in button](https://developers.google.com/identity/gsi/web/guides/display-button)
