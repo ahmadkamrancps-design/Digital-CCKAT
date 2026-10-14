@@ -1,4 +1,4 @@
-import { test, expect, type BrowserContext, type Page } from '@playwright/test';
+import { test, expect, type BrowserContext, type Page } from './fixtures';
 import type { Answer, AnswerWrite, Attempt, SubjectPaper } from '../src/types/attempt';
 
 /** Browser storage/locks/network tests. Authentication and API are synthetic test fixtures only. */

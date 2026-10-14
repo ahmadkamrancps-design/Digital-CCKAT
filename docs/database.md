@@ -1,4 +1,4 @@
-# Database through Milestone 5
+# Database through Milestone 6
 
 PostgreSQL with UTF-8 encoding is the application database. SQLAlchemy 2 maps
 models; Alembic controls schema changes. No table creation occurs during startup.
@@ -114,7 +114,7 @@ restoring Milestone 2 without deleting its existing exams. Downgrading deliberat
 removes attempt/answer data and belongs only in disposable verification environments
 or a separately reviewed recovery process.
 
-Grading records and append-oriented audit events remain later milestones. Do not
+Grading records and candidate/proctor audit events remain later milestones. Do not
 add durations or fixed subject names to foundation identity tables.
 
 Milestone 4 adds no migration. The assigned-exam API reads existing exam-subject
@@ -128,3 +128,25 @@ generation, account epoch, confirmed answers, editable drafts, and exact pending
 requests. The account epoch invalidates old writers after logout. Browser records
 are untrusted recovery data; PostgreSQL remains authoritative for answers, revisions,
 eligibility, state, and deadlines. See [Milestone 5 handover](milestone-5.md).
+
+## Admin portal migration
+
+`0004_admin_portal` adds `exams.is_published`, `exams.results_released`,
+`exams.result_release_at`, and `audit_events`. No identity, answer, deadline, or
+attempt tables are replaced. Publication defaults true at the database/legacy
+API boundary to preserve existing assignment visibility. The new portal explicitly
+creates unpublished exams. Start authorization still defaults false and requires
+publication plus valid papers. Result release defaults false.
+
+`audit_events` contains UUID primary key, restrictive actor/user FK, event type,
+affected record UUID, and server-generated timestamp. Services append events in
+the mutation transaction; duplicate imports roll back their events as well. No
+API updates/deletes events. This is an application-level append-oriented foundation,
+not a tamper-proof database audit store.
+
+Subject reordering locks the exam, checks the submitted IDs match the complete
+current subject set, uses temporary unique sequence positions, then applies the
+requested order in one transaction. Existing attempt/configuration locks still
+apply. The migration's downgrade drops its action table and three fields while
+preserving the prior exam/attempt data; it discards publication/release/action
+history and is only appropriate in a reviewed recovery or disposable test context.

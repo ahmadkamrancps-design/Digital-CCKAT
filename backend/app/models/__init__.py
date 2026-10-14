@@ -6,6 +6,7 @@ from app.models.attempt import (
     SubjectAttempt,
     SubjectStatus,
 )
+from app.models.audit import AuditEvent
 from app.models.candidate import Candidate, CandidateStatus
 from app.models.exam import Exam, ExamQuestion, ExamStatus, ExamSubject
 from app.models.question import AcceptedAnswer, GradingMode, Question, QuestionOption, QuestionType
@@ -14,6 +15,7 @@ from app.models.subject import Subject
 from app.models.user import Role, User
 
 __all__ = [
+    "AuditEvent",
     "AuthSession",
     "Candidate",
     "CandidateStatus",

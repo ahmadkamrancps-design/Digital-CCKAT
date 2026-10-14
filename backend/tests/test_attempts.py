@@ -21,6 +21,7 @@ from app.models import (
     Exam,
     ExamAttempt,
     ExamQuestion,
+    ExamStatus,
     ExamSubject,
     GradingMode,
     Question,
@@ -212,6 +213,61 @@ def test_assigned_exam_summaries_are_safe_ordered_and_do_not_start_an_attempt(
     assert "is_correct" not in response.text
     with db_factory() as db:
         assert db.scalar(select(func.count()).select_from(ExamAttempt)) == 0
+
+
+@pytest.mark.parametrize("archived", [False, True])
+def test_hidden_assignment_cannot_start_or_appear(
+    client: TestClient,
+    scenario: Scenario,
+    candidate_headers: dict[str, str],
+    db_factory: sessionmaker[Session],
+    archived: bool,
+) -> None:
+    with db_factory() as db:
+        exam = db.get(Exam, scenario.exam_id)
+        assert exam is not None
+        exam.is_published = archived
+        exam.status = ExamStatus.ARCHIVED if archived else ExamStatus.DRAFT
+        db.commit()
+    assert client.get("/api/candidate/exams").json() == []
+    assert (
+        client.post(
+            f"/api/candidate/exams/{scenario.exam_id}/attempt", headers=candidate_headers
+        ).status_code
+        == 403
+    )
+
+
+def test_unpublishing_keeps_active_answers_deadlines_and_resume(
+    client: TestClient,
+    scenario: Scenario,
+    candidate_headers: dict[str, str],
+    db_factory: sessionmaker[Session],
+    clock: TestClock,
+) -> None:
+    from app.services.admin_management_service import publish_exam
+
+    attempt, questions = started(client, scenario, candidate_headers)
+    deadline = attempt["subjects"][0]["expires_at"]
+    with db_factory() as db:
+        publish_exam(db, scenario.exam_id, False, scenario.admin_id)
+    clock.advance(10)
+    assert client.get("/api/candidate/exams").json()[0]["attempt_id"] == attempt["id"]
+    result = client.put(
+        subject_path(attempt) + f"/answers/{questions[0]['exam_question_id']}",
+        headers=candidate_headers,
+        json=save_body(questions[0]),
+    )
+    assert result.status_code == 200
+    resumed = begin(client, scenario, candidate_headers)
+    assert resumed["subjects"][0]["expires_at"] == deadline
+    assert (
+        client.post(subject_path(attempt) + "/submit", headers=candidate_headers).status_code == 200
+    )
+    assert (
+        client.post(subject_path(attempt, 1) + "/start", headers=candidate_headers).status_code
+        == 403
+    )
 
 
 def test_start_resume_refresh_and_relogin_never_reset_deadline(

@@ -3,6 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
 
+from app.api.admin_audit import audit_mutation
 from app.api.dependencies import Db, require_csrf, require_origin
 from app.core.permissions import require_roles
 from app.models import Exam, Question, QuestionType, Role
@@ -15,6 +16,7 @@ from app.schemas.exam_domain import (
     PaperResponse,
     PaperWrite,
     QuestionWrite,
+    SubjectOrderWrite,
     SubjectResponse,
     SubjectWrite,
 )
@@ -23,7 +25,7 @@ from app.services import exam_domain_service as service
 router = APIRouter(
     prefix="/admin", tags=["admin exam domain"], dependencies=[Depends(require_roles(Role.ADMIN))]
 )
-mutations = [Depends(require_origin), Depends(require_csrf)]
+mutations = [Depends(require_origin), Depends(require_csrf), Depends(audit_mutation)]
 Limit = Annotated[int, Query(ge=1, le=100)]
 Offset = Annotated[int, Query(ge=0)]
 
@@ -44,13 +46,18 @@ def update_subject(subject_id: UUID, body: SubjectWrite, db: Db) -> SubjectRespo
 
 
 @router.get("/exams", response_model=list[ExamResponse])
-def exams(db: Db, limit: Limit = 50, offset: Offset = 0) -> list[ExamResponse]:
-    return service.list_exams(db, limit, offset)
+def exams(
+    db: Db,
+    limit: Limit = 50,
+    offset: Offset = 0,
+    search: Annotated[str, Query(max_length=200)] = "",
+) -> list[ExamResponse]:
+    return service.list_exams(db, limit, offset, search)
 
 
 @router.get("/exams/{exam_id}", response_model=ExamResponse)
 def exam(exam_id: UUID, db: Db) -> ExamResponse:
-    return service.exam_response(service.get_record(db, Exam, exam_id))
+    return service.exam_response(service.get_record(db, Exam, exam_id), db)
 
 
 @router.post("/exams", response_model=ExamResponse, status_code=201, dependencies=mutations)
@@ -66,6 +73,15 @@ def update_exam(exam_id: UUID, body: ExamWrite, db: Db) -> ExamResponse:
 @router.get("/exams/{exam_id}/subjects", response_model=list[ExamSubjectResponse])
 def exam_subjects(exam_id: UUID, db: Db) -> list[ExamSubjectResponse]:
     return service.list_exam_subjects(db, exam_id)
+
+
+@router.put(
+    "/exams/{exam_id}/subject-order",
+    response_model=list[ExamSubjectResponse],
+    dependencies=mutations,
+)
+def reorder_subjects(exam_id: UUID, body: SubjectOrderWrite, db: Db) -> list[ExamSubjectResponse]:
+    return service.reorder_subjects(db, exam_id, body.subject_ids)
 
 
 @router.post(
@@ -103,8 +119,10 @@ def questions(
     offset: Offset = 0,
     subject_id: UUID | None = None,
     question_type: QuestionType | None = None,
+    search: Annotated[str, Query(max_length=200)] = "",
+    is_active: bool | None = None,
 ) -> list[AdminQuestionResponse]:
-    return service.list_questions(db, limit, offset, subject_id, question_type)
+    return service.list_questions(db, limit, offset, subject_id, question_type, search, is_active)
 
 
 @router.get("/questions/{question_id}", response_model=AdminQuestionResponse)

@@ -7,6 +7,12 @@ import { ExamPage } from './pages/ExamPage';
 import { SubmissionPage } from './pages/SubmissionPage';
 import { CandidateInfoPage } from './pages/CandidateInfoPage';
 import { ExamSessions } from './features/exam/ExamSessions';
+import { AdminLayout } from './features/admin/AdminLayout';
+import { CandidatesPage } from './features/admin/CandidatesPage';
+import { SubjectsPage } from './features/admin/SubjectsPage';
+import { QuestionsPage } from './features/admin/QuestionsPage';
+import { CreateExamPage, ExamDetailPage, ExamsPage } from './features/admin/ExamsPage';
+import { StaffActionsPage } from './features/admin/StaffActionsPage';
 
 export default function App() {
   const { loading, error, refresh, profile, isPreview } = useAuth();
@@ -22,6 +28,16 @@ export default function App() {
     <Route path="/system-check" element={<CandidateInfoPage section="system-check" />} />
     <Route path="/profile" element={<CandidateInfoPage section="profile" />} />
     <Route path="/help" element={<CandidateInfoPage section="help" />} />
+    <Route path="/admin" element={<AdminLayout />}>
+      <Route index element={<Navigate to="candidates" replace />} />
+      <Route path="candidates" element={<CandidatesPage />} />
+      <Route path="subjects" element={<SubjectsPage />} />
+      <Route path="questions" element={<QuestionsPage />} />
+      <Route path="exams" element={<ExamsPage />} />
+      <Route path="exams/new" element={<CreateExamPage />} />
+      <Route path="exams/:examId" element={<ExamDetailPage />} />
+      <Route path="actions" element={<StaffActionsPage />} />
+    </Route>
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>;
   const content = publicLogin ? routes
@@ -31,8 +47,8 @@ export default function App() {
         <button onClick={() => { void refresh(); }}>Try again</button>
       </div>
       : routes;
-  const fullPage = ['/dashboard', '/instructions', '/system-check', '/profile', '/help', '/exam', '/submission'].includes(pathname)
-    && (isPreview || (profile?.user.role === 'CANDIDATE' && !!profile.candidate));
+  const fullPage = pathname.startsWith('/admin') || (['/dashboard', '/instructions', '/system-check', '/profile', '/help', '/exam', '/submission'].includes(pathname)
+    && (isPreview || (profile?.user.role === 'CANDIDATE' && !!profile.candidate)));
   const page = publicLogin || (fullPage && (!loading || !!profile) && (!error || !!profile))
     ? content
     : <Layout>{content}</Layout>;

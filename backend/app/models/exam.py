@@ -48,6 +48,10 @@ class Exam(TimestampMixin, Base):
     is_start_authorized: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default="false"
     )
+    # Preserve visibility of existing Milestone 3 assignments on upgrade.
+    is_published: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+    results_released: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    result_release_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     scheduled_start: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     scheduled_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 

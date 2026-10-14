@@ -93,6 +93,17 @@ def test_postgres_migration_roundtrip_and_model_match(db_engine: Engine) -> None
         db.add(exam)
         db.commit()
         exam_id = exam.id
+    command.downgrade(config, "0003_attempt_engine")
+    assert "audit_events" not in inspect(db_engine).get_table_names()
+    assert "is_published" not in {
+        column["name"] for column in inspect(db_engine).get_columns("exams")
+    }
+    with Session(db_engine) as db:
+        assert db.scalar(select(Exam.title).where(Exam.id == exam_id)) == "Preserved domain exam"
+    command.upgrade(config, "head")
+    command.check(config)
+    with Session(db_engine) as db:
+        assert db.get(Exam, exam_id).is_published is True
     command.downgrade(config, "0002_exam_domain")
     assert not {"candidate_exam_assignments", "exam_attempts", "subject_attempts", "answers"} & set(
         inspect(db_engine).get_table_names()
@@ -116,6 +127,7 @@ def test_postgres_migration_roundtrip_and_model_match(db_engine: Engine) -> None
         "exam_attempts",
         "subject_attempts",
         "answers",
+        "audit_events",
     } <= set(inspect(db_engine).get_table_names())
     with Session(db_engine) as db:
         user = User(email="migration@gmail.com", display_name="Preserved admin", role=Role.ADMIN)

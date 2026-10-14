@@ -43,7 +43,8 @@ export default function DashboardPage() {
       </section>
       <section className="exam-card card" aria-labelledby="staff-heading">
         <h2 id="staff-heading">Staff workspace</h2>
-        <p>Your staff role is verified. Staff management tools will be added in a later development milestone.</p>
+        <p>{user.role === 'ADMIN' ? 'Your administrator role is verified. Open the portal to manage candidates, exams, and papers.' : 'Your staff role is verified. Your role’s workspace will be added in its development milestone.'}</p>
+        {user.role === 'ADMIN' && <Link className="primary-button" to="/admin">Open administration portal</Link>}
       </section>
     </div>;
   }

@@ -1,4 +1,4 @@
-# Exam lifecycle through Milestone 5
+# Exam lifecycle through Milestone 6
 
 The backend implements authorized starts, independent subject deadlines, saved
 answers/review flags, submission, automatic expiry, and resume. Grading and results
@@ -29,8 +29,8 @@ Core invariants:
 ## Start authorization
 
 An ADMIN assigns an approved candidate to an exam and explicitly enables
-`is_start_authorized`. This is a minimal engine control, not the final publication
-or test-day administration UI. Authorization validates every configured subject
+`is_start_authorized` through the admin portal. Publication controls whether an
+unstarted assigned exam appears in the candidate dashboard. Authorization validates every configured subject
 has an active, valid, nonempty paper. Configuration freezes while authorized,
 and remains frozen once an attempt exists. DRAFT is the editable domain status;
 an explicitly authorized DRAFT may start. ARCHIVED exams cannot start.
@@ -82,8 +82,9 @@ subjects record the deadline as submitted_at, even if processed later. An
 unstarted subject closed by the exam cutoff has no started_at and no answers.
 The worker and APIs share the same expiry logic and database clock.
 
-Publication, result release, grading, audit events, and proctor actions remain
-later milestones. Keep the frontend templates when integrating these capabilities.
+The admin portal implements publication, start/pause controls, and withheld-result
+planning. Actual result publication depends on completed grading in Milestone 8.
+Candidate/proctor events and proctor actions remain later milestones.
 
 ## Live candidate interface (Milestone 4)
 
@@ -122,3 +123,19 @@ unsynchronized local changes without uploading them. Fully synchronized closed
 copies are cleared. Explicit sign-out clears the account's local copies, so
 candidates are advised to wait for Saved before signing out. A cold offline reload
 cannot reopen an editable paper until authentication and server state are verified.
+
+## Administration (Milestone 6)
+
+An administrator creates an unpublished exam, selects subjects/durations/order,
+assembles each ordered paper, configures the schedule, and assigns approved
+candidates. Publishing validates the papers and exposes assigned metadata. Enabling
+starts independently validates again and freezes configuration. Pausing starts
+permits editing only before any attempts exist. An exam with attempts remains
+immutable even after all subjects close.
+
+Unpublishing pauses new starts and hides the exam from candidates who have not
+begun. Existing owners still see/resume their original attempts and can save an
+active subject until its original deadline. Revocation/disable is a separate
+explicit action that removes access. Archiving hides unstarted assignments and
+prevents starts. Administrative candidate identity/status changes revoke login
+sessions and never create a fresh exam attempt.

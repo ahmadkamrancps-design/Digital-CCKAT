@@ -7,8 +7,9 @@ Google certificate requests have a five-second timeout. Provider failures return
 a safe 503; invalid credentials return 401. No OAuth client secret is needed for
 this ID-token flow.
 
-Google authentication alone never creates a user or approves a candidate. Accounts
-are preprovisioned through the trusted local CLI. The backend checks user activity
+Google authentication alone never creates a user or approves a candidate. Staff
+accounts are preprovisioned through the trusted local CLI; approved administrators
+can provision candidates through the protected portal/API. The backend checks user activity
 and candidate status before issuing a session and on every authenticated request.
 Backend dependencies enforce roles; frontend routing is only a usability feature.
 
@@ -85,11 +86,26 @@ an identical payload do not add revisions or duplicate logical answers. Browser
 timestamps are rejected, and server-clock expiry is checked after lock waits.
 Revoked assignments deny subsequent candidate access while expiry continues;
 reauthorizing restores the same attempt and deadline, not a retake.
+Candidate management never accepts a role field or creates staff. Edits are
+restricted to existing candidate-role users. Email/verified-subject/status changes
+revoke existing sessions under the user lock used by authentication. Full-name/roll
+changes preserve account/attempt IDs. Disabled candidates cannot authenticate or
+receive new assignments. Imports validate all rows and preserve existing records
+on any error. Staff actions commit with successful writes and contain actor/record
+IDs, type, and server time, without answers, tokens, or raw identity values.
+Admin pages require a verified ADMIN profile before fetching lists or keys;
+backend role checks remain authoritative. New mutation routes enforce Origin/CSRF.
+
+Unpublishing an exam pauses new starts but preserves authorized active-attempt
+access and deadlines; revoking an assignment or disabling a candidate blocks access.
+The result-release endpoint rejects release while grading is unavailable. A planned
+date is configuration only and cannot expose scores. Candidate schemas are unchanged.
 The CLI runs only for operators with database credentials and must not be exposed
 as a web service.
 
 Unfinished hardening: distributed rate limiting, certificate caching, an append-only
-audit store, OAuth replay/nonce policy, expired-session cleanup, security monitoring,
+database-enforced audit immutability, candidate/proctor events, OAuth replay/nonce policy,
+expired-session cleanup, security monitoring,
 production reverse proxy/CSP/HSTS configuration, dependency review, and concurrent
 login stress testing. Trusted-host and CORS settings are not substitutes for these.
 This milestone is not production-ready and does not authorize real examinations.

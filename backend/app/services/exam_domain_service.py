@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.db.base import Base
 from app.models import (
     AcceptedAnswer,
+    AuditEvent,
     Exam,
     ExamAttempt,
     ExamQuestion,
@@ -52,6 +53,15 @@ def get_record[Model: Base](
 
 def commit(db: Session) -> None:
     try:
+        action = db.info.pop("admin_action", None)
+        if action:
+            records = list(db.new)
+            db.flush()
+            actor, event_type, entity_id = action
+            if entity_id is None and records:
+                entity_id = records[0].id
+            if entity_id is not None:
+                db.add(AuditEvent(user_id=actor, event_type=event_type, entity_id=entity_id))
         db.commit()
     except IntegrityError as exc:
         db.rollback()
@@ -128,13 +138,19 @@ def utc_timestamp(value: datetime | None) -> datetime | None:
     return value.replace(tzinfo=UTC) if value.tzinfo is None else value.astimezone(UTC)
 
 
-def exam_response(exam: Exam) -> ExamResponse:
+def exam_response(exam: Exam, db: Session | None = None) -> ExamResponse:
     return ExamResponse(
         id=exam.id,
         title=exam.title,
         description=exam.description,
         status=exam.status,
         is_start_authorized=exam.is_start_authorized,
+        is_published=exam.is_published,
+        results_released=exam.results_released,
+        result_release_at=utc_timestamp(exam.result_release_at),
+        has_attempts=bool(
+            db and db.scalar(select(ExamAttempt.id).where(ExamAttempt.exam_id == exam.id).limit(1))
+        ),
         scheduled_start=utc_timestamp(exam.scheduled_start),
         scheduled_end=utc_timestamp(exam.scheduled_end),
         created_at=exam.created_at,
@@ -142,23 +158,23 @@ def exam_response(exam: Exam) -> ExamResponse:
     )
 
 
-def list_exams(db: Session, limit: int, offset: int) -> list[ExamResponse]:
-    return [
-        exam_response(item)
-        for item in db.scalars(
-            select(Exam).order_by(Exam.created_at, Exam.id).limit(limit).offset(offset)
-        )
-    ]
+def list_exams(db: Session, limit: int, offset: int, search: str = "") -> list[ExamResponse]:
+    query = select(Exam).order_by(Exam.created_at, Exam.id)
+    if search:
+        query = query.where(Exam.title.icontains(search, autoescape=True))
+    return [exam_response(item, db) for item in db.scalars(query.limit(limit).offset(offset))]
 
 
 def write_exam(db: Session, body: ExamWrite, exam_id: UUID | None = None) -> ExamResponse:
     exam = draft_exam(db, exam_id) if exam_id else Exam()
     exam.title, exam.description, exam.status = body.title, body.description, body.status
+    exam.is_published = body.is_published
+    exam.result_release_at = utc_timestamp(body.result_release_at)
     exam.scheduled_start = body.scheduled_start.astimezone(UTC) if body.scheduled_start else None
     exam.scheduled_end = body.scheduled_end.astimezone(UTC) if body.scheduled_end else None
     db.add(exam)
     commit(db)
-    return exam_response(exam)
+    return exam_response(exam, db)
 
 
 def paper_response(db: Session, exam_subject_id: UUID) -> PaperResponse:
@@ -245,6 +261,23 @@ def remove_exam_subject(db: Session, exam_id: UUID, exam_subject_id: UUID) -> No
     commit(db)  # Restrictive foreign keys reject removal while a paper is attached.
 
 
+def reorder_subjects(db: Session, exam_id: UUID, ids: list[UUID]) -> list[ExamSubjectResponse]:
+    draft_exam(db, exam_id)
+    rows = list(db.scalars(select(ExamSubject).where(ExamSubject.exam_id == exam_id)))
+    if {row.id for row in rows} != set(ids):
+        raise HTTPException(409, "The subject list changed. Reload before reordering.")
+    # Temporary positions avoid immediate unique-index collisions during swaps.
+    base = max((row.sequence for row in rows), default=0) + 1
+    for index, row in enumerate(rows):
+        row.sequence = base + index
+    db.flush()
+    mapping = {row.id: row for row in rows}
+    for index, record_id in enumerate(ids):
+        mapping[record_id].sequence = index + 1
+    commit(db)
+    return list_exam_subjects(db, exam_id)
+
+
 def question_response(db: Session, question: Question) -> AdminQuestionResponse:
     options = [
         OptionResponse(
@@ -294,12 +327,18 @@ def list_questions(
     offset: int,
     subject_id: UUID | None,
     question_type: QuestionType | None,
+    search: str = "",
+    is_active: bool | None = None,
 ) -> list[AdminQuestionResponse]:
     query = select(Question).order_by(Question.created_at, Question.id)
     if subject_id:
         query = query.where(Question.subject_id == subject_id)
     if question_type:
         query = query.where(Question.type == question_type)
+    if search:
+        query = query.where(Question.prompt.icontains(search, autoescape=True))
+    if is_active is not None:
+        query = query.where(Question.is_active.is_(is_active))
     return [question_response(db, item) for item in db.scalars(query.limit(limit).offset(offset))]
 
 
@@ -331,6 +370,8 @@ def write_question(
     )
     db.add(question)
     db.flush()
+    if action := db.info.get("admin_action"):
+        db.info["admin_action"] = (action[0], action[1], question.id)
     if isinstance(body, MCQWrite):
         db.add_all(
             [

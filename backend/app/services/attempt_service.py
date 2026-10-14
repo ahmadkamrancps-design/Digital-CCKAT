@@ -3,7 +3,7 @@ from uuid import UUID
 
 from fastapi import HTTPException
 from pydantic import TypeAdapter, ValidationError
-from sqlalchemy import or_, select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.clock import Clock
@@ -178,6 +178,8 @@ def validate_papers(db: Session, exam_id: UUID) -> list[ExamSubject]:
 def authorize_start(db: Session, exam_id: UUID, authorized: bool) -> StartAuthorizationResponse:
     exam = get_record(db, Exam, exam_id, lock=True)
     if authorized:
+        if not exam.is_published:
+            raise HTTPException(409, "Publish this exam before authorizing starts.")
         if exam.status != ExamStatus.DRAFT:
             raise HTTPException(409, "Archived exams cannot be started.")
         validate_papers(db, exam_id)
@@ -254,7 +256,7 @@ def finalize(attempt: ExamAttempt, subjects: list[SubjectAttempt]) -> None:
 
 
 def check_start(exam: Exam, now: datetime) -> None:
-    if not exam.is_start_authorized or exam.status != ExamStatus.DRAFT:
+    if not exam.is_published or not exam.is_start_authorized or exam.status != ExamStatus.DRAFT:
         raise HTTPException(403, "This exam is not authorized to start.")
     if exam.scheduled_start and as_utc(exam.scheduled_start) > now:
         raise HTTPException(409, "The exam has not opened yet.")
@@ -510,6 +512,10 @@ def assigned_exams(db: Session, candidate_id: UUID) -> list[AssignedExamResponse
         .where(
             CandidateExamAssignment.candidate_id == candidate_id,
             CandidateExamAssignment.is_active.is_(True),
+            or_(
+                and_(Exam.is_published.is_(True), Exam.status == ExamStatus.DRAFT),
+                ExamAttempt.id.is_not(None),
+            ),
         )
         .order_by(Exam.created_at, Exam.id)
     ).all()

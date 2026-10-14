@@ -29,6 +29,12 @@ frontend/
 │   │   └── SubmissionPage.tsx
 │   ├── data/mockExam.ts
 │   ├── features/auth/
+│   ├── features/admin/
+│   │   ├── AdminLayout.tsx, admin.css
+│   │   ├── CandidatesPage.tsx, candidateCsv.ts
+│   │   ├── ExamsPage.tsx, PaperBuilder.tsx
+│   │   ├── QuestionsPage.tsx, SubjectsPage.tsx, StaffActionsPage.tsx
+│   │   └── shared.tsx
 │   ├── features/exam/
 │   │   ├── AssignedExams.tsx
 │   │   ├── LiveExam.tsx
@@ -42,17 +48,19 @@ frontend/
 │   ├── features/preview/preview.ts
 │   ├── services/api.ts
 │   ├── services/exam.ts
+│   ├── services/admin.ts
 │   ├── storage/recovery.ts
 │   ├── types/
 │   │   ├── auth.ts
+│   │   ├── admin.ts
 │   │   ├── attempt.ts
 │   │   └── exam.ts
 │   ├── App.tsx
 │   ├── main.tsx
 │   └── index.css
 ├── tests/auth.test.tsx, api.test.ts, preview.test.tsx, exam-preview.test.tsx,
-│   exam-state.test.ts, live-exam.test.tsx, recovery.test.ts, browser-storage.ts
-├── e2e/resilience.spec.ts
+│   exam-state.test.ts, live-exam.test.tsx, recovery.test.ts, browser-storage.ts, admin.test.tsx
+├── e2e/resilience.spec.ts, admin.spec.ts, fixtures.ts
 └── playwright.config.ts
 ```
 
@@ -97,6 +105,16 @@ server state and explicitly starts the next subject. `/submission?attempt=<id>&s
 fetches the server-confirmed receipt; missing parameters show an empty state and
 an active or inaccessible subject never shows success. Staff return to their dashboard.
 Backend authorization remains necessary for every exam API; route guards only control navigation.
+
+Verified ADMIN users enter `/admin`, with separate CCK navy navigation and routes
+for candidates, exams/builder, subjects, question bank, and staff actions. Candidate,
+proctor, and examiner sessions return to their own dashboard before admin requests
+are issued. The candidate preview does not grant administrator access.
+Admin forms use explicit typed write contracts, current CSRF tokens, and visible
+load/save errors. Failed saves preserve form contents. Lists use backend pagination;
+selectors page through all catalogs rather than silently truncating to 50 rows.
+CSV is parsed in the browser and previewed before its typed rows are validated and
+imported atomically by the backend. See [Milestone 6](milestone-6.md).
 
 The exam header, timer, palette, and question renderer are presentation components.
 The timer takes a display value; live integration derives it from server timestamps

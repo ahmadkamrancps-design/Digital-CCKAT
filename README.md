@@ -1,6 +1,6 @@
 # CCK Digital Entry Test
 
-Foundation, exam domain, attempt engine, candidate interface, and Milestone 5 recovery for Cadet College Kohat's entry-test platform. React +
+Foundation, exam domain, attempt engine, candidate interface, recovery, and the Milestone 6 admin portal for Cadet College Kohat's entry-test platform. React +
 TypeScript, FastAPI, SQLAlchemy 2, PostgreSQL, Alembic, and Google Identity Services.
 The supplied CCK frontend now supports real assigned exams, server-derived timers,
 revisioned autosave, persistent answer recovery, reconnection, navigation/review, and confirmed submission. A separate
@@ -64,8 +64,16 @@ python -m app.cli register-staff \
   --email "approved-staff@gmail.com" --name "Staff Member" --role ADMIN
 ```
 
-Staff roles are ADMIN, PROCTOR, EXAMINER. Admin exam-domain APIs are available;
-the staff portals arrive in their later milestones.
+Staff roles are ADMIN, PROCTOR, EXAMINER. Approved ADMIN users can open `/admin`
+or choose **Open administration portal** on their dashboard. Candidate management,
+CSV import, subject configuration, question bank, exam builder, scheduling,
+publication, and start controls are implemented. Proctor/examiner workspaces arrive
+in their milestones. The candidate design preview does not grant admin access.
+
+After pulling Milestone 6, run `alembic upgrade head` before starting the backend.
+Migration `0004_admin_portal` adds publication/result-control fields and staff
+action records. See [Milestone 6 handover](docs/milestone-6.md) for the admin workflow,
+CSV format, migration compatibility, and current result-release limits.
 
 Run the expiry worker in a separate backend terminal so deadlines are recorded
 even when no browser is connected:
@@ -238,6 +246,14 @@ running backend. The normal development server on port 5173 can remain running.
 | GET /api/me | Approved user session | Restore public account/profile state |
 | GET /api/candidate/me | Approved CANDIDATE role | Protected candidate profile |
 | GET /api/admin/subjects, /exams, /questions | Approved ADMIN session | Paginated domain lists |
+| GET/POST /api/admin/candidates | ADMIN; mutations require origin + CSRF | Search/filter or create approved candidate records |
+| PUT /api/admin/candidates/{id} | ADMIN + origin + CSRF | Edit/disable candidate and revoke changed-access sessions |
+| POST /api/admin/candidates/import | ADMIN + origin + CSRF | Atomic import of up to 500 validated candidate rows |
+| GET /api/admin/candidates/{id}/assignments | ADMIN | Inspect that candidate's assignments |
+| PUT /api/admin/exams/{id}/subject-order | ADMIN + origin + CSRF | Atomically reorder all exam subjects |
+| POST /api/admin/exams/{id}/publication | ADMIN + origin + CSRF | Publish/unpublish; unpublishing pauses new starts |
+| POST /api/admin/exams/{id}/result-release | ADMIN + origin + CSRF | Record planned release while withholding ungraded results |
+| GET /api/admin/actions | ADMIN | Paginated staff action history |
 | POST /api/admin/subjects, /exams, /questions | ADMIN + origin + CSRF | Create domain records |
 | PUT /api/admin/subjects/{id}, /exams/{id}, /questions/{id} | ADMIN + origin + CSRF | Replace editable records |
 | GET/POST /api/admin/exams/{id}/subjects | ADMIN; mutations also require origin + CSRF | Configure durations and subject order |
@@ -273,10 +289,11 @@ exclude keys, accepted values, and grading configuration. See
 - [Milestone 3 handover, attempt workflow, and verification results](docs/milestone-3.md)
 - [Milestone 4 handover, live candidate interface, and verification results](docs/milestone-4.md)
 - [Milestone 5 handover, offline recovery, and verification results](docs/milestone-5.md)
+- [Milestone 6 handover, administration workflow, and verification results](docs/milestone-6.md)
 - [GitHub setup and progress history](docs/version-control.md)
 
-Milestone 5 preserves your CCK templates and adds durable local drafts, bounded
-reconnection retries, stale-answer protection, and recovery after refresh.
-Next is Milestone 6: the administrative portal.
+Milestone 6 preserves your CCK templates and adds a separate administration portal
+using the existing permission, domain, and attempt foundations.
+Next is Milestone 7: the proctor system.
 Real Google acceptance testing remains necessary before the Milestone 1 exit
 criteria can be considered fully demonstrated.

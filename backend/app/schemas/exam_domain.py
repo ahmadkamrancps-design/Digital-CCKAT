@@ -38,6 +38,8 @@ class ExamWrite(Input):
     status: ExamStatus = ExamStatus.DRAFT
     scheduled_start: AwareDatetime | None = None
     scheduled_end: AwareDatetime | None = None
+    is_published: bool = True
+    result_release_at: AwareDatetime | None = None
 
     @model_validator(mode="after")
     def valid_schedule(self) -> Self:
@@ -54,6 +56,8 @@ class ExamWrite(Input):
 
 class ExamResponse(ExamWrite):
     is_start_authorized: bool
+    results_released: bool
+    has_attempts: bool = False
     id: UUID
     created_at: datetime
     updated_at: datetime
@@ -70,6 +74,16 @@ class ExamSubjectResponse(ExamSubjectWrite):
     exam_id: UUID
     total_marks: Decimal
     question_count: int
+
+
+class SubjectOrderWrite(Input):
+    subject_ids: list[UUID] = Field(max_length=1000)
+
+    @model_validator(mode="after")
+    def unique_ids(self) -> Self:
+        if len(set(self.subject_ids)) != len(self.subject_ids):
+            raise ValueError("Subject IDs must be unique.")
+        return self
 
 
 class OptionWrite(Input):

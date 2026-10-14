@@ -3,6 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Request
 
+from app.api.admin_audit import audit_mutation
 from app.api.dependencies import Db, require_csrf, require_origin
 from app.core.clock import Clock
 from app.core.permissions import require_roles
@@ -42,7 +43,7 @@ def candidate_id(context: AuthContext) -> UUID:
 @admin_router.put(
     "/exams/{exam_id}/candidates/{candidate_id}",
     response_model=AssignmentResponse,
-    dependencies=mutations,
+    dependencies=[*mutations, Depends(audit_mutation)],
 )
 def assign(
     exam_id: UUID, candidate_id: UUID, body: AssignmentWrite, db: Db, context: AdminAuth
@@ -53,7 +54,7 @@ def assign(
 @admin_router.post(
     "/exams/{exam_id}/start-authorization",
     response_model=StartAuthorizationResponse,
-    dependencies=mutations,
+    dependencies=[*mutations, Depends(audit_mutation)],
 )
 def authorize(
     exam_id: UUID, body: StartAuthorizationWrite, db: Db, context: AdminAuth

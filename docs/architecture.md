@@ -1,9 +1,9 @@
-# Application architecture through Milestone 5
+# Application architecture through Milestone 6
 
 The repository contains a React/TypeScript/Vite frontend, a Python/FastAPI backend,
 and PostgreSQL infrastructure. Domain management and the backend attempt engine
 and the live candidate interface are implemented, including persistent answer
-recovery and reconnection in Milestone 5.
+recovery and reconnection in Milestone 5 and a separate admin portal in Milestone 6.
 
 ```text
 cck-digital-test/
@@ -121,11 +121,28 @@ backend and frontend Dockerfiles are development building blocks, not a complete
 production deployment.
 
 There is one explicit role per user initially: CANDIDATE, ADMIN, PROCTOR, EXAMINER.
-Only trusted local provisioning can create approved users. Milestone 2 adds
-ADMIN-only exam-domain APIs with Origin/CSRF protection on mutations. Staff
-portals remain later milestones. Candidate approval grants dashboard access;
+The trusted CLI provisions staff, including the first ADMIN. Authenticated ADMIN
+users can now provision/edit/disable candidates and import registrations atomically.
+ADMIN-only management APIs use Origin/CSRF protection on mutations. The separate
+`features/admin/` frontend contains candidates, exams, subjects, questions, paper
+builder, and staff action history. Its navigation uses the existing navy CCK brand.
+Candidate preview never opens a privileged admin workspace. Candidate approval grants dashboard access;
 exam access also requires an active assignment and administrator start authorization.
 Schedules gate starts and impose a hard end when configured.
+
+`admin_management_service.py` manages candidate identity/eligibility, publication,
+and withheld-result planning. Identity or status edits revoke existing sessions.
+Import rolls back the entire batch and its staff events if any row conflicts.
+`api/admin_audit.py` attaches safe actor/action context to domain mutations; the
+existing commit helper writes an action record atomically with a successful change.
+There are no audit update/delete endpoints. Strong database-level immutability
+and candidate/proctor events remain later hardening/monitoring work.
+
+Publication is separate from start authorization. Unpublished unstarted exams are
+hidden from candidates. Existing attempts stay resumable and retain their deadlines,
+while unpublishing disables new starts. Question keys remain ADMIN-only. Result
+release is refused until the grading milestone; planned dates never auto-release
+ungraded results. See [Milestone 6 handover](milestone-6.md).
 
 PostgreSQL's current clock supplies deadlines and timestamps. The engine reads
 `clock_timestamp()` after obtaining row locks; transaction-start time would be
