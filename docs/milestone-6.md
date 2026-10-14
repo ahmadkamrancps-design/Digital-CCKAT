@@ -59,6 +59,7 @@ implemented in this milestone.
 | Admin interface | New `frontend/src/features/admin/`: `AdminLayout.tsx`, `CandidatesPage.tsx`, `SubjectsPage.tsx`, `QuestionsPage.tsx`, `ExamsPage.tsx`, `PaperBuilder.tsx`, `StaffActionsPage.tsx`, `candidateCsv.ts`, `shared.tsx`, `admin.css` |
 | API and routes | New `frontend/src/services/admin.ts`, `frontend/src/types/admin.ts`; updated `App.tsx`, `pages/DashboardPage.tsx` |
 | Frontend tests | New `frontend/tests/admin.test.tsx`, `frontend/e2e/admin.spec.ts`, `frontend/e2e/fixtures.ts`; updated resilience suite to use the shared browser fixture |
+| Recovery regression found during CI | Updated `frontend/src/features/exam/AnswerQueue.ts`, `frontend/tests/exam-state.test.ts`, `frontend/tests/live-exam.test.tsx` |
 | Documentation | Updated README, architecture, database, lifecycle, security, and frontend structure; this handover |
 
 Backend paths in this table are relative to `backend/`. No runtime dependency
@@ -155,8 +156,9 @@ wsl -d Ubuntu -- bash -ic 'cd /home/mr_laptop/cck-digital-test/frontend && npm r
 | --- | --- |
 | Backend quick suite | 144 passed; 4 PostgreSQL-only checks skipped |
 | Full PostgreSQL suite before the additional archived-visibility case | 147 passed, including migrations and concurrency |
+| Full PostgreSQL 17 suite in GitHub CI | 148 passed |
 | Final PostgreSQL attempt regression | 33 passed; the added unpublished/archived parameter cases both passed separately |
-| Frontend unit/component suite | 104 passed across 8 files |
+| Frontend unit/component suite | 109 passed across 8 files |
 | Real Chromium workflow suite | 8 passed: 3 admin and 5 recovery scenarios |
 | TypeScript and Vite production build | Passed |
 | Backend Ruff lint/format and strict mypy | Passed |
@@ -180,6 +182,13 @@ Failures investigated and corrected:
 - Recovery browser traces showed external Google Fonts requests stalling page
   navigation. Both browser suites now share a fixture that blocks those requests
   and uses the system font fallback. Application styling remains unchanged.
+- A second CI run found a real recovery race: a reconnect/manual retry during a
+  failed save's local checkpoint could clear its error and leave the pending
+  answer without another upload. Deterministic regressions failed before the fix.
+  Retry and reconnect now await the active drain before clearing errors and
+  starting fresh serialized work. Explicit conflict choices use the same path.
+  Tests cover both retry actions, deadline expiry during the wait, and conflict
+  resolution while persistence is pending. Existing test timeouts were retained.
 
 Local PostgreSQL checks used a temporary PostgreSQL 16.2 instance. GitHub CI
 uses PostgreSQL 17 and Python 3.12; local Python was 3.14. The existing local

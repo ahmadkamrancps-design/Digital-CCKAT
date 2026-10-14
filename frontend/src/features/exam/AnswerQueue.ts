@@ -175,7 +175,11 @@ export class AnswerQueue {
       return !this.dirty() && !this.snapshot.localError && !Object.values(this.snapshot.cells).some((cell) => cell.error);
     } finally { this.snapshot = { ...this.snapshot, saving: false }; this.emit(); }
   }
-  retry() {
+  async retry() {
+    clearTimeout(this.retryTimer);
+    // A failed drain may still be committing its local recovery checkpoint.
+    // Wait before clearing its error, then start a fresh serialized drain.
+    if (this.running) await this.running;
     clearTimeout(this.retryTimer);
     for (const [id, cell] of Object.entries(this.snapshot.cells)) {
       if (!cell.conflict) this.update(id, { error: undefined });
@@ -188,7 +192,7 @@ export class AnswerQueue {
     this.update(id, { confirmed: cell.conflict, draft: keepDraft ? cell.draft : fields(cell.conflict),
       conflict: undefined, error: undefined, request: undefined });
     void this.checkpoint();
-    void this.flush();
+    void this.reconnect();
   }
   private scheduleRetry() {
     clearTimeout(this.retryTimer);
@@ -198,7 +202,9 @@ export class AnswerQueue {
     this.retryTimer = setTimeout(() => { void this.reconnect(); }, delay);
   }
   /** Browser online is a hint. Actual request success/failure determines synchronization state. */
-  reconnect() {
+  async reconnect() {
+    clearTimeout(this.retryTimer);
+    if (this.running) await this.running;
     clearTimeout(this.retryTimer);
     for (const [id, cell] of Object.entries(this.snapshot.cells)) {
       if (cell.retryable && !cell.conflict) this.update(id, { error: undefined });

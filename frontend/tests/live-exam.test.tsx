@@ -175,8 +175,7 @@ describe('live CCK candidate workflow', () => {
     expect(fixture.state.subjects[0].status).toBe('ACTIVE');
     fixture.controls.failSave = 0;
     act(() => { window.dispatchEvent(new Event('online')); });
-    // Reconnection can overlap a failed in-flight save's local checkpoint. Its
-    // next automatic retry uses backoff (up to 2.4 seconds after two failures).
+    // Reconnection waits for the failed save's checkpoint before retrying.
     await waitFor(() => expect(fixture.paper.questions[0].answer.selected_option_id).toBe('a'), { timeout: 4000 });
   });
 

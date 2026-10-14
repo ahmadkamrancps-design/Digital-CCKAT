@@ -3,6 +3,7 @@ import { AnswerQueue } from '../src/features/exam/AnswerQueue';
 import { ServerDeadline } from '../src/features/exam/ServerDeadline';
 import { ApiError } from '../src/services/api';
 import type { Answer, AnswerSaved, AnswerWrite } from '../src/types/attempt';
+import type { RecoveryJournal } from '../src/storage/recovery';
 
 const answer = (id = 'q1', revision = 0, text: string | null = null): Answer => ({
   exam_question_id: id, revision, short_answer_text: text, selected_option_id: null,
@@ -17,10 +18,70 @@ function makeQueue(send: (id: string, request: AnswerWrite) => Promise<AnswerSav
   queues.push(queue);
   return queue;
 }
+function pausedCheckpoint() {
+  let release!: () => void;
+  let notifyStarted!: () => void;
+  let pauseNext = false;
+  const pending = new Promise<void>((resolve) => { release = resolve; });
+  const started = new Promise<void>((resolve) => { notifyStarted = resolve; });
+  const journal: RecoveryJournal = {
+    initial: [],
+    save: async () => {
+      if (pauseNext) { pauseNext = false; notifyStarted(); await pending; }
+    },
+    clear: async () => {},
+    release: async () => {},
+  };
+  return { journal, started, pause: () => { pauseNext = true; }, release: () => release() };
+}
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => { queues.splice(0).forEach((queue) => queue.dispose()); vi.useRealTimers(); });
 
 describe('answer synchronization', () => {
+  it.each([['reconnect', false], ['retry', false], ['reconnect', true], ['retry', true]] as const)(
+    'does not lose %s during a failed save checkpoint; deadline expires=%s', async (action, expires) => {
+      const checkpoint = pausedCheckpoint();
+      const send = vi.fn(async (id: string, request: AnswerWrite) => saved(id, request))
+        .mockImplementationOnce(async () => {
+          checkpoint.pause(); throw new ApiError(0, 'Network interrupted');
+        });
+      let writable = true;
+      const queue = new AnswerQueue([answer()], send, () => writable, checkpoint.journal);
+      queues.push(queue);
+      queue.edit('q1', { short_answer_text: 'پاکستان' });
+      const first = queue.flush();
+      await checkpoint.started;
+      const retried = queue[action]();
+      expect(send).toHaveBeenCalledTimes(1);
+      writable = !expires;
+      checkpoint.release();
+      await first;
+      expect(await retried).toBe(!expires);
+      expect(send).toHaveBeenCalledTimes(expires ? 1 : 2);
+      if (!expires) expect(send.mock.calls[1][1]).toEqual(send.mock.calls[0][1]);
+      expect(queue.dirty()).toBe(expires);
+    });
+
+  it('saves an explicit conflict choice made while its recovery checkpoint is pending', async () => {
+    const checkpoint = pausedCheckpoint();
+    const send = vi.fn(async (id: string, request: AnswerWrite) => saved(id, request))
+      .mockImplementationOnce(async () => {
+        checkpoint.pause(); throw new ApiError(409, 'Conflict', { current_answer: answer('q1', 5, 'server') });
+      });
+    const queue = new AnswerQueue([answer()], send, () => true, checkpoint.journal);
+    queues.push(queue);
+    queue.edit('q1', { short_answer_text: 'my answer' });
+    const first = queue.flush();
+    await checkpoint.started;
+    queue.resolve('q1', true);
+    checkpoint.release();
+    await first;
+    await vi.advanceTimersByTimeAsync(0);
+    expect(send).toHaveBeenCalledTimes(2);
+    expect(send.mock.calls[1][1]).toMatchObject({ expected_revision: 5, short_answer_text: 'my answer' });
+    expect(queue.dirty()).toBe(false);
+  });
+
   it.each([0, 408, 429, 503])('automatically backs off and retries transient failures (%s)', async (status) => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     const send = vi.fn(async (id: string, request: AnswerWrite) => saved(id, request))
