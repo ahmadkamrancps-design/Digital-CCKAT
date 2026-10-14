@@ -1,18 +1,44 @@
 # GitHub and progress history
 
-The current project contains the implementation and handovers through Milestone 5.
-Its first commit should capture that existing state honestly. Earlier milestones
-were not separately committed, so historical code snapshots cannot be reconstructed
-from the milestone documents alone.
+The project is saved in the private repository
+[ahmadkamrancps-design/Digital-CCKAT](https://github.com/ahmadkamrancps-design/Digital-CCKAT).
+The local `main` branch tracks `origin/main` through HTTPS with GitHub CLI
+authentication. Linking the account has been completed and source has been pushed.
 
-Use a private GitHub repository named `cck-digital-test`. Include source, dependency
+Recorded checkpoints:
+
+- `a10ab75`: existing application through Milestone 5.
+- `d011a87`: Milestone 6 administration portal, migration, tests, and handover.
+
+Earlier milestones were not separately committed, so their historical code
+snapshots cannot be reconstructed from the handovers alone. New milestones should
+continue to receive focused commits and verified pushes.
+
+The local folder is named `cck-digital-test`; the GitHub repository is
+`Digital-CCKAT`. Include source, dependency
 lockfiles, migrations, tests, public branding assets, and documentation. Actual
 environment files, credentials, candidate data, database backups, dependencies,
 build output, and test artifacts must stay outside Git. The root `.gitignore`
 already excludes the normal local files; review new files before each commit.
 Git records committed files, not database contents or this conversation.
 
-## Publish the local project
+## Inspect and synchronize the existing repository
+
+Run inside Ubuntu/WSL at the project root:
+
+```bash
+git status
+git log --oneline -5
+git remote -v
+git push origin main
+```
+
+Review and commit new source changes before pushing. The configured remote is
+`https://github.com/ahmadkamrancps-design/Digital-CCKAT.git`. GitHub Actions runs
+backend and frontend checks after pushes. Do not recreate `origin` or publish a
+second repository for the current checkout.
+
+## Initial publishing instructions for a different checkout
 
 In VS Code, open this folder through WSL and use Source Control. Configure your
 commit name/email if prompted; a GitHub noreply address is suitable. Review the
@@ -23,7 +49,7 @@ Checkpoint CCK application through Milestone 5
 ```
 
 Use **Publish to GitHub**, authenticate in the browser, and choose a **private**
-repository named `cck-digital-test`. If a repository already exists, connect its
+repository with the intended project name. If a repository already exists, connect its
 URL as `origin` and push the existing branch instead of creating another repo.
 Complete authentication in GitHub/VS Code; never paste credentials into chat or
 commit them into a file. Confirm that the repository shows the source files and
