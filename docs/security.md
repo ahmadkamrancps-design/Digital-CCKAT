@@ -99,12 +99,33 @@ backend role checks remain authoritative. New mutation routes enforce Origin/CSR
 Unpublishing an exam pauses new starts but preserves authorized active-attempt
 access and deadlines; revoking an assignment or disabling a candidate blocks access.
 The result-release endpoint rejects release while grading is unavailable. A planned
-date is configuration only and cannot expose scores. Candidate schemas are unchanged.
+date is configuration only and cannot expose scores. Candidate paper/answer schemas are unchanged.
 The CLI runs only for operators with database credentials and must not be exposed
 as a web service.
 
+Monitoring APIs require active PROCTOR or ADMIN authentication. Each PROCTOR read
+also checks an active exam-specific assignment; revocation denies subsequent reads.
+ADMIN controls assignments using Origin/CSRF-protected writes. Proctors cannot
+change exam starts, candidate eligibility, grades, or answer content. Monitoring
+responses use explicit schemas and omit question/answer/key data and identity email.
+Frontend access denial clears the displayed snapshot; network failures instead
+retain clearly labeled stale data. Account changes remount the monitoring scope.
+
+Candidate presence writes use owning-attempt/assignment validation plus Origin/CSRF.
+Only an active subject and valid reported question position are accepted. The server
+assigns time, permits no more than one update every five seconds, and limits batches
+to eight allowlisted browser events. Nonces deduplicate repeated reports. Browser
+metadata cannot claim authoritative server events; source/type checks exist in SQL.
+Raw answers, authentication credentials, and free-text metadata are not accepted.
+
+Connection status represents recent server contact rather than proof of physical
+network state. Browser events are untrusted and can be missing, delayed, or fabricated;
+they support authorized human review and never trigger cheating judgments, score
+changes, time extensions, or automatic penalties. The bounded in-memory browser
+event buffer is best-effort and separate from durable answer recovery.
+
 Unfinished hardening: distributed rate limiting, certificate caching, an append-only
-database-enforced audit immutability, candidate/proctor events, OAuth replay/nonce policy,
+database-enforced audit immutability, broader security-event coverage, OAuth replay/nonce policy,
 expired-session cleanup, security monitoring,
 production reverse proxy/CSP/HSTS configuration, dependency review, and concurrent
 login stress testing. Trusted-host and CORS settings are not substitutes for these.

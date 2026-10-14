@@ -12,7 +12,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app.api.dependencies import Db
-from app.api.routes import admin_domain, admin_management, attempts, auth, profiles
+from app.api.routes import admin_domain, admin_management, attempts, auth, proctor, profiles
 from app.config import Settings, load_settings
 from app.core.clock import DatabaseClock
 from app.db.session import create_db_engine, create_session_factory
@@ -103,6 +103,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(admin_management.router, prefix="/api")
     app.include_router(attempts.router, prefix="/api")
     app.include_router(attempts.admin_router, prefix="/api")
+    app.include_router(proctor.router, prefix="/api")
     return app
 
 

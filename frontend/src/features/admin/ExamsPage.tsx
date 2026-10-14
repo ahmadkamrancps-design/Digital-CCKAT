@@ -18,6 +18,7 @@ import {
   utcDate,
 } from "./shared";
 import { PaperBuilder } from "./PaperBuilder";
+import { ProctorAssignments } from "./ProctorAssignments";
 
 export function ExamsPage() {
   const client = useAdminApi();
@@ -259,6 +260,7 @@ export function ExamDetailPage() {
       <TaskStatus task={task} />
       {data && (
         <>
+          <ProctorAssignments key={data.exam.id} examId={data.exam.id} />
           <ExamEditor
             key={`${data.exam.id}:${data.exam.updated_at}:${data.exam.is_start_authorized}:${data.exam.has_attempts}`}
             exam={data.exam}

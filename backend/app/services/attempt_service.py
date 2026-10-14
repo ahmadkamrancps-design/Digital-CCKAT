@@ -22,6 +22,7 @@ from app.models import (
     QuestionOption,
     QuestionType,
     Role,
+    SessionEventType,
     Subject,
     SubjectAttempt,
     SubjectStatus,
@@ -44,6 +45,7 @@ from app.schemas.attempt import (
 from app.schemas.exam_domain import QuestionWrite
 from app.services.auth_service import as_utc
 from app.services.exam_domain_service import commit, get_record, question_response
+from app.services.session_event_service import record_event
 
 TERMINAL = {SubjectStatus.SUBMITTED, SubjectStatus.EXPIRED}
 
@@ -234,16 +236,20 @@ def reconcile(
         ):
             subject.status = SubjectStatus.EXPIRED
             subject.submitted_at = subject.expires_at
+            record_event(db, attempt, SessionEventType.SUBJECT_AUTO_SUBMITTED, now, subject)
         elif subject.status == SubjectStatus.NOT_STARTED and end and end <= now:
             # The overall deadline closes papers the candidate never started, too.
             subject.status = SubjectStatus.EXPIRED
             subject.expires_at = end
             subject.submitted_at = end
-    finalize(attempt, subjects)
+            record_event(db, attempt, SessionEventType.SUBJECT_AUTO_SUBMITTED, now, subject)
+    finalize(db, attempt, subjects, now)
     return subjects, now
 
 
-def finalize(attempt: ExamAttempt, subjects: list[SubjectAttempt]) -> None:
+def finalize(
+    db: Session, attempt: ExamAttempt, subjects: list[SubjectAttempt], now: datetime
+) -> None:
     if (
         attempt.status == AttemptStatus.IN_PROGRESS
         and subjects
@@ -253,6 +259,7 @@ def finalize(attempt: ExamAttempt, subjects: list[SubjectAttempt]) -> None:
         attempt.submitted_at = max(
             as_utc(item.submitted_at) for item in subjects if item.submitted_at
         )
+        record_event(db, attempt, SessionEventType.EXAM_SUBMITTED, now)
 
 
 def check_start(exam: Exam, now: datetime) -> None:
@@ -279,6 +286,7 @@ def begin_exam(db: Session, exam_id: UUID, candidate_id: UUID, clock: Clock) -> 
         )
         db.add(attempt)
         db.flush()
+        record_event(db, attempt, SessionEventType.EXAM_OPENED, now)
         db.add_all(
             [
                 SubjectAttempt(
@@ -337,6 +345,7 @@ def begin_subject(
         subject.expires_at = now + timedelta(minutes=subject.duration_minutes)
         if exam.scheduled_end:
             subject.expires_at = min(subject.expires_at, as_utc(exam.scheduled_end))
+        record_event(db, attempt, SessionEventType.SUBJECT_STARTED, now, subject)
         papers = list(
             db.execute(
                 select(ExamQuestion, Question.type)
@@ -450,7 +459,8 @@ def save_answer(
     now = clock.now(db)
     if subject.expires_at and as_utc(subject.expires_at) <= now:
         subject.status, subject.submitted_at = SubjectStatus.EXPIRED, subject.expires_at
-        finalize(attempt, subjects)
+        record_event(db, attempt, SessionEventType.SUBJECT_AUTO_SUBMITTED, now, subject)
+        finalize(db, attempt, subjects, now)
         commit(db)
         raise HTTPException(410, "This subject is not editable.")
     same = (
@@ -469,6 +479,16 @@ def save_answer(
             },
         )
     if not same:
+        if answer.is_marked_for_review != body.is_marked_for_review:
+            record_event(
+                db,
+                attempt,
+                SessionEventType.QUESTION_FLAGGED
+                if body.is_marked_for_review
+                else SessionEventType.QUESTION_UNFLAGGED,
+                now,
+                subject,
+            )
         answer.selected_option_id, answer.short_answer_text = (
             body.selected_option_id,
             body.short_answer_text,
@@ -476,6 +496,7 @@ def save_answer(
         answer.is_marked_for_review = body.is_marked_for_review
         answer.revision += 1
         answer.last_saved_at = now
+        record_event(db, attempt, SessionEventType.ANSWER_SAVED, now, subject)
     commit(db)
     return AnswerSaveResponse(answer=answer_response(answer), server_time=now)
 
@@ -490,7 +511,8 @@ def submit_subject(
         raise HTTPException(409, "Start this subject before submitting it.")
     if subject.status == SubjectStatus.ACTIVE:
         subject.status, subject.submitted_at = SubjectStatus.SUBMITTED, now
-        finalize(attempt, subjects)
+        record_event(db, attempt, SessionEventType.SUBJECT_SUBMITTED, now, subject)
+        finalize(db, attempt, subjects, now)
     commit(db)
     return attempt_response(attempt, subjects, now)
 

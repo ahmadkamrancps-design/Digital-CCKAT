@@ -1,4 +1,4 @@
-# Exam lifecycle through Milestone 6
+# Exam lifecycle through Milestone 7
 
 The backend implements authorized starts, independent subject deadlines, saved
 answers/review flags, submission, automatic expiry, and resume. Grading and results
@@ -84,7 +84,7 @@ The worker and APIs share the same expiry logic and database clock.
 
 The admin portal implements publication, start/pause controls, and withheld-result
 planning. Actual result publication depends on completed grading in Milestone 8.
-Candidate/proctor events and proctor actions remain later milestones.
+Session events and read-only proctor monitoring are implemented in Milestone 7.
 
 ## Live candidate interface (Milestone 4)
 
@@ -139,3 +139,20 @@ active subject until its original deadline. Revocation/disable is a separate
 explicit action that removes access. Archiving hides unstarted assignments and
 prevents starts. Administrative candidate identity/status changes revoke login
 sessions and never create a fresh exam attempt.
+
+## Monitoring (Milestone 7)
+
+ADMIN assigns approved proctors to specific exams. Authorized proctors inspect
+candidate state and safe event history; they have no exam/answer mutation controls.
+Monitoring reads reconcile elapsed deadlines through the existing engine. The
+expiry worker still closes subjects independently when neither candidate nor staff
+is connected. Transition events append only when the corresponding state changes.
+
+During an active subject, a separate heartbeat reports question position and up to
+eight browser events. It normally runs every ten seconds and never starts a subject
+or modifies its deadline, answers, revisions, or score. Network/storage failures
+in answer saving retain their existing behavior. Heartbeat failures do not block
+answers, and subject closure stops its reporter. Connection freshness becomes
+unknown/no recent contact rather than proof of misconduct. Offline browser reports
+can arrive later with their server receipt time; the bounded nonpersistent buffer
+may lose reports on closure/reload. This does not change durable answer recovery.

@@ -48,6 +48,7 @@ async function backend(
       });
     if (role !== "ADMIN")
       return send({ detail: "Administrator access required." }, 403);
+    if (path === '/api/admin/proctors' || path.endsWith('/proctors')) return send([]);
     if (
       method !== "GET" &&
       request.headers()["x-csrf-token"] !== "browser-csrf"

@@ -41,6 +41,7 @@ async function backend(context: BrowserContext) {
       return send(paper);
     }
     if (request.method() !== 'GET' && request.headers()['x-csrf-token'] !== 'synthetic-test-csrf') return send({ detail: 'CSRF required.' }, 403);
+    if (path.endsWith('/presence')) return send({ server_time: attempt.server_time });
     if (path.includes('/answers/')) {
       if (attempt.subjects[0].status !== 'ACTIVE') return send({ detail: 'Subject is closed.' }, 410);
       const write = request.postDataJSON() as AnswerWrite;

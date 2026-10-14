@@ -54,6 +54,7 @@ function backend() {
       return response(copy(state));
     }
     if (path.endsWith('/subject-1/questions')) return response(copy(paper));
+    if (path.endsWith('/presence')) return response({ server_time: state.server_time });
     if (path.endsWith('/subject-1/start') && method === 'POST') {
       state.subjects[0].status = 'ACTIVE'; state.subjects[0].started_at = state.started_at;
       state.subjects[0].expires_at = '2026-10-08T10:01:00Z';
@@ -135,7 +136,7 @@ describe('live CCK candidate workflow', () => {
     view.unmount(); renderApp();
     expect(await screen.findByRole('radio', { name: 'Alpha' })).toBeChecked();
     expect(screen.getByRole('button', { name: 'Mark for Review' })).toHaveAttribute('aria-pressed', 'true');
-    expect(fixture.fetcher.mock.calls.filter(([, options]) => options?.method === 'POST')).toHaveLength(0);
+    expect(fixture.fetcher.mock.calls.filter(([path, options]) => options?.method === 'POST' && !path.endsWith('/presence'))).toHaveLength(0);
   });
 
   it('crosses out options without changing the selected answer or sending a save', async () => {
@@ -154,7 +155,7 @@ describe('live CCK candidate workflow', () => {
     expect(within(dialog).getByText(/1 unanswered questions/)).toBeInTheDocument();
     await userEvent.click(within(dialog).getByRole('button', { name: 'Submit subject' }));
     expect(await screen.findByRole('heading', { name: 'Test Submitted Successfully!' })).toBeInTheDocument();
-    const writes = fixture.fetcher.mock.calls.filter(([, options]) => options?.method === 'PUT' || options?.method === 'POST');
+    const writes = fixture.fetcher.mock.calls.filter(([path, options]) => !path.endsWith('/presence') && (options?.method === 'PUT' || options?.method === 'POST'));
     expect(writes.map(([, options]) => options?.method)).toEqual(['PUT', 'POST']);
     expect(screen.getByRole('link', { name: 'Continue to Urdu' })).toBeInTheDocument();
     await userEvent.click(screen.getByRole('link', { name: 'Continue to Urdu' }));

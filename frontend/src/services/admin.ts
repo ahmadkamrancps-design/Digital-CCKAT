@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useAuth } from "../features/auth/AuthProvider";
 import { api } from "./api";
+import type { ProctorAssignment } from "../types/proctor";
 import type {
   AdminAssignment,
   AdminCandidate,
@@ -26,6 +27,8 @@ export function adminApi(csrf: string) {
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
   return {
+    proctorAssignments: (exam: string) => api<ProctorAssignment[]>(`/admin/exams/${exam}/proctors`),
+    assignProctor: (exam: string, user: string, is_active: boolean) => write<ProctorAssignment[]>(`/exams/${exam}/proctors/${user}`, 'PUT', { is_active }),
     list: <T>(path: string, query: Record<string, string> = {}) =>
       api<T[]>(`/admin${path}?${new URLSearchParams(query)}`),
     candidate: (value: AdminCandidateWrite, id?: string) =>

@@ -1,4 +1,4 @@
-# Database through Milestone 6
+# Database through Milestone 7
 
 PostgreSQL with UTF-8 encoding is the application database. SQLAlchemy 2 maps
 models; Alembic controls schema changes. No table creation occurs during startup.
@@ -114,7 +114,7 @@ restoring Milestone 2 without deleting its existing exams. Downgrading deliberat
 removes attempt/answer data and belongs only in disposable verification environments
 or a separately reviewed recovery process.
 
-Grading records and candidate/proctor audit events remain later milestones. Do not
+Grading records remain for Milestone 8. Do not
 add durations or fixed subject names to foundation identity tables.
 
 Milestone 4 adds no migration. The assigned-exam API reads existing exam-subject
@@ -150,3 +150,26 @@ requested order in one transaction. Existing attempt/configuration locks still
 apply. The migration's downgrade drops its action table and three fields while
 preserving the prior exam/attempt data; it discards publication/release/action
 history and is only appropriate in a reviewed recovery or disposable test context.
+
+## Proctor monitoring migration
+
+`0005_proctor_monitoring` adds three tables without replacing answers or deadlines:
+
+| Table | Constraints and purpose |
+| --- | --- |
+| proctor_exam_assignments | Unique exam/user pair; restrictive exam/staff/actor FKs; active flag and timestamps |
+| attempt_presence | One row per attempt; restrictive attempt/subject FKs; position 1–200; server-authoritative last-seen timestamp |
+| session_events | Restrictive attempt/optional subject FKs; unique attempt/client nonce; indexed attempt/time; constrained source/type pairs |
+
+Heartbeat validation enforces owning assignment, active subject, position within
+its paper, five-second minimum update spacing, and at most eight events per batch.
+Subject/attempt membership is checked by the service. A client cannot claim server
+event types or timestamps. Event source checks also exist at the database level.
+Server transition events commit with their corresponding business state; unchanged
+answer/start/submit retries append no duplicate event. Existing audit events record
+administrator proctor assignments/revocations.
+
+The migration downgrade removes only these three monitoring tables. It loses their
+presence/events/access configuration and preserves the existing exam/answer tables.
+Upgrade/downgrade/re-upgrade and ORM comparison are verified on PostgreSQL. Neither
+audit table is tamper-proof against a privileged database operator.

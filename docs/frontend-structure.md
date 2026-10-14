@@ -33,6 +33,7 @@ frontend/
 │   │   ├── AdminLayout.tsx, admin.css
 │   │   ├── CandidatesPage.tsx, candidateCsv.ts
 │   │   ├── ExamsPage.tsx, PaperBuilder.tsx
+│   │   ├── ProctorAssignments.tsx
 │   │   ├── QuestionsPage.tsx, SubjectsPage.tsx, StaffActionsPage.tsx
 │   │   └── shared.tsx
 │   ├── features/exam/
@@ -41,26 +42,31 @@ frontend/
 │   │   ├── LiveSubmission.tsx
 │   │   ├── AnswerQueue.ts
 │   │   ├── createSession.ts
+│   │   ├── presence.ts, useExamPresence.ts
 │   │   ├── ServerDeadline.ts
 │   │   └── ExamSessions.tsx
+│   ├── features/proctor/ProctorPage.tsx, usePoll.ts, proctor.css
 │   ├── features/exam-preview/ExamPreview.tsx
 │   ├── features/exam-preview/SubmissionPreview.tsx
 │   ├── features/preview/preview.ts
 │   ├── services/api.ts
 │   ├── services/exam.ts
 │   ├── services/admin.ts
+│   ├── services/proctor.ts
 │   ├── storage/recovery.ts
 │   ├── types/
 │   │   ├── auth.ts
 │   │   ├── admin.ts
 │   │   ├── attempt.ts
+│   │   ├── proctor.ts
 │   │   └── exam.ts
 │   ├── App.tsx
 │   ├── main.tsx
 │   └── index.css
 ├── tests/auth.test.tsx, api.test.ts, preview.test.tsx, exam-preview.test.tsx,
-│   exam-state.test.ts, live-exam.test.tsx, recovery.test.ts, browser-storage.ts, admin.test.tsx
-├── e2e/resilience.spec.ts, admin.spec.ts, fixtures.ts
+│   exam-state.test.ts, live-exam.test.tsx, recovery.test.ts, browser-storage.ts, admin.test.tsx,
+│   proctor.test.tsx, presence.test.ts
+├── e2e/resilience.spec.ts, admin.spec.ts, proctor.spec.ts, fixtures.ts
 └── playwright.config.ts
 ```
 
@@ -115,6 +121,15 @@ load/save errors. Failed saves preserve form contents. Lists use backend paginat
 selectors page through all catalogs rather than silently truncating to 50 rows.
 CSV is parsed in the browser and previewed before its typed rows are validated and
 imported atomically by the backend. See [Milestone 6](milestone-6.md).
+
+`/proctor` requires a verified PROCTOR or ADMIN profile and shows a separate CCK
+monitoring workspace. Candidate preview grants no staff access. Exam selection,
+search, active-subject filtering, paging, monotonic remaining time, contact freshness,
+and safe event history use `services/proctor.ts`. Polling avoids overlapping requests,
+backs off on failures, labels stale data, and clears denied snapshots. The admin
+exam workspace includes a proctor-assignment panel. Live candidate presence uses
+a separate bounded, in-memory reporter that never receives answer content or
+changes the recovery journal. See [Milestone 7](milestone-7.md).
 
 The exam header, timer, palette, and question renderer are presentation components.
 The timer takes a display value; live integration derives it from server timestamps

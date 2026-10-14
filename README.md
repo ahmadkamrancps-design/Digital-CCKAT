@@ -1,6 +1,7 @@
 # CCK Digital Entry Test
 
-Foundation, exam domain, attempt engine, candidate interface, recovery, and the Milestone 6 admin portal for Cadet College Kohat's entry-test platform. React +
+Foundation, exam domain, attempt engine, candidate interface, recovery, administration,
+and Milestone 7 proctor monitoring for Cadet College Kohat's entry-test platform. React +
 TypeScript, FastAPI, SQLAlchemy 2, PostgreSQL, Alembic, and Google Identity Services.
 The supplied CCK frontend now supports real assigned exams, server-derived timers,
 revisioned autosave, persistent answer recovery, reconnection, navigation/review, and confirmed submission. A separate
@@ -67,13 +68,29 @@ python -m app.cli register-staff \
 Staff roles are ADMIN, PROCTOR, EXAMINER. Approved ADMIN users can open `/admin`
 or choose **Open administration portal** on their dashboard. Candidate management,
 CSV import, subject configuration, question bank, exam builder, scheduling,
-publication, and start controls are implemented. Proctor/examiner workspaces arrive
-in their milestones. The candidate design preview does not grant admin access.
+publication, and start controls are implemented. PROCTOR users open `/proctor`
+to monitor exams explicitly assigned by an administrator. ADMIN users can monitor
+all exams. The examiner workspace arrives with grading. Candidate preview grants
+neither admin nor proctor access.
 
 After pulling Milestone 6, run `alembic upgrade head` before starting the backend.
 Migration `0004_admin_portal` adds publication/result-control fields and staff
 action records. See [Milestone 6 handover](docs/milestone-6.md) for the admin workflow,
 CSV format, migration compatibility, and current result-release limits.
+
+After pulling Milestone 7, run `alembic upgrade head` to apply
+`0005_proctor_monitoring`. Provision approved proctor staff once:
+
+```bash
+python -m app.cli register-staff --email "approved-proctor@gmail.com" --name "CCK Proctor" --role PROCTOR
+```
+
+In `/admin`, open an exam and use **Proctor access** to assign that staff account.
+Sign in as the proctor and choose **Open proctor monitoring** on the dashboard.
+Status updates poll about every five seconds. Candidate heartbeats normally send
+every ten seconds while a subject is active. The portal shows reported question
+position, connection freshness, server-derived time, and safe session events;
+it exposes no candidate answers. See [Milestone 7 handover](docs/milestone-7.md).
 
 Run the expiry worker in a separate backend terminal so deadlines are recorded
 even when no browser is connected:
@@ -254,6 +271,13 @@ running backend. The normal development server on port 5173 can remain running.
 | POST /api/admin/exams/{id}/publication | ADMIN + origin + CSRF | Publish/unpublish; unpublishing pauses new starts |
 | POST /api/admin/exams/{id}/result-release | ADMIN + origin + CSRF | Record planned release while withholding ungraded results |
 | GET /api/admin/actions | ADMIN | Paginated staff action history |
+| GET /api/admin/proctors | ADMIN | List active proctor accounts without identity secrets |
+| GET /api/admin/exams/{id}/proctors | ADMIN | Inspect assigned proctors |
+| PUT /api/admin/exams/{id}/proctors/{user_id} | ADMIN + origin + CSRF | Assign/revoke exam-specific monitoring access |
+| GET /api/proctor/exams | Assigned PROCTOR or ADMIN | List permitted monitoring exams |
+| GET /api/proctor/exams/{id}/sessions | Assigned PROCTOR or ADMIN | Safe candidate status, expiry, position, and contact freshness |
+| GET /api/proctor/attempts/{id}/events | Assigned PROCTOR or ADMIN | Allowlisted session event history without answers |
+| POST /api/candidate/attempts/{id}/presence | Owning CANDIDATE + origin + CSRF | Rate-limited position/heartbeat and browser reports |
 | POST /api/admin/subjects, /exams, /questions | ADMIN + origin + CSRF | Create domain records |
 | PUT /api/admin/subjects/{id}, /exams/{id}, /questions/{id} | ADMIN + origin + CSRF | Replace editable records |
 | GET/POST /api/admin/exams/{id}/subjects | ADMIN; mutations also require origin + CSRF | Configure durations and subject order |
@@ -290,10 +314,11 @@ exclude keys, accepted values, and grading configuration. See
 - [Milestone 4 handover, live candidate interface, and verification results](docs/milestone-4.md)
 - [Milestone 5 handover, offline recovery, and verification results](docs/milestone-5.md)
 - [Milestone 6 handover, administration workflow, and verification results](docs/milestone-6.md)
+- [Milestone 7 handover, proctor workflow, and verification results](docs/milestone-7.md)
 - [GitHub setup and progress history](docs/version-control.md)
 
-Milestone 6 preserves your CCK templates and adds a separate administration portal
-using the existing permission, domain, and attempt foundations.
-Next is Milestone 7: the proctor system.
+Milestone 7 preserves your CCK templates and adds scoped proctor monitoring and
+session events using the existing authorization and attempt engine.
+Next is Milestone 8: grading and results.
 Real Google acceptance testing remains necessary before the Milestone 1 exit
 criteria can be considered fully demonstrated.

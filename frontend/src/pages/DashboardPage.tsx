@@ -43,8 +43,9 @@ export default function DashboardPage() {
       </section>
       <section className="exam-card card" aria-labelledby="staff-heading">
         <h2 id="staff-heading">Staff workspace</h2>
-        <p>{user.role === 'ADMIN' ? 'Your administrator role is verified. Open the portal to manage candidates, exams, and papers.' : 'Your staff role is verified. Your role’s workspace will be added in its development milestone.'}</p>
+        <p>{user.role === 'ADMIN' ? 'Your administrator role is verified. Open the portal to manage candidates, exams, and papers.' : user.role === 'PROCTOR' ? 'Your proctor role is verified. Open monitoring to view your assigned exams and candidate sessions.' : 'Your staff role is verified. Your role’s workspace will be added in its development milestone.'}</p>
         {user.role === 'ADMIN' && <Link className="primary-button" to="/admin">Open administration portal</Link>}
+        {['ADMIN', 'PROCTOR'].includes(user.role) && <p><Link className="primary-button" to="/proctor">Open proctor monitoring</Link></p>}
       </section>
     </div>;
   }

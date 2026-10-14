@@ -1,9 +1,10 @@
-# Application architecture through Milestone 6
+# Application architecture through Milestone 7
 
 The repository contains a React/TypeScript/Vite frontend, a Python/FastAPI backend,
 and PostgreSQL infrastructure. Domain management and the backend attempt engine
 and the live candidate interface are implemented, including persistent answer
-recovery and reconnection in Milestone 5 and a separate admin portal in Milestone 6.
+recovery and reconnection in Milestone 5, administration in Milestone 6, and scoped
+proctor monitoring in Milestone 7.
 
 ```text
 cck-digital-test/
@@ -136,13 +137,49 @@ Import rolls back the entire batch and its staff events if any row conflicts.
 `api/admin_audit.py` attaches safe actor/action context to domain mutations; the
 existing commit helper writes an action record atomically with a successful change.
 There are no audit update/delete endpoints. Strong database-level immutability
-and candidate/proctor events remain later hardening/monitoring work.
+remains later hardening work. Session events are implemented separately below.
 
 Publication is separate from start authorization. Unpublished unstarted exams are
 hidden from candidates. Existing attempts stay resumable and retain their deadlines,
 while unpublishing disables new starts. Question keys remain ADMIN-only. Result
 release is refused until the grading milestone; planned dates never auto-release
 ungraded results. See [Milestone 6 handover](milestone-6.md).
+
+`proctor_service.py` checks exam-specific proctor assignments; ADMIN can monitor
+all exams. Its explicit schemas return names/roll numbers, subject/status, reported
+position, contact freshness, expiry, and safe event types. They never return answer
+content, prompts, options, grades, Google identities, or emails. Monitoring reads
+reconcile expiry through the same attempt engine and commit its server events.
+Attempt locks are acquired in UUID order when a monitoring page covers multiple
+candidates. Proctors have read-only access and cannot authorize starts or edit tests.
+
+Three new tables keep monitoring independent: `proctor_exam_assignments` grants
+scope, `attempt_presence` stores the latest heartbeat, and `session_events` stores
+allowlisted server/browser event context. Server transitions append events in the
+same transaction as attempt/answer changes. Retry/idempotent actions do not create
+duplicate transition events. Browser event nonces are unique within an attempt.
+
+`features/proctor/` polls permitted exams/rosters/events without overlapping requests,
+backs off on failures, labels stale snapshots, and clears data on access denial.
+Its timers anchor server timestamps to monotonic elapsed time. Candidate
+`PresenceReporter` sends position and bounded event batches separately from answer
+saving; failure does not block exam work. Dashboard polls are about five seconds,
+normal heartbeats ten seconds, and recent contact means no more than thirty seconds
+since server receipt. There is no WebSocket/broker infrastructure in this milestone.
+Load qualification can justify a later change without replacing the attempt engine.
+
+```mermaid
+flowchart LR
+    Candidate[Active candidate interface] -->|Position and browser reports| Presence[Validated heartbeat API]
+    Presence --> Monitoring[(Presence and session events)]
+    Engine[Authoritative attempt engine] -->|Atomic server events| Monitoring
+    Proctor[Scoped proctor dashboard] -->|Polling and authorization| API[Safe monitoring API]
+    API --> Monitoring
+    API --> Engine
+```
+
+Browser events remain untrusted observations for human review, not proof of
+misconduct. See [Milestone 7 handover](milestone-7.md) for operational limits.
 
 PostgreSQL's current clock supplies deadlines and timestamps. The engine reads
 `clock_timestamp()` after obtaining row locks; transaction-start time would be

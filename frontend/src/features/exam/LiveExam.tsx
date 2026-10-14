@@ -11,6 +11,7 @@ import type { ExamQuestion, SaveState } from '../../types/exam';
 import { useAuth } from '../auth/AuthProvider';
 import { AssignedExams } from './AssignedExams';
 import { useOpenExamSession, type ExamSession } from './ExamSessions';
+import { useExamPresence } from './useExamPresence';
 
 const message = (cause: unknown) => cause instanceof Error ? cause.message : 'Unable to load the exam.';
 const closed = (subject: SubjectAttempt) => ['SUBMITTED', 'EXPIRED'].includes(subject.status);
@@ -144,6 +145,7 @@ function ExamWorkspace({ paper, session, attempt, onState }: { paper: SubjectPap
   const question = paper.questions[index];
   const cell = snapshot.cells[question.exam_question_id];
   const locked = seconds === 0 || queue.locked || !!snapshot.localError || paper.subject.status !== 'ACTIVE';
+  useExamPresence(attempt.id, paper.subject.id, index + 1, seconds > 0 && !queue.locked && paper.subject.status === 'ACTIVE');
   const value = question.type === 'MCQ' ? cell.draft.selected_option_id || '' : cell.draft.short_answer_text || '';
   const navigation = paper.questions.map((item, number) => {
     const answer = snapshot.cells[item.exam_question_id].draft;
