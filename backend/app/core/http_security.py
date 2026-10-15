@@ -1,8 +1,42 @@
-"""Bound input before JSON parsing, including chunked bodies without Content-Length."""
+"""HTTP boundaries: bounded JSON, safe exceptions, and response headers."""
+
+import logging
 
 from starlette.datastructures import Headers
 from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
+
+logger = logging.getLogger(__name__)
+
+
+class SafeErrorsMiddleware:
+    """Stop private HTTP exception messages reaching the ASGI server traceback logger."""
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        started = False
+
+        async def track_response(message: Message) -> None:
+            nonlocal started
+            if message["type"] == "http.response.start":
+                started = True
+            await send(message)
+
+        try:
+            await self.app(scope, receive, track_response)
+        except Exception as exc:
+            # Starlette's generic error handler re-raises to the server even after
+            # returning safe JSON. Consume here so Uvicorn cannot log raw values.
+            logger.error("HTTP request failed error_type=%s", type(exc).__name__)
+            if not started:
+                await JSONResponse({"detail": "Unable to complete this request."}, status_code=500)(
+                    scope, receive, send
+                )
 
 
 class RequestLimitsMiddleware:

@@ -19,7 +19,7 @@ Milestone 10 deployment and operational acceptance have not started.
 | Database access | A tested runtime-role grant template permits normal application operations and history appends, while denying DDL, history rewrites, and Alembic changes. Development credentials are preserved; deployment must configure separate roles. |
 | Candidate data | Existing explicit DTOs, assignment/ownership checks, private answer keys, unpublished-result suppression, immutable raw answers after closure, and plain React rendering reviewed. Existing functional/security tests retained. |
 | Proxy and headers | Development proxy strips supplied forwarding headers. Backend container disables proxy-header trust, access logs, and the server header. API and development HTML gain framing defenses; production API gains HSTS. Full production HTML CSP belongs at the ingress. |
-| Configuration | Invalid origin ports/whitespace and wildcard/URL-shaped hosts fail startup validation. Database credentials are excluded from settings repr. Safe startup/API error messages remain. |
+| Configuration and errors | Invalid origin ports/whitespace and wildcard/URL-shaped hosts fail startup validation. Database credentials are excluded from settings repr. Safe HTTP errors are consumed before the ASGI server can log a private exception traceback; diagnostics record only error type. |
 | Dependencies/secrets | Python and npm audits report no known vulnerabilities at review time. CI adds audits, read-only repository permissions, credential-free checkout, and verified full-commit action pins. Real .env/build artifacts remain ignored; tracked credential-pattern review found no matches. |
 
 Only public certificate caching adds application dependencies: CacheControl 0.14.4
@@ -95,7 +95,7 @@ runtime-role permissions, and bounded cleanup. A separate real Chromium → Vite
 FastAPI → PostgreSQL smoke verifies grading, publication, and result withdrawal
 using isolated synthetic accounts/schema; it cleans up afterward.
 
-The quick backend suite passes 263 tests with 10 PostgreSQL cases deliberately
+The quick backend suite passes 264 tests with 10 PostgreSQL cases deliberately
 skipped. The 139 frontend unit tests and 19 browser workflows pass. CI also runs the entire suite against
 PostgreSQL 17/Python 3.12. Local targeted tests use PostgreSQL 16.2/Python 3.14.
 There is a pre-existing Starlette/httpx TestClient deprecation warning, with no
@@ -105,6 +105,12 @@ Initial checks exposed an obsolete oversized-body assertion and a test helper
 depending on FastAPI's internal router layout. The schema validation test now stays
 below the outer body cap, and route coverage uses public OpenAPI paths. These test
 issues are resolved; the application rejects oversized data before validation.
+
+Final review also found that Starlette re-raises generic failures after invoking
+an application's safe 500 handler. A small HTTP error boundary now prevents the
+original exception message from reaching Uvicorn's traceback logger. A strict
+ASGI-transport regression verifies safe JSON, headers, no escaped exception, and
+logs containing only the exception type.
 
 Both `npm audit` and pip-audit of production/development locks reported no known
 vulnerabilities on 14 October 2026. This is not a penetration test, artifact-hash

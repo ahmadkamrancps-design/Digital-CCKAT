@@ -89,7 +89,9 @@ and drafts and displays a warning. A server 401/403 removes the profile and disp
 its exam queues. Every API request still requires current backend authorization;
 an old profile never authorizes exam access. Authentication responses include `Cache-Control: no-store`.
 Validation errors do not echo credential input. Database/unexpected errors return
-safe messages; diagnostic logs record only error type. Auth logs include user ID
+safe messages; an HTTP error boundary consumes unexpected exceptions before
+Starlette can re-raise them to Uvicorn's raw traceback logger. Diagnostic logs
+record only error type. Auth logs include user ID
 and role for success, not tokens, answers, database credentials, or Google claims.
 
 SQLAlchemy parameterizes application queries; the frontend uses React text

@@ -24,6 +24,7 @@ from app.config import Settings, load_settings
 from app.core.clock import DatabaseClock
 from app.core.http_security import (
     RequestLimitsMiddleware,
+    SafeErrorsMiddleware,
     SecurityHeadersMiddleware,
     security_headers,
 )
@@ -69,6 +70,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_headers=["Content-Type", "X-CSRF-Token"],
     )
     app.add_middleware(RequestLimitsMiddleware, max_bytes=config.max_request_bytes)
+    app.add_middleware(SafeErrorsMiddleware)
     app.add_middleware(SecurityHeadersMiddleware, production=config.environment == "production")
 
     @app.exception_handler(RequestValidationError)

@@ -12,6 +12,7 @@ from unittest.mock import patch
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from httpx import ASGITransport, AsyncClient
 from pydantic import ValidationError
 from sqlalchemy import Engine, func, select, text
 from sqlalchemy.exc import DBAPIError
@@ -136,6 +137,31 @@ def test_unexpected_error_is_safe_and_has_security_headers(application: FastAPI)
     assert "PRIVATE" not in response.text
     assert response.headers["cache-control"] == "no-store"
     assert response.headers["x-frame-options"] == "DENY"
+
+
+def test_private_exception_does_not_escape_to_server_logs(
+    application: FastAPI,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    @application.get("/api/test-only-private-error")
+    def fail() -> None:
+        raise RuntimeError("PRIVATE credential or candidate answer")
+
+    async def request() -> None:
+        # Unlike TestClient(raise_server_exceptions=False), this fails if any
+        # handled exception is re-raised to the server after the JSON response.
+        async with AsyncClient(
+            transport=ASGITransport(app=application, raise_app_exceptions=True),
+            base_url="http://testserver",
+        ) as client:
+            response = await client.get("/api/test-only-private-error")
+            assert response.status_code == 500
+            assert "PRIVATE" not in response.text
+            assert response.headers["cache-control"] == "no-store"
+
+    asyncio.run(request())
+    assert "error_type=RuntimeError" in caplog.text
+    assert "PRIVATE" not in caplog.text
 
 
 def test_production_hides_docs_and_uses_hsts() -> None:
