@@ -143,6 +143,11 @@ PostgreSQL 17 container; move data through a controlled backup/restore instead.
   comparison failure; no failure was suppressed or excluded from the repair check.
 - Ruff checks/formatting, strict mypy, and Git whitespace checks passed.
 
+The first GitHub run also caught an order-dependent assertion in the new resume
+test: selecting any answer in a subject could inspect an unanswered question.
+The corrected assertion selects the saved exam question explicitly and verifies
+both its revision and selected option; application behavior was unchanged.
+
 Browser regression fixtures use mocked APIs; the separate real-service smoke
 check used a temporary schema in the test database and removed it afterward.
 No admissions data was scraped or imported, no live candidate was provisioned,

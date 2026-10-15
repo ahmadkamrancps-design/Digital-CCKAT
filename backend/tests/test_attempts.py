@@ -225,10 +225,12 @@ def test_admissions_relogin_preserves_attempt_deadline_and_saved_answers(
     with db_factory() as db:
         answer = db.scalar(
             select(Answer).where(
-                Answer.subject_attempt_id == uuid.UUID(attempt["subjects"][0]["id"])
+                Answer.subject_attempt_id == uuid.UUID(attempt["subjects"][0]["id"]),
+                Answer.exam_question_id == uuid.UUID(questions[0]["exam_question_id"]),
             )
         )
         assert answer is not None and answer.revision == 1
+        assert str(answer.selected_option_id) == saved.json()["answer"]["selected_option_id"]
 
 
 def test_assigned_exam_summaries_are_safe_ordered_and_do_not_start_an_attempt(
