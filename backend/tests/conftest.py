@@ -74,6 +74,14 @@ def db_engine(monkeypatch: pytest.MonkeyPatch) -> Iterator[Engine]:
             connection: sqlite3.Connection, record: ConnectionPoolEntry
         ) -> None:
             connection.execute("PRAGMA foreign_keys=ON")
+            # PostgreSQL's explicit btrim spelling gives stable index reflection
+            # in Alembic. SQLite has only trim; mirror btrim's default ASCII space.
+            connection.create_function(
+                "btrim",
+                1,
+                lambda value: value.strip(" ") if value is not None else None,
+                deterministic=True,
+            )
 
         Base.metadata.create_all(engine)  # Unit tests only; app startup never creates tables.
         yield engine

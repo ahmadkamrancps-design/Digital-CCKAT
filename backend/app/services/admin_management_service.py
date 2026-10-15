@@ -34,6 +34,7 @@ def candidate_response(candidate: Candidate, user: User) -> CandidateResponse:
         user_id=user.id,
         email=user.email,
         full_name=candidate.full_name,
+        father_name=candidate.father_name,
         roll_number=candidate.roll_number,
         google_subject=user.google_subject,
         status=candidate.status,
@@ -90,9 +91,12 @@ def write_candidate(
         if user.role != Role.CANDIDATE:
             raise HTTPException(409, "This account is not a candidate account.")
         changed_access = (
-            user.email != str(body.email).lower()
+            user.email != (str(body.email).lower() if body.email else None)
             or user.google_subject != body.google_subject
             or candidate.status != body.status
+            or candidate.roll_number != body.roll_number
+            or candidate.full_name != body.full_name
+            or candidate.father_name != body.father_name
         )
     else:
         user = User(role=Role.CANDIDATE)
@@ -100,7 +104,7 @@ def write_candidate(
         changed_access = False
         db.add(user)
     user.email, user.display_name, user.google_subject = (
-        str(body.email).lower(),
+        str(body.email).lower() if body.email else None,
         body.full_name,
         body.google_subject,
     )
@@ -113,6 +117,7 @@ def write_candidate(
             body.roll_number,
             body.status,
         )
+        candidate.father_name = body.father_name
         db.add(candidate)
         db.flush()
     except IntegrityError as cause:

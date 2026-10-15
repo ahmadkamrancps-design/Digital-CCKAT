@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     session_cookie_name: str = Field(default="cck_session", pattern=r"^[A-Za-z0-9_-]+$")
     session_cookie_secure: bool = False
     session_ttl_seconds: int = Field(default=28800, ge=300, le=86400)
+    candidate_login_roll_limit: int = Field(default=10, ge=1, le=100)
+    candidate_login_ip_limit: int = Field(default=1000, ge=10, le=100000)
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
 
     @model_validator(mode="after")
@@ -42,8 +44,8 @@ class Settings(BaseSettings):
         ):
             raise ValueError("GOOGLE_CLIENT_ID must be a Google OAuth web client ID")
         if self.environment == "production":
-            if not self.google_client_id or not self.session_cookie_secure:
-                raise ValueError("Production requires Google configuration and secure cookies")
+            if not self.session_cookie_secure:
+                raise ValueError("Production requires secure cookies")
             if origin.scheme != "https":
                 raise ValueError("Production FRONTEND_ORIGIN must use HTTPS")
             if make_url(self.database_url).password in {None, "", "cck_local_only"}:

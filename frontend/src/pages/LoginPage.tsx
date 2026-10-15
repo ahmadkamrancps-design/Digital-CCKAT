@@ -1,11 +1,13 @@
-import { Mail } from 'lucide-react';
+import { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import CCKLogo from '../components/CCKLogo';
 import { GoogleSignIn } from '../features/auth/GoogleSignIn';
 import { useAuth } from '../features/auth/AuthProvider';
+import { CandidateSignIn } from '../features/auth/CandidateSignIn';
 
 export default function LoginPage() {
   const { profile, loading, error, refresh, isPreview } = useAuth();
+  const [staffOpen, setStaffOpen] = useState(false);
   if (profile && !loading && !error) return <Navigate to="/dashboard" replace />;
   return (
     <main className="login-page" id="main" tabIndex={-1}>
@@ -31,30 +33,24 @@ export default function LoginPage() {
 
         {isPreview ? <Link className="primary-button preview-entry" to="/dashboard">Explore without login →</Link>
           : loading ? <p className="login-session-status" role="status">Checking your session…</p>
-          : error ? <div className="login-session-error" role="alert">
-            <p>{error}</p>
-            <button className="secondary-button" type="button" onClick={() => { void refresh(); }}>Try again</button>
-          </div>
-          : <GoogleSignIn />}
-
-        <div className="or" aria-hidden="true">
-          <span />
-          OR
-          <span />
-        </div>
-
-        <button className="email-button" type="button" disabled aria-describedby="email-unavailable">
-          <Mail size={17} aria-hidden="true" />
-          Sign in with Email (Authorized Only)
-        </button>
-        <p className="email-unavailable" id="email-unavailable">Email sign-in is not available yet.</p>
+          : <>
+            {error && <div className="login-session-error" role="alert">
+              <p>{error}</p>
+              <button className="secondary-button" type="button" onClick={() => { void refresh(); }}>Try again</button>
+            </div>}
+            <CandidateSignIn />
+            <details className="staff-sign-in" onToggle={(event) => setStaffOpen(event.currentTarget.open)}>
+              <summary>Staff sign-in</summary>
+              {staffOpen && <GoogleSignIn />}
+            </details>
+          </>}
 
         <div className="login-info">
           <span aria-hidden="true">ⓘ</span>
           <p>
             Only registered candidates can access the test.
             <br />
-            Please use your authorized Google account.
+            Use your admission roll number, full name, and father’s name.
           </p>
         </div>
       </section>

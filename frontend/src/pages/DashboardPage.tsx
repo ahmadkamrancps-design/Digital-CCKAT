@@ -70,7 +70,7 @@ export default function DashboardPage() {
             Roll No: <strong><bdi>{candidate.roll_number}</bdi></strong>
             <span className="candidate-badge">Candidate</span>
           </div>
-          <p className="candidate-email">Registered email: <bdi>{user.email}</bdi></p>
+          {user.email && <p className="candidate-email">Registered email: <bdi>{user.email}</bdi></p>}
           {!isPreview && <p className="candidate-email">Wait for Saved before signing out. Signing out clears your local recovery copies.</p>}
         </section>
 

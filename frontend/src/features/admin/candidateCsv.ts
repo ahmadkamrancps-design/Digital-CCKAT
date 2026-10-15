@@ -54,16 +54,16 @@ export function candidateCsv(text: string): AdminCandidateWrite[] {
   if (quoted) throw new Error("The CSV ends inside a quoted field.");
   if (value || row.length || ended) line();
   const headers = rows.shift()?.map((item) => item.trim().toLowerCase()) || [];
-  const required = ["email", "full_name", "roll_number"];
+  const required = ["full_name", "roll_number"];
   if (
     new Set(headers).size !== headers.length ||
     required.some((header) => !headers.includes(header)) ||
     headers.some(
-      (header) => ![...required, "google_subject", "status"].includes(header),
+      (header) => ![...required, "father_name", "email", "google_subject", "status"].includes(header),
     )
   ) {
     throw new Error(
-      "Use unique CSV headers: email,full_name,roll_number,google_subject,status. The first three are required.",
+      "Use unique CSV headers: roll_number,full_name,father_name,email,google_subject,status. Roll number and full name are required.",
     );
   }
   if (!rows.length || rows.length > 500)
@@ -79,20 +79,21 @@ export function candidateCsv(text: string): AdminCandidateWrite[] {
     const status = record.status || "APPROVED";
     if (status !== "APPROVED" && status !== "DISABLED")
       throw new Error(`Row ${index + 2}: status must be APPROVED or DISABLED.`);
-    const email = record.email.toLowerCase();
-    if (!email || !record.full_name || !record.roll_number)
+    const email = record.email?.toLowerCase() || null;
+    if (!record.full_name || !record.roll_number || (!record.father_name && !email))
       throw new Error(
-        `Row ${index + 2}: email, name, and roll number are required.`,
+        `Row ${index + 2}: full name, roll number, and father’s name are required for candidate login.`,
       );
-    if (emails.has(email) || rolls.has(record.roll_number))
+    if ((email && emails.has(email)) || rolls.has(record.roll_number.toLowerCase()))
       throw new Error(
         `Row ${index + 2}: duplicate email or roll number in this file.`,
       );
-    emails.add(email);
-    rolls.add(record.roll_number);
+    if (email) emails.add(email);
+    rolls.add(record.roll_number.toLowerCase());
     return {
       email,
       full_name: record.full_name,
+      father_name: record.father_name || null,
       roll_number: record.roll_number,
       google_subject: record.google_subject || null,
       status,

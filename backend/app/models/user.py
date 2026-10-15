@@ -20,7 +20,7 @@ class User(TimestampMixin, Base):
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     google_subject: Mapped[str | None] = mapped_column(String(255), unique=True)
-    email: Mapped[str] = mapped_column(String(254), unique=True)
+    email: Mapped[str | None] = mapped_column(String(254), unique=True)
     display_name: Mapped[str] = mapped_column(String(200))
     role: Mapped[Role] = mapped_column(
         Enum(Role, native_enum=False, create_constraint=True, name="user_role"), nullable=False

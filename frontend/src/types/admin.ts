@@ -1,6 +1,7 @@
 export interface AdminCandidateWrite {
-  email: string;
+  email: string | null;
   full_name: string;
+  father_name?: string | null;
   roll_number: string;
   google_subject: string | null;
   status: "APPROVED" | "DISABLED";

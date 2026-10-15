@@ -59,6 +59,19 @@ def test_startup_config_failure_does_not_expose_credentials(
     assert "SECRET_DATABASE_PASSWORD" not in str(failure.value)
 
 
+def test_candidate_production_configuration_does_not_require_google() -> None:
+    settings = Settings(
+        _env_file=None,
+        environment="production",
+        session_cookie_secure=True,
+        google_client_id="",
+        frontend_origin="https://test.cck.example",
+        database_url="postgresql+psycopg://cck:separate-password@db/cck",
+        allowed_hosts=["test.cck.example"],
+    )
+    assert settings.google_client_id == ""
+
+
 @pytest.mark.parametrize("origin", ["*", "http://localhost:5173/", "http://localhost:5173/path"])
 def test_origins_must_be_exact(origin: str) -> None:
     with pytest.raises(ValidationError):

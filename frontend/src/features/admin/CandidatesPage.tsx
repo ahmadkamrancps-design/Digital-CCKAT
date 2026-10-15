@@ -218,6 +218,7 @@ function CandidateEditor({
     candidate || {
       email: "",
       full_name: "",
+      father_name: "",
       roll_number: "",
       google_subject: null,
       status: "APPROVED",
@@ -237,7 +238,10 @@ function CandidateEditor({
             candidate &&
             (candidate.email !== value.email ||
               candidate.google_subject !== value.google_subject ||
-              candidate.status !== value.status);
+              candidate.status !== value.status ||
+              candidate.roll_number !== value.roll_number ||
+              candidate.full_name !== value.full_name ||
+              candidate.father_name !== value.father_name);
           if (
             accessChanged &&
             !window.confirm(
@@ -248,8 +252,9 @@ function CandidateEditor({
           void task.run(async () => {
             await client.candidate(
               {
-                email: value.email,
+                email: value.email || null,
                 full_name: value.full_name,
+                father_name: value.father_name || null,
                 roll_number: value.roll_number,
                 google_subject: value.google_subject,
                 status: value.status,
@@ -274,6 +279,16 @@ function CandidateEditor({
             />
           </label>
           <label>
+            Father’s name
+            <input
+              required={!candidate}
+              maxLength={200}
+              value={value.father_name || ""}
+              dir="auto"
+              onChange={(event) => patch({ father_name: event.target.value })}
+            />
+          </label>
+          <label>
             Roll number
             <input
               required
@@ -282,13 +297,13 @@ function CandidateEditor({
               onChange={(event) => patch({ roll_number: event.target.value })}
             />
           </label>
+          <p className="admin-muted">Use the roll number and names from the official admission record. This system does not issue admission roll numbers.</p>
           <label>
             Authorized email
             <input
               type="email"
-              required
               maxLength={254}
-              value={value.email}
+              value={value.email || ""}
               onChange={(event) => patch({ email: event.target.value })}
             />
           </label>
@@ -303,6 +318,7 @@ function CandidateEditor({
             />
           </label>
           <p className="admin-muted">
+            Email and Google identity are optional for candidate roll-number login.
             Enter a subject identifier only after independent verification.
             Gmail/verified Workspace identities can bind to the approved email
             on first sign-in.
@@ -359,9 +375,10 @@ function CandidateImporter({
     <section className="admin-panel">
       <h2>Import candidates</h2>
       <p className="admin-muted">
-        Required headers: email,full_name,roll_number. Optional:
-        google_subject,status. Blank status means APPROVED. Maximum 500 rows;
+        Required headers: roll_number,full_name,father_name. Optional:
+        email,google_subject,status. Blank status means APPROVED. Maximum 500 rows;
         any rejected row prevents the entire import.
+        Legacy email-based files are supported; records without a father’s name cannot use candidate sign-in.
       </p>
       <TaskStatus task={task} />
       {error && (
@@ -416,7 +433,7 @@ function CandidateImporter({
                 setRows(null);
               }}
               placeholder={
-                "email,full_name,roll_number\ncandidate@gmail.com,Test Candidate,CCK-104"
+                "roll_number,full_name,father_name\nCCK-104,Test Candidate,Test Father"
               }
             />
           </label>
@@ -431,8 +448,8 @@ function CandidateImporter({
               </p>
               <ul>
                 {rows.slice(0, 10).map((item) => (
-                  <li key={item.email}>
-                    <bdi>{item.full_name}</bdi> · <bdi>{item.roll_number}</bdi>{" "}
+                  <li key={item.roll_number}>
+                    <bdi>{item.full_name}</bdi> · <bdi>{item.father_name || "Father’s name missing"}</bdi> · <bdi>{item.roll_number}</bdi>{" "}
                     · {item.status}
                   </li>
                 ))}

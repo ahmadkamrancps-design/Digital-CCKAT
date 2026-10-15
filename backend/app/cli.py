@@ -12,10 +12,11 @@ from app.models import Candidate, Role, User
 
 class Registration(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
-    email: EmailStr
+    email: EmailStr | None = None
     name: str = Field(min_length=1, max_length=200)
     roll_number: str | None = Field(default=None, min_length=1, max_length=64)
     google_subject: str | None = Field(default=None, min_length=1, max_length=255)
+    father_name: str | None = Field(default=None, min_length=1, max_length=200)
 
 
 def main() -> None:
@@ -24,20 +25,22 @@ def main() -> None:
     candidate = subcommands.add_parser("register-candidate", help="Approve a candidate account")
     staff = subcommands.add_parser("register-staff", help="Approve a staff account")
     for command in (candidate, staff):
-        command.add_argument("--email", required=True)
+        command.add_argument("--email", required=command is staff)
         command.add_argument("--name", required=True)
         command.add_argument(
             "--google-subject", help="Independently verified Google sub, if available"
         )
     candidate.add_argument("--roll-number", required=True)
+    candidate.add_argument("--father-name", required=True)
     staff.add_argument("--role", choices=["ADMIN", "PROCTOR", "EXAMINER"], required=True)
     args = parser.parse_args()
     try:
         data = Registration(
-            email=args.email.strip().lower(),
+            email=args.email.strip().lower() if args.email else None,
             name=args.name.strip(),
             roll_number=getattr(args, "roll_number", None),
             google_subject=args.google_subject,
+            father_name=getattr(args, "father_name", None),
         )
     except ValidationError:
         parser.exit(
@@ -47,7 +50,7 @@ def main() -> None:
     try:
         with create_session_factory(engine)() as db:
             user = User(
-                email=str(data.email).lower(),
+                email=str(data.email).lower() if data.email else None,
                 display_name=data.name,
                 google_subject=data.google_subject,
                 role=Role.CANDIDATE if args.command == "register-candidate" else Role(args.role),
@@ -61,6 +64,7 @@ def main() -> None:
                         user_id=user.id,
                         full_name=data.name,
                         roll_number=data.roll_number.strip(),
+                        father_name=data.father_name,
                     )
                 )
             db.commit()

@@ -187,6 +187,50 @@ def save_body(question: dict[str, Any], revision: int = 0, marked: bool = False)
     }
 
 
+def test_admissions_relogin_preserves_attempt_deadline_and_saved_answers(
+    client: TestClient,
+    scenario: Scenario,
+    candidate_headers: dict[str, str],
+    db_factory: sessionmaker[Session],
+    clock: TestClock,
+) -> None:
+    attempt, questions = started(client, scenario, candidate_headers)
+    path = subject_path(attempt)
+    saved = client.put(
+        path + f"/answers/{questions[0]['exam_question_id']}",
+        headers=candidate_headers,
+        json=save_body(questions[0]),
+    )
+    assert saved.status_code == 200, saved.text
+    with db_factory() as db:
+        candidate = db.get(Candidate, scenario.candidate_id)
+        candidate.father_name = "Test Father"
+        db.commit()
+    clock.advance(10)
+    login = client.post(
+        "/api/auth/candidate",
+        headers={"Origin": candidate_headers["Origin"]},
+        json={
+            "roll_number": "CCK-104",
+            "full_name": "Test Candidate",
+            "father_name": "Test Father",
+        },
+    )
+    assert login.status_code == 200
+    resumed = begin(
+        client, scenario, {**candidate_headers, "X-CSRF-Token": login.json()["csrf_token"]}
+    )
+    assert resumed["id"] == attempt["id"]
+    assert resumed["subjects"][0]["expires_at"] == attempt["subjects"][0]["expires_at"]
+    with db_factory() as db:
+        answer = db.scalar(
+            select(Answer).where(
+                Answer.subject_attempt_id == uuid.UUID(attempt["subjects"][0]["id"])
+            )
+        )
+        assert answer is not None and answer.revision == 1
+
+
 def test_assigned_exam_summaries_are_safe_ordered_and_do_not_start_an_attempt(
     client: TestClient,
     scenario: Scenario,

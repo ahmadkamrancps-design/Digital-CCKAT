@@ -56,7 +56,7 @@ describe('protected dashboard', () => {
     expect(await screen.findByRole('heading', { name: 'Welcome' })).toBeInTheDocument();
     expect(screen.queryByText('CCK-104')).not.toBeInTheDocument();
     expect(screen.getAllByRole('main')).toHaveLength(1);
-    expect(screen.getByRole('button', { name: 'Sign in with Email (Authorized Only)' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Sign in' })).toBeEnabled();
   });
 
   it('shows a retry when the backend is unavailable', async () => {
@@ -129,6 +129,7 @@ describe('Google credential exchange', () => {
       }), disableAutoSelect: vi.fn(),
     } } };
     return async () => {
+      await userEvent.click(await screen.findByText('Staff sign-in'));
       await waitFor(() => expect(callback).toBeDefined());
       await waitFor(() => expect(screen.getByRole('button', { name: 'Continue with Google' })).toBeEnabled());
       await userEvent.click(await screen.findByRole('button', { name: 'Continue with Google' }));
@@ -157,6 +158,7 @@ describe('Google credential exchange', () => {
     const fetcher = vi.fn().mockResolvedValue(response({ detail: 'Sign in' }, 401));
     vi.stubGlobal('fetch', fetcher);
     renderApp('/');
+    await userEvent.click(await screen.findByText('Staff sign-in'));
     const button = await screen.findByRole('button', { name: 'Continue with Google' });
     expect(button).toBeDisabled();
     await userEvent.click(button);
@@ -174,6 +176,71 @@ describe('Google credential exchange', () => {
     await submitGoogle();
     expect(await screen.findByRole('alert')).toHaveTextContent('This account is not authorized');
     expect(screen.queryByText('CCK-104')).not.toBeInTheDocument();
+  });
+});
+
+describe('admissions candidate sign-in', () => {
+  async function fillDetails() {
+    await userEvent.type(await screen.findByLabelText('Roll number'), 'CCK-104');
+    await userEvent.type(screen.getByLabelText('Full name'), 'Test Candidate');
+    await userEvent.type(screen.getByLabelText('Father’s name'), 'Test Father');
+  }
+
+  it('signs in without Google or email and restores the dashboard after refresh', async () => {
+    vi.stubEnv('VITE_GOOGLE_CLIENT_ID', '');
+    const approved = { ...profile, user: { ...profile.user, email: null } };
+    const fetcher = vi.fn().mockImplementation(() => Promise.resolve(response(approved)))
+      .mockResolvedValueOnce(response({ detail: 'Sign in' }, 401));
+    vi.stubGlobal('fetch', fetcher);
+    const view = renderApp('/');
+    await fillDetails();
+    await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    expect(await screen.findByText('CCK-104')).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith('/api/auth/candidate', expect.objectContaining({
+      method: 'POST', credentials: 'same-origin',
+      body: JSON.stringify({ roll_number: 'CCK-104', full_name: 'Test Candidate', father_name: 'Test Father' }),
+    }));
+    expect(screen.queryByText('Registered email:')).not.toBeInTheDocument();
+    expect(localStorage.length).toBe(0);
+    expect(sessionStorage.length).toBe(0);
+    view.unmount();
+    renderApp('/dashboard');
+    expect(await screen.findByText('CCK-104')).toBeInTheDocument();
+    expect(fetcher).toHaveBeenLastCalledWith('/api/me', expect.anything());
+  });
+
+  it.each([
+    [401, 'Unable to sign in. Check your admissions details or contact admissions.'],
+    [429, 'Too many sign-in attempts. Please wait before trying again.'],
+    [503, 'Service temporarily unavailable.'],
+  ])('preserves details and shows the server error for HTTP %s', async (status, detail) => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(response({ detail: 'Sign in' }, 401))
+      .mockResolvedValueOnce(response({ detail }, status)));
+    renderApp('/');
+    await fillDetails();
+    await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(detail);
+    expect(screen.getByLabelText('Roll number')).toHaveValue('CCK-104');
+    expect(screen.getByLabelText('Father’s name')).toHaveValue('Test Father');
+    expect(screen.queryByRole('heading', { name: 'Welcome, Test Candidate.' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sign in' })).toBeEnabled();
+  });
+
+  it('requires all three fields and prevents duplicate submits while verifying', async () => {
+    let finish!: (value: Response) => void;
+    const fetcher = vi.fn().mockResolvedValueOnce(response({ detail: 'Sign in' }, 401))
+      .mockImplementationOnce(() => new Promise<Response>((resolve) => { finish = resolve; }));
+    vi.stubGlobal('fetch', fetcher);
+    renderApp('/');
+    const button = await screen.findByRole('button', { name: 'Sign in' });
+    await userEvent.click(button);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    await fillDetails();
+    await userEvent.dblClick(button);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole('button', { name: 'Verifying…' })).toBeDisabled();
+    await act(async () => { finish(response(profile)); });
+    expect(await screen.findByText('CCK-104')).toBeInTheDocument();
   });
 });
 
@@ -229,7 +296,7 @@ describe('application routing', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Checking your session');
     expect(screen.queryByText('Candidate portal')).not.toBeInTheDocument();
     await act(async () => { finishSession(response({ detail: 'Please sign in.' }, 401)); });
-    expect(await screen.findByRole('status')).toHaveTextContent('Sign-in is being configured');
+    expect(await screen.findByRole('form', { name: 'Candidate sign-in' })).toBeInTheDocument();
   });
 
   it('keeps the login design visible on connection failure and allows retry', async () => {
@@ -241,7 +308,7 @@ describe('application routing', () => {
     expect(screen.getByRole('main')).toHaveClass('login-page');
     expect(screen.queryByText('CCK-104')).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Try again' }));
-    expect(await screen.findByRole('status')).toHaveTextContent('Sign-in is being configured');
+    expect(await screen.findByRole('form', { name: 'Candidate sign-in' })).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 

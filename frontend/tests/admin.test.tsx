@@ -164,6 +164,7 @@ describe("administrator access and workflows", () => {
       await screen.findByRole("button", { name: "Create candidate" }),
     );
     await userEvent.type(screen.getByLabelText("Full name"), "محمد احمد");
+    await userEvent.type(screen.getByLabelText("Father’s name"), "محمد کامران");
     await userEvent.type(screen.getByLabelText("Roll number"), "CCK-201");
     await userEvent.type(
       screen.getByLabelText("Authorized email"),
@@ -193,6 +194,7 @@ describe("administrator access and workflows", () => {
       Object.keys(JSON.parse(String(state.writes[1].options.body))).sort(),
     ).toEqual([
       "email",
+      "father_name",
       "full_name",
       "google_subject",
       "roll_number",
@@ -272,6 +274,13 @@ describe("administrator access and workflows", () => {
   });
 });
 describe("candidate CSV import parser", () => {
+  it("imports admission records without Google identities or email addresses", () => {
+    expect(candidateCsv("roll_number,full_name,father_name\nCCK-104,محمد احمد,محمد کامران")).toEqual([{
+      roll_number: "CCK-104", full_name: "محمد احمد", father_name: "محمد کامران",
+      email: null, google_subject: null, status: "APPROVED",
+    }]);
+    expect(() => candidateCsv("roll_number,full_name,father_name\ncck-1,A,F\nCCK-1,B,G")).toThrow(/duplicate/);
+  });
   it("supports Unicode, BOM, CRLF, quoted commas, escaped quotes, and embedded newlines", () => {
     const rows = candidateCsv(
       '\uFEFFemail,full_name,roll_number,status\r\nAPPROVED@gmail.com,"محمد, ""احمد""\nKamran",CCK-1,DISABLED\r\n',
@@ -280,6 +289,7 @@ describe("candidate CSV import parser", () => {
       {
         email: "approved@gmail.com",
         full_name: 'محمد, "احمد"\nKamran',
+        father_name: null,
         roll_number: "CCK-1",
         google_subject: null,
         status: "DISABLED",

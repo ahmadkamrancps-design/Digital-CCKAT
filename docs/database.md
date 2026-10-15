@@ -4,11 +4,16 @@ PostgreSQL with UTF-8 encoding is the application database. SQLAlchemy 2 maps
 models; Alembic controls schema changes. No table creation occurs during startup.
 SQLite is used only by the quick unit-test suite, never as the application database.
 
+The admissions-login update `0006_candidate_login` adds nullable candidate father's
+name, optional candidate email, a unique `lower(btrim(roll_number))` login index,
+and persistent rate-limit buckets. Existing attempts and answers are untouched.
+See [migration and registration details](candidate-login.md).
+
 Migration `0001_auth_foundation` creates:
 
 | Table | Purpose | Constraints |
 | --- | --- | --- |
-| users | Preapproved identity and explicit role | Unique email and nullable unique Google sub; lowercase/trimmed email; role check |
+| users | Preapproved identity and explicit role | Unique email (nullable after 0006) and nullable unique Google sub; normalized email when supplied; role check |
 | candidates | Approved candidate registration | Unique user mapping and roll number; nonempty roll; status check; restrictive user FK |
 | auth_sessions | Revocable application session | Unique hashed token; one session per user; expiry index; cascading user FK |
 

@@ -86,8 +86,11 @@ question/answer schemas. Backend dependencies provide authentication and role ch
 SQLAlchemy's synchronous PostgreSQL driver runs in FastAPI's worker thread pool.
 There is no need for an async data layer for this foundation.
 
-Browser → Google Identity Services popup → ID token → backend verification →
-approved account lookup → opaque session cookie → protected `/api/me` → dashboard.
+Candidate browser → roll number/full name/father's name → persistent login throttle →
+approved admissions record lookup → opaque session cookie → protected `/api/me` → dashboard.
+Staff retain Google Identity Services → verified ID token → preapproved staff lookup →
+the same opaque session mechanism. Admission records are entered/imported by authorized
+staff; no automatic admission-portal connection or roll-number generation is implemented.
 React retains the profile and CSRF token in memory; it reloads `/me` on refresh.
 Authentication tokens are not stored in browser persistent storage.
 
@@ -95,18 +98,14 @@ Authentication tokens are not stored in browser persistent storage.
 sequenceDiagram
     participant Candidate
     participant React
-    participant Google
     participant FastAPI
     participant PostgreSQL
-    Candidate->>React: Sign in
-    React->>Google: Identity Services popup
-    Google-->>React: ID token
-    React->>FastAPI: POST /api/auth/google
-    FastAPI->>Google: Fetch public verification certificates
-    FastAPI->>FastAPI: Verify signature, audience, issuer, expiry
-    FastAPI->>PostgreSQL: Check approved account and candidate
+    Candidate->>React: Admission roll number and both names
+    React->>FastAPI: POST /api/auth/candidate
+    FastAPI->>PostgreSQL: Atomically reserve roll/IP login limits
+    FastAPI->>PostgreSQL: Lock user and approved candidate; compare details
     alt Approved
-        FastAPI->>PostgreSQL: Bind stable identity and rotate session
+        FastAPI->>PostgreSQL: Rotate session without changing attempts
         FastAPI-->>React: HttpOnly cookie and public profile
         React-->>Candidate: Protected dashboard
     else Not approved

@@ -37,6 +37,33 @@ def registration(roll: str = "CCK-201", email: str = "approved@gmail.com") -> di
     }
 
 
+def test_admin_registers_admission_details_without_google_or_email(
+    client: TestClient, admin_headers: dict[str, str]
+) -> None:
+    details = {
+        "roll_number": "CCK-PORTAL-1",
+        "full_name": "محمد احمد",
+        "father_name": "محمد کامران",
+    }
+    saved = create(client, admin_headers, "candidates", details)
+    assert saved["email"] is None and saved["google_subject"] is None
+    assert saved["father_name"] == details["father_name"]
+    # Use a separate client so the administrator session is unaffected.
+    with TestClient(client.app) as candidate:
+        response = candidate.post(
+            "/api/auth/candidate", json=details, headers={"Origin": admin_headers["Origin"]}
+        )
+        assert response.status_code == 200
+        assert response.json()["candidate"]["id"] == saved["id"]
+    imported = client.post(
+        "/api/admin/candidates/import",
+        json={"candidates": [{**details, "roll_number": "CCK-PORTAL-2"}]},
+        headers=admin_headers,
+    )
+    assert imported.status_code == 201
+    assert imported.json()[0]["email"] is None
+
+
 @pytest.mark.parametrize("role", list(Role))
 def test_management_rbac(
     client: TestClient, db_factory: sessionmaker[Session], login_headers: dict[str, str], role: Role
@@ -153,6 +180,9 @@ def test_import_invalid_row_and_limit_preserve_records(
         ("email", "new@gmail.com"),
         ("google_subject", "independently-verified-new-sub"),
         ("status", "DISABLED"),
+        ("full_name", "Updated Candidate Name"),
+        ("father_name", "Verified Father Name"),
+        ("roll_number", "CCK-REASSIGNED"),
     ],
 )
 def test_identity_or_eligibility_change_revokes_session(

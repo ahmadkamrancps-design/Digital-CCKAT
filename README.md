@@ -2,7 +2,8 @@
 
 Foundation, exam domain, attempt engine, candidate interface, recovery, administration,
 and Milestone 7 proctor monitoring for Cadet College Kohat's entry-test platform. React +
-TypeScript, FastAPI, SQLAlchemy 2, PostgreSQL, Alembic, and Google Identity Services.
+TypeScript, FastAPI, SQLAlchemy 2, PostgreSQL, and Alembic. Candidates sign in with
+their admissions roll number, full name, and father's name. Staff use Google Identity Services.
 The supplied CCK frontend now supports real assigned exams, server-derived timers,
 revisioned autosave, persistent answer recovery, reconnection, navigation/review, and confirmed submission. A separate
 development preview remains available without login.
@@ -14,7 +15,7 @@ The system is not approved for real examinations.
 - Node.js 22.12+; Node 24 LTS is recommended, with npm.
 - Git.
 - Docker Engine/Desktop with Compose v2, or an existing PostgreSQL 17 instance.
-- A Google Cloud OAuth web client configured for the local frontend.
+- A Google Cloud OAuth web client for staff sign-in; candidate sign-in needs no Google setup.
 
 In WSL, open Docker Desktop → Settings → Resources → WSL Integration, enable
 this distro, and choose Apply & restart. Verify `docker compose version` afterward.
@@ -50,8 +51,8 @@ python -m pip install -r requirements-dev.lock
 python -m pip install --no-deps -e .
 alembic upgrade head
 python -m app.cli register-candidate \
-  --email "your-approved-account@gmail.com" \
   --name "Test Candidate" \
+  --father-name "Test Father" \
   --roll-number "CCK-104"
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000 --no-access-log
 ```
@@ -64,6 +65,14 @@ are rejected. It has no public registration endpoint. To provision a staff accou
 python -m app.cli register-staff \
   --email "approved-staff@gmail.com" --name "Staff Member" --role ADMIN
 ```
+
+Apply migration `0006_candidate_login` with `alembic upgrade head` before using the
+new candidate login. Existing candidates need a verified father's name entered by
+an administrator. Names and rolls must come from the official admission record;
+this app does not issue admission roll numbers or yet synchronize with cck.edu.pk.
+For bulk registration, administrators can import CSV using
+`roll_number,full_name,father_name` headers; `email,google_subject,status` are optional.
+Email is optional for candidates. See [candidate login setup](docs/candidate-login.md).
 
 Staff roles are ADMIN, PROCTOR, EXAMINER. Approved ADMIN users can open `/admin`
 or choose **Open administration portal** on their dashboard. Candidate management,
@@ -131,7 +140,7 @@ put a backend URL in browser code. Keep `FRONTEND_ORIGIN` exactly
 `http://localhost:5173` for these commands. A different host/port needs matching
 backend and Google-origin configuration.
 
-## Configure Google sign-in
+## Candidate login and design preview
 
 To explore the UI before configuring Google or PostgreSQL, set
 `VITE_ENABLE_UI_PREVIEW=true` in `frontend/.env` and run `npm run dev`.
@@ -149,9 +158,9 @@ answers, create a server session, or change backend authorization. Other sidebar
 destinations remain information scaffolds.
 
 Production builds ignore this flag and require authentication. Set it to `false`
-and restart Vite when resuming actual Google sign-in testing.
+and restart Vite when testing actual candidate or staff sign-in.
 
-With preview disabled and Google configured, the dashboard displays assigned
+With preview disabled and approved candidate records loaded, the dashboard displays assigned
 exams and configurable subject cards. Open an exam's instructions, explicitly
 open the authorized exam, then choose **Start subject**. Merely viewing instructions
 does not start its timer. Refresh restores the existing attempt and server-saved
@@ -164,6 +173,10 @@ cannot be uploaded. The live exam requires IndexedDB and Web Locks on localhost
 or HTTPS. Wait for **Saved** before signing out: explicit sign-out clears local
 recovery copies. See [Milestone 5 handover](docs/milestone-5.md) for recovery limits.
 
+## Configure staff Google sign-in
+
+Open **Staff sign-in** below the candidate form. Candidates do not need these steps.
+
 1. Open [Google Cloud Console](https://console.cloud.google.com/) and create or
    select a dedicated project.
 2. In Google Auth Platform, configure Branding, Audience, and Data Access for
@@ -175,7 +188,7 @@ recovery copies. See [Milestone 5 handover](docs/milestone-5.md) for recovery li
    URI or Google client secret is needed.
 5. Put the same public web client ID in `backend/.env` as `GOOGLE_CLIENT_ID` and
    in `frontend/.env` as `VITE_GOOGLE_CLIENT_ID`.
-6. Restart both development servers and approve a candidate with the CLI.
+6. Restart both development servers and approve a staff account with the CLI.
 
 Never place a client secret or database credential in a `VITE_` variable. Vite
 variables are public browser configuration. Missing Google configuration leaves
@@ -183,8 +196,7 @@ the app showing a disabled Continue with Google button and setup message;
 sign-in becomes available after you configure the matching client IDs and restart
 both servers. The configured button opens Google's account selection popup and
 exchanges the returned credential with `/api/auth/google`. Backend approval is
-still required. Production startup
-rejects missing Google configuration.
+still required. Missing Google configuration does not block candidate sign-in.
 
 Google's [setup instructions](https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid)
 and [verification guidance](https://developers.google.com/identity/gsi/web/guides/verify-google-id-token)
@@ -193,18 +205,19 @@ For accounts outside Gmail/Workspace, preapprove the independently verified stab
 Google subject using the CLI's `--google-subject` option. Email matching alone is
 deliberately insufficient for those accounts. See [security design](docs/security.md).
 
-## Verify the Milestone 1 flow
+## Verify candidate sign-in
 
 1. Start PostgreSQL; apply migrations; run both servers.
-2. Visit the portal and sign in with the preapproved Google account.
-3. Confirm the dashboard shows the expected roll number and registered email.
+2. Disable UI preview and sign in with the approved roll number, full name, and father's name.
+3. Confirm the dashboard shows the expected candidate name and roll number.
 4. Refresh and reopen `/dashboard`; the server session should restore access.
 5. Sign out; revisiting `/dashboard` must show sign-in.
-6. Sign in with an unregistered Google account; access must be denied with no
+6. Try an unknown roll number or incorrect name; access must be denied with no
    new user/candidate/session created.
 7. Confirm only assigned exams appear and no result data is exposed.
 
-These manual steps require your actual Google client and test accounts. Automated
+These manual steps require PostgreSQL and approved admissions records. Staff Google sign-in
+additionally requires your actual Google client and accounts. Automated
 tests substitute Google's certificate retrieval or verifier at explicit dependency
 boundaries; there is no development bypass in the application.
 
@@ -259,6 +272,7 @@ running backend. The normal development server on port 5173 can remain running.
 | GET /api/health | Public | Process liveness |
 | GET /api/health/ready | Public | Database and initial schema availability |
 | POST /api/auth/google | Exact allowed origin + Google credential | Verify identity, approval, issue session |
+| POST /api/auth/candidate | Exact allowed origin + three admissions fields; persistent rate limits | Match approved candidate and issue session |
 | POST /api/auth/logout | Session + exact origin + CSRF header | Revoke session |
 | GET /api/me | Approved user session | Restore public account/profile state |
 | GET /api/candidate/me | Approved CANDIDATE role | Protected candidate profile |

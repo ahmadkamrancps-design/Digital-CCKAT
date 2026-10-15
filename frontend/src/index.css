@@ -169,6 +169,21 @@ button {
   font-size: 14px;
 }
 
+.candidate-login-form { margin-top: 22px; text-align: left; }
+.candidate-login-form fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
+.candidate-login-form label { display: block; margin: 16px 0 7px; font-size: 13px; font-weight: 600; }
+.candidate-login-form input {
+  width: 100%; min-height: 44px; padding: 10px 12px;
+  border: 1px solid #aab8ca; border-radius: 6px; background: white; color: var(--text);
+}
+.candidate-login-form p { font-size: 12px; line-height: 1.6; }
+#roll-help, .login-details-help { color: #526078; margin: 6px 0 0; }
+.candidate-login-form .primary-button { width: 100%; margin-top: 20px; min-height: 44px; }
+.candidate-login-form fieldset:disabled { opacity: 0.75; }
+.staff-sign-in { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border); font-size: 13px; }
+.staff-sign-in summary { cursor: pointer; color: var(--navy); }
+.login-page footer { position: relative; bottom: auto; margin-top: 32px; }
+
 .google-button,
 .email-button {
   width: 100%;

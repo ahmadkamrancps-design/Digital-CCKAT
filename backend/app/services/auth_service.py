@@ -45,6 +45,13 @@ def login(db: Session, identity: GoogleIdentity, settings: Settings) -> tuple[Au
     candidate = ensure_eligible(db, user)
     user.google_subject = identity.subject
     # The approved email/name remain administration-controlled. Never rebind by email.
+    return issue_session(db, user, candidate, settings)
+
+
+def issue_session(
+    db: Session, user: User, candidate: Candidate | None, settings: Settings
+) -> tuple[AuthContext, str]:
+    # Callers hold the user lock, serializing login with admissions record edits.
     raw_token = new_token()
     session = AuthSession(
         user_id=user.id,

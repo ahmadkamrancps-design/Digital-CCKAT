@@ -19,8 +19,9 @@ Text = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 
 class CandidateWrite(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    email: EmailStr
+    email: EmailStr | None = None
     full_name: Annotated[Text, Field(max_length=200)]
+    father_name: Annotated[Text, Field(max_length=200)] | None = None
     roll_number: Annotated[Text, Field(max_length=64)]
     google_subject: Annotated[Text, Field(max_length=255)] | None = None
     status: CandidateStatus = CandidateStatus.APPROVED

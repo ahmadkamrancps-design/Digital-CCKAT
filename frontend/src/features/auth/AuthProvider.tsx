@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { api, ApiError } from '../../services/api';
-import type { SessionProfile } from '../../types/auth';
+import type { CandidateCredentials, SessionProfile } from '../../types/auth';
 import { uiPreviewEnabled } from '../preview/preview';
 import { clearUserRecovery } from '../../storage/recovery';
 
@@ -11,6 +11,7 @@ interface AuthState {
   error: string | null;
   refresh: () => Promise<void>;
   signIn: (credential: string) => Promise<void>;
+  signInCandidate: (credentials: CandidateCredentials) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -73,6 +74,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(result);
   }, [isPreview]);
 
+  const signInCandidate = useCallback(async (credentials: CandidateCredentials) => {
+    if (isPreview) throw new Error('Disable UI preview before signing in.');
+    const result = await api<SessionProfile>('/auth/candidate', {
+      method: 'POST', body: JSON.stringify(credentials),
+    });
+    ++requestVersion.current;
+    setLoading(false);
+    setError(null);
+    setProfile(result);
+  }, [isPreview]);
+
   const signOut = useCallback(async () => {
     if (isPreview || !profile) return;
     try {
@@ -94,7 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [isPreview, profile]);
 
-  return <AuthContext.Provider value={{ isPreview, profile, loading, error, refresh, signIn, signOut }}>
+  return <AuthContext.Provider value={{ isPreview, profile, loading, error, refresh, signIn, signInCandidate, signOut }}>
     {children}
   </AuthContext.Provider>;
 }

@@ -48,7 +48,7 @@ export function CandidateInfoPage({ section }: { section: keyof typeof sections 
         {section === 'profile' && <dl>
           <dt>Name</dt><dd><bdi>{displayProfile.candidate.full_name}</bdi></dd>
           <dt>Roll number</dt><dd><bdi>{displayProfile.candidate.roll_number}</bdi></dd>
-          <dt>Registered email</dt><dd><bdi>{displayProfile.user.email}</bdi></dd>
+          {displayProfile.user.email && <><dt>Registered email</dt><dd><bdi>{displayProfile.user.email}</bdi></dd></>}
         </dl>}
         <Link to="/dashboard">Return to dashboard</Link>
       </section>

@@ -1,5 +1,41 @@
 # Authentication and authorization foundation
 
+Candidates now use admissions roll number, full name, and father's name via
+`POST /api/auth/candidate`. Only existing APPROVED candidates linked to an active
+CANDIDATE user can receive a session. The endpoint cannot create accounts, bind
+Google identities, or grant staff access. The database enforces uniqueness of
+`lower(trim(roll_number))`. Names use Unicode NFKC, whitespace collapse, and
+case-folding; there is no fuzzy matching or transliteration. Missing verified
+father's names on legacy records deny this login. Public profiles omit this
+verification field; only administrators can read/write it with candidate records.
+
+These details are personal information, not a strong authentication secret.
+An attacker who knows them can impersonate a candidate. Before real exams, add a
+separately issued private exam code/OTP or supervised verification. Rate limiting
+reduces guessing; it cannot prevent impersonation by someone who knows the details.
+This follows OWASP's warning against relying on knowledge-based personal details:
+[credential stuffing prevention](https://cheatsheetseries.owasp.org/cheatsheets/Credential_Stuffing_Prevention_Cheat_Sheet.html).
+
+Login responses use the same 401 message for unknown, mismatched, disabled,
+missing-field legacy, and staff records. Validated requests consume persistent,
+atomic PostgreSQL throttle buckets before matching: 10 requests per normalized
+roll and 1,000 per client IP per 15 minutes by default, including successful
+requests. Limits survive restarts and multiple workers; 429 includes Retry-After.
+Expired buckets are deleted on subsequent login requests. Buckets store SHA-256
+fingerprints instead of raw rolls/IPs; these fingerprints are still pseudonymous
+data and are not secret hashes of authentication factors. Tune the IP limit for
+shared exam-center NAT/proxies. Configure Uvicorn/reverse-proxy trusted addresses
+carefully; never trust arbitrary incoming forwarded headers. Malformed requests
+are rejected before the limiter, so deployment still needs proxy request limits.
+See [OWASP authentication guidance](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html).
+
+Staff retain the existing Google login below. The backend Google route remains
+compatible with previously approved candidate identities; it is no longer offered
+as candidate login in the UI. Candidate email is nullable, with no generated fake
+email address. Changes to any candidate login field revoke existing sessions
+without changing exam attempts or deadlines. The portal has no automatic admissions
+integration: trusted staff must verify and enter/import official records.
+
 Google Identity Services provides an ID token through its JavaScript popup callback.
 The backend uses `google-auth` to verify Google's signature, token expiry/issued-at,
 issuer, and the configured OAuth audience. It requires `email_verified` to be true.
@@ -27,7 +63,8 @@ Session credentials are opaque random values delivered only in HttpOnly cookies,
 scoped to `/api`, with SameSite=Lax. PostgreSQL stores hashes, not raw cookie
 credentials. New sign-in revokes the previous session. Logout revokes the database
 record and clears the cookie. Production validation requires Secure cookies,
-HTTPS frontend origin, configured Google client ID, and separate database credentials.
+HTTPS frontend origin and separate database credentials. Staff Google login requires
+a configured Google client ID; candidate login does not.
 No app signing secret is required because these sessions are database-backed,
 not signed self-contained tokens.
 

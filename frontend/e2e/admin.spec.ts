@@ -266,6 +266,7 @@ test("admin creates and disables a candidate, reviews CSV, and preserves a rejec
   await page.goto("/admin/candidates");
   await page.getByRole("button", { name: "Create candidate" }).click();
   await page.getByLabel("Full name").fill("محمد احمد");
+  await page.getByLabel("Father’s name").fill("محمد کامران");
   await page.getByLabel("Roll number").fill("CCK-201");
   await page.getByLabel("Authorized email").fill("approved@gmail.com");
   await page.getByRole("button", { name: "Save candidate" }).click();
