@@ -12,6 +12,7 @@ import { NavLink } from 'react-router-dom';
 const items = [
   { icon: Gauge, label: "Dashboard", to: '/dashboard' },
   { icon: ClipboardList, label: "My Exam", to: '/exam' },
+  { icon: ClipboardList, label: "Results", to: '/results' },
   { icon: CircleHelp, label: "Instructions", to: '/instructions' },
   { icon: MonitorCheck, label: "System Check", to: '/system-check' },
   { icon: UserRound, label: "Profile", to: '/profile' },

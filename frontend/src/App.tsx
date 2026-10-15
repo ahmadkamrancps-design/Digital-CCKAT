@@ -14,6 +14,8 @@ import { QuestionsPage } from './features/admin/QuestionsPage';
 import { CreateExamPage, ExamDetailPage, ExamsPage } from './features/admin/ExamsPage';
 import { StaffActionsPage } from './features/admin/StaffActionsPage';
 import { ProctorPage } from './features/proctor/ProctorPage';
+import { GradingPage } from './features/grading/GradingPage';
+import { ResultsPage } from './features/grading/ResultsPage';
 
 export default function App() {
   const { loading, error, refresh, profile, isPreview } = useAuth();
@@ -30,6 +32,8 @@ export default function App() {
     <Route path="/profile" element={<CandidateInfoPage section="profile" />} />
     <Route path="/help" element={<CandidateInfoPage section="help" />} />
     <Route path="/proctor" element={<ProctorPage />} />
+    <Route path="/grading" element={<GradingPage />} />
+    <Route path="/results" element={<ResultsPage />} />
     <Route path="/admin" element={<AdminLayout />}>
       <Route index element={<Navigate to="candidates" replace />} />
       <Route path="candidates" element={<CandidatesPage />} />
@@ -49,7 +53,7 @@ export default function App() {
         <button onClick={() => { void refresh(); }}>Try again</button>
       </div>
       : routes;
-  const fullPage = pathname.startsWith('/admin') || pathname === '/proctor' || (['/dashboard', '/instructions', '/system-check', '/profile', '/help', '/exam', '/submission'].includes(pathname)
+  const fullPage = pathname.startsWith('/admin') || pathname === '/proctor' || pathname === '/grading' || (['/dashboard', '/instructions', '/system-check', '/profile', '/help', '/exam', '/submission', '/results'].includes(pathname)
     && (isPreview || (profile?.user.role === 'CANDIDATE' && !!profile.candidate)));
   const page = publicLogin || (fullPage && (!loading || !!profile) && (!error || !!profile))
     ? content

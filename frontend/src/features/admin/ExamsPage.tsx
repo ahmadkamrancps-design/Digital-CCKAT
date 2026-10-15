@@ -19,6 +19,7 @@ import {
 } from "./shared";
 import { PaperBuilder } from "./PaperBuilder";
 import { ProctorAssignments } from "./ProctorAssignments";
+import { ExaminerAssignments } from "./ExaminerAssignments";
 
 export function ExamsPage() {
   const client = useAdminApi();
@@ -326,6 +327,7 @@ export function ExamDetailPage() {
               </button>
             </div>
           </section>
+          <ExaminerAssignments examId={examId} />
           <ResultControls
             key={`${data.exam.id}:${data.exam.result_release_at}`}
             exam={data.exam}
@@ -374,9 +376,8 @@ function ResultControls({
         <strong>{exam.results_released ? "Released" : "Withheld"}</strong>
       </p>
       <p className="admin-muted">
-        Grading and candidate results arrive in Milestone 8. A planned release
-        date can be recorded now; it does not publish ungraded results
-        automatically.
+        Pause new starts and finish grading all attempts before authorizing release.
+        A future release time delays visibility. Withhold results before correcting marks.
       </p>
       <TaskStatus task={task} />
       <form
@@ -400,8 +401,11 @@ function ResultControls({
         <button disabled={task.pending}>
           Save release plan / keep withheld
         </button>
-        <button type="button" disabled>
-          Release results (grading required)
+        <button type="button" disabled={task.pending || exam.is_start_authorized} onClick={() => {
+          if (!window.confirm('Authorize publication of completed results? Candidates will see marks at the selected time, or immediately if no time is set.')) return;
+          void task.run(async () => { await client.release(exam.id, utcDate(date)); await saved(); }, 'Result publication authorized.');
+        }}>
+          Authorize result release
         </button>
       </form>
     </section>

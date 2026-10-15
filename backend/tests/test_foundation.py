@@ -101,6 +101,12 @@ def test_database_email_normalization_constraint(db_factory: sessionmaker[Sessio
 def test_postgres_migration_roundtrip_and_model_match(db_engine: Engine) -> None:
     config = Config("alembic.ini")
     command.check(config)
+    command.downgrade(config, "0006_candidate_login")
+    assert not {"grading_records", "examiner_exam_assignments"} & set(
+        inspect(db_engine).get_table_names()
+    )
+    command.upgrade(config, "head")
+    command.check(config)
     with Session(db_engine) as db:
         exam = Exam(title="Preserved domain exam")
         db.add(exam)

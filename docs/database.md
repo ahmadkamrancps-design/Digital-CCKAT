@@ -1,4 +1,4 @@
-# Database through Milestone 7
+# Database through Milestone 8
 
 PostgreSQL with UTF-8 encoding is the application database. SQLAlchemy 2 maps
 models; Alembic controls schema changes. No table creation occurs during startup.
@@ -119,8 +119,8 @@ restoring Milestone 2 without deleting its existing exams. Downgrading deliberat
 removes attempt/answer data and belongs only in disposable verification environments
 or a separately reviewed recovery process.
 
-Grading records remain for Milestone 8. Do not
-add durations or fixed subject names to foundation identity tables.
+Milestone 8 adds independent grading records below. Do not add durations or fixed
+subject names to foundation identity tables.
 
 Milestone 4 adds no migration. The assigned-exam API reads existing exam-subject
 rows to provide safe names, durations, and order for the CCK dashboard cards.
@@ -178,3 +178,26 @@ The migration downgrade removes only these three monitoring tables. It loses the
 presence/events/access configuration and preserves the existing exam/answer tables.
 Upgrade/downgrade/re-upgrade and ORM comparison are verified on PostgreSQL. Neither
 audit table is tamper-proof against a privileged database operator.
+
+## Milestone 8 grading and examiner scope
+
+`0007_grading_results`, following the admission-login migration, creates:
+
+- `examiner_exam_assignments`: unique exam/user, active flag, assigning administrator,
+  timestamps, and restrictive foreign keys to exam and user records.
+- `grading_records`: answer foreign key, grade revision, original answer revision,
+  decimal awarded/maximum marks, method, nullable grading staff identifier, server
+  timestamp, and notes. Unique answer/revision prevents duplicate logical versions.
+  Checks require positive revisions, bounded nonnegative marks no larger than the
+  snapshot maximum, allowed methods, bounded notes, and an actor for MANUAL only.
+
+History is append-oriented through the application. The greatest revision is the
+current grade; earlier revisions remain inspectable by authorized graders. The
+original answer, answer revision, flags, and deadline are untouched. Computed
+subject/total marks are not duplicated into a mutable total cache. A paper closed
+before it was started has no answers and contributes zero against its full maximum.
+
+Upgrade and downgrade force existing result-release flags false, so removing or
+introducing grading cannot accidentally publish ungraded results. No existing
+user, candidate, paper, attempt, or answer is removed by this migration's upgrade.
+Downgrade removes grade history and examiner grants: back up before any rollback.

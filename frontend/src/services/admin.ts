@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useAuth } from "../features/auth/AuthProvider";
 import { api } from "./api";
 import type { ProctorAssignment } from "../types/proctor";
+import type { ExaminerAssignment } from "../types/grading";
 import type {
   AdminAssignment,
   AdminCandidate,
@@ -27,6 +28,8 @@ export function adminApi(csrf: string) {
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
   return {
+    assignExaminer: (exam: string, user: string, is_active: boolean) => write<ExaminerAssignment[]>(`/exams/${exam}/examiners/${user}`, 'PUT', { is_active }),
+    release: (id: string, result_release_at: string | null) => write<AdminExam>(`/exams/${id}/result-release`, 'POST', { released: true, result_release_at }),
     proctorAssignments: (exam: string) => api<ProctorAssignment[]>(`/admin/exams/${exam}/proctors`),
     assignProctor: (exam: string, user: string, is_active: boolean) => write<ProctorAssignment[]>(`/exams/${exam}/proctors/${user}`, 'PUT', { is_active }),
     list: <T>(path: string, query: Record<string, string> = {}) =>

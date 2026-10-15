@@ -1,7 +1,7 @@
 # Frontend structure
 
 The requested source structure is in place alongside the existing authentication
-and API modules. Google sign-in and the protected dashboard remain functional.
+and API modules. Admission-details candidate login, staff Google sign-in, and the protected dashboard remain functional.
 
 ```text
 frontend/
@@ -72,7 +72,7 @@ frontend/
 
 The stylesheet moved from `styles.css` to `index.css`. The dashboard uses the new
 candidate sidebar and shared CCK logo component. The sidebar uses the supplied
-navy design and six navigation links. Instructions, system check, and support
+navy design with a Results link added in Milestone 8. Instructions, system check, and support
 destinations are information scaffolds; profile displays registration details.
 It appears only for candidate profiles. Existing authentication modules
 and the shared layout were retained to preserve the working foundation. The login
@@ -222,3 +222,20 @@ offline/reload, lost acknowledgement, tab handoff, expiry, and conflict scenario
 See the root README for Ubuntu/WSL development commands. Milestone 1's real Google
 browser acceptance check still requires the configured OAuth client and approved
 test account.
+
+## Milestone 8 grading and candidate results
+
+`features/grading/GradingPage.tsx` provides the separate CCK examiner workspace,
+manual review forms, revision history, and administrator backfill controls.
+`features/grading/ResultsPage.tsx` adds `/results` to candidate navigation with
+withheld/scheduled messaging and released subject totals. Both reuse the existing
+navy CCK styles and logo; existing exam/submission screens and assets are retained.
+`types/grading.ts` and `services/grading.ts` type the new APIs; `grading.css` holds
+scoped additions. `features/admin/ExaminerAssignments.tsx` adds explicit examiner
+assignment/revocation to the exam page, alongside the updated release controls.
+
+With UI preview enabled, `/results` displays a clearly labeled synthetic result
+without requests or real session credentials. `/grading` still requires staff
+access. Real candidate result refreshes hide previous scores while verifying the
+current response, and revalidate on visibility/connection restoration. Examiner
+save denials clear the response instead of keeping revoked content visible.

@@ -135,8 +135,9 @@ backend role checks remain authoritative. New mutation routes enforce Origin/CSR
 
 Unpublishing an exam pauses new starts but preserves authorized active-attempt
 access and deadlines; revoking an assignment or disabling a candidate blocks access.
-The result-release endpoint rejects release while grading is unavailable. A planned
-date is configuration only and cannot expose scores. Candidate paper/answer schemas are unchanged.
+The result-release endpoint requires paused starts and complete grading of every
+attempt. A planned date alone cannot expose scores; authorization plus the server
+release time and complete grades are required. Candidate paper/answer schemas are unchanged.
 The CLI runs only for operators with database credentials and must not be exposed
 as a web service.
 
@@ -173,3 +174,26 @@ Primary references:
 - [Google token verification](https://developers.google.com/identity/gsi/web/guides/verify-google-id-token)
 - [Google web-client setup](https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid)
 - [Google sign-in button](https://developers.google.com/identity/gsi/web/guides/display-button)
+
+Milestone 8 grading routes allow ADMIN or explicitly exam-assigned EXAMINER only;
+PROCTOR and CANDIDATE cannot fetch queues, inspect grade histories, or assign marks.
+Manual review exposes only submitted exam responses and required question text;
+it does not send accepted answers or MCQ keys to examiners. Automatic backfill and
+publication are ADMIN-only. Writes require Origin plus CSRF. Notes and candidate
+responses remain plain React text and are not put in diagnostic or staff-action logs.
+
+Manual marks use Decimal, question-specific maxima, optimistic grade revisions,
+and row locks. A repeat of the immediately previous identical request by the same
+actor is safely acknowledged; stale or competing edits fail with 409. Corrections
+require notes and append history with staff ID and server time. Authorized or
+scheduled publication freezes all grade changes until results are explicitly
+withheld. API question configuration remains frozen after paper use.
+
+Candidate result DTOs contain only titles, publication/grading status, released
+subject totals, total marks, and server-computed percentage. Before release, marks,
+maximum, percentage, and subject results are absent/null even if grading is done.
+The endpoint filters by the authenticated candidate and current exam assignment;
+it cannot accept a different candidate identity. Proctor responses remain unchanged.
+Database administrators can still change records directly; database least privilege,
+audit tamper resistance, request-rate policy, and operational review remain
+Milestone 9/10 work. These features alone do not establish production readiness.

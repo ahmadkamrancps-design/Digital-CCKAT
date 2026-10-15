@@ -49,6 +49,7 @@ async function backend(
     if (role !== "ADMIN")
       return send({ detail: "Administrator access required." }, 403);
     if (path === '/api/admin/proctors' || path.endsWith('/proctors')) return send([]);
+    if (path === '/api/admin/examiners' || path.endsWith('/examiners')) return send([]);
     if (
       method !== "GET" &&
       request.headers()["x-csrf-token"] !== "browser-csrf"
@@ -371,7 +372,7 @@ test("admin builds a configured paper, changes order, and enables starts with ed
     page.getByRole("button", { name: "Save ordered paper" }),
   ).toBeDisabled();
   await expect(
-    page.getByRole("button", { name: "Release results (grading required)" }),
+    page.getByRole("button", { name: "Authorize result release" }),
   ).toBeDisabled();
   await page.screenshot({
     path: "test-results/admin-exam-workspace.png",

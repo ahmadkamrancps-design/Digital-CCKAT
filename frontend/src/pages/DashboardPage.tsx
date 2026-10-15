@@ -46,6 +46,7 @@ export default function DashboardPage() {
         <p>{user.role === 'ADMIN' ? 'Your administrator role is verified. Open the portal to manage candidates, exams, and papers.' : user.role === 'PROCTOR' ? 'Your proctor role is verified. Open monitoring to view your assigned exams and candidate sessions.' : 'Your staff role is verified. Your role’s workspace will be added in its development milestone.'}</p>
         {user.role === 'ADMIN' && <Link className="primary-button" to="/admin">Open administration portal</Link>}
         {['ADMIN', 'PROCTOR'].includes(user.role) && <p><Link className="primary-button" to="/proctor">Open proctor monitoring</Link></p>}
+        {['ADMIN', 'EXAMINER'].includes(user.role) && <p><Link className="primary-button" to="/grading">Open grading workspace</Link></p>}
       </section>
     </div>;
   }

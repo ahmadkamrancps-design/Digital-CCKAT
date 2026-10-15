@@ -217,6 +217,7 @@ async function backend(
       });
     }
     if (role === "ADMIN") {
+      if (path === '/api/admin/examiners' || path.endsWith('/examiners')) return send([]);
       if (path === "/api/admin/proctors")
         return send([{ id: "proctor-1", display_name: "Approved Proctor" }]);
       if (

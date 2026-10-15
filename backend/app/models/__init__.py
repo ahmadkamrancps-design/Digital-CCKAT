@@ -9,6 +9,7 @@ from app.models.attempt import (
 from app.models.audit import AuditEvent
 from app.models.candidate import Candidate, CandidateStatus
 from app.models.exam import Exam, ExamQuestion, ExamStatus, ExamSubject
+from app.models.grading import ExaminerExamAssignment, GradingRecord
 from app.models.login_throttle import LoginThrottle
 from app.models.proctor import (
     AttemptPresence,
@@ -23,6 +24,8 @@ from app.models.subject import Subject
 from app.models.user import Role, User
 
 __all__ = [
+    "ExaminerExamAssignment",
+    "GradingRecord",
     "LoginThrottle",
     "AttemptPresence",
     "EventSource",

@@ -1,7 +1,7 @@
 # CCK Digital Entry Test
 
 Foundation, exam domain, attempt engine, candidate interface, recovery, administration,
-and Milestone 7 proctor monitoring for Cadet College Kohat's entry-test platform. React +
+proctor monitoring, and Milestone 8 grading/results for Cadet College Kohat's entry-test platform. React +
 TypeScript, FastAPI, SQLAlchemy 2, PostgreSQL, and Alembic. Candidates sign in with
 their admissions roll number, full name, and father's name. Staff use Google Identity Services.
 The supplied CCK frontend now supports real assigned exams, server-derived timers,
@@ -79,8 +79,8 @@ or choose **Open administration portal** on their dashboard. Candidate managemen
 CSV import, subject configuration, question bank, exam builder, scheduling,
 publication, and start controls are implemented. PROCTOR users open `/proctor`
 to monitor exams explicitly assigned by an administrator. ADMIN users can monitor
-all exams. The examiner workspace arrives with grading. Candidate preview grants
-neither admin nor proctor access.
+all exams. EXAMINER users open `/grading` to review manual responses for assigned
+exams. Candidate preview grants no staff access.
 
 After pulling Milestone 6, run `alembic upgrade head` before starting the backend.
 Migration `0004_admin_portal` adds publication/result-control fields and staff
@@ -100,6 +100,16 @@ Status updates poll about every five seconds. Candidate heartbeats normally send
 every ten seconds while a subject is active. The portal shows reported question
 position, connection freshness, server-derived time, and safe session events;
 it exposes no candidate answers. See [Milestone 7 handover](docs/milestone-7.md).
+
+After pulling Milestone 8, run `alembic upgrade head` to apply `0007_grading_results`.
+MCQ, EXACT, and NUMERIC responses are automatically graded when subjects close.
+Provision approved examiners with `python -m app.cli register-staff --email "approved-examiner@gmail.com" --name "CCK Examiner" --role EXAMINER`,
+then assign them through **Examiner access** in the exam's admin page. Use `/grading`
+for manual marks and audited corrections. Administrators can backfill automatic grades
+for older completed attempts there. Pause starts and finish all grading before
+authorizing result release. Candidates see only released totals at `/results`.
+The existing free-access preview includes a labeled sample result at the same route.
+See [Milestone 8 handover](docs/milestone-8.md) for rules, endpoints, and verification.
 
 Run the expiry worker in a separate backend terminal so deadlines are recorded
 even when no browser is connected:
@@ -283,7 +293,14 @@ running backend. The normal development server on port 5173 can remain running.
 | GET /api/admin/candidates/{id}/assignments | ADMIN | Inspect that candidate's assignments |
 | PUT /api/admin/exams/{id}/subject-order | ADMIN + origin + CSRF | Atomically reorder all exam subjects |
 | POST /api/admin/exams/{id}/publication | ADMIN + origin + CSRF | Publish/unpublish; unpublishing pauses new starts |
-| POST /api/admin/exams/{id}/result-release | ADMIN + origin + CSRF | Record planned release while withholding ungraded results |
+| POST /api/admin/exams/{id}/result-release | ADMIN + origin + CSRF | Authorize/schedule completed results or withhold them |
+| GET /api/admin/examiners | ADMIN | List approved examiner accounts |
+| GET/PUT /api/admin/exams/{id}/examiners[/{user_id}] | ADMIN; writes require origin + CSRF | Inspect, assign, or revoke examiner scope |
+| GET /api/grading/exams, /exams/{id}/attempts, /exams/{id}/queue | ADMIN or exam-assigned EXAMINER | Grading progress and manual responses |
+| GET /api/grading/answers/{id}/history | ADMIN or exam-assigned EXAMINER | Preserve and inspect grade revisions |
+| POST /api/grading/answers/{id}/grade | Scoped grading role + origin + CSRF | Record manual marks with stale-write protection |
+| POST /api/admin/attempts/{id}/grade | ADMIN + origin + CSRF | Backfill automatic grades for completed attempts |
+| GET /api/candidate/results | Owning, approved CANDIDATE | Released subject totals and percentage; withheld marks are absent |
 | GET /api/admin/actions | ADMIN | Paginated staff action history |
 | GET /api/admin/proctors | ADMIN | List active proctor accounts without identity secrets |
 | GET /api/admin/exams/{id}/proctors | ADMIN | Inspect assigned proctors |
@@ -329,10 +346,11 @@ exclude keys, accepted values, and grading configuration. See
 - [Milestone 5 handover, offline recovery, and verification results](docs/milestone-5.md)
 - [Milestone 6 handover, administration workflow, and verification results](docs/milestone-6.md)
 - [Milestone 7 handover, proctor workflow, and verification results](docs/milestone-7.md)
+- [Milestone 8 handover, grading/results workflow, and verification results](docs/milestone-8.md)
 - [GitHub setup and progress history](docs/version-control.md)
 
-Milestone 7 preserves your CCK templates and adds scoped proctor monitoring and
-session events using the existing authorization and attempt engine.
-Next is Milestone 8: grading and results.
+Milestone 8 preserves your CCK templates and adds backend scoring, versioned manual
+review, examiner access, and controlled candidate results.
+Next is Milestone 9: security review and hardening.
 Real Google acceptance testing remains necessary before the Milestone 1 exit
 criteria can be considered fully demonstrated.

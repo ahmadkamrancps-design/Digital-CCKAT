@@ -1,10 +1,10 @@
-# Application architecture through Milestone 7
+# Application architecture through Milestone 8
 
 The repository contains a React/TypeScript/Vite frontend, a Python/FastAPI backend,
 and PostgreSQL infrastructure. Domain management and the backend attempt engine
 and the live candidate interface are implemented, including persistent answer
 recovery and reconnection in Milestone 5, administration in Milestone 6, and scoped
-proctor monitoring in Milestone 7.
+proctor monitoring in Milestone 7, and grading/results in Milestone 8.
 
 ```text
 cck-digital-test/
@@ -141,8 +141,9 @@ remains later hardening work. Session events are implemented separately below.
 Publication is separate from start authorization. Unpublished unstarted exams are
 hidden from candidates. Existing attempts stay resumable and retain their deadlines,
 while unpublishing disables new starts. Question keys remain ADMIN-only. Result
-release is refused until the grading milestone; planned dates never auto-release
-ungraded results. See [Milestone 6 handover](milestone-6.md).
+release requires paused starts, completed attempts, and completed grading. A date
+alone never releases results; an ADMIN must authorize publication explicitly.
+See [Milestone 8 handover](milestone-8.md).
 
 `proctor_service.py` checks exam-specific proctor assignments; ADMIN can monitor
 all exams. Its explicit schemas return names/roll numbers, subject/status, reported
@@ -197,3 +198,15 @@ must be supervised separately from the FastAPI process. The design uses PostgreS
 Milestone sequence remains: foundation → exam domain → attempt engine → candidate
 test UI → resilience → admin portal → proctors → grading/results → hardening →
 production readiness. Proceed to the next milestone only on the project owner's instruction.
+
+Milestone 8 adds `auto_grading_service.py`, `grading_service.py`, and
+`result_service.py`. Automatic grading runs in the subject-close transaction and
+bulk-loads private keys. Grading records reference raw answers without replacing
+or normalizing their stored text. Completed-attempt backfill is an explicit admin
+operation. Manual review locks exam → attempt → subject → answer and appends a
+revision; examiner grants are checked while the exam lock is held. Publication,
+withholding, manual grading, and examiner-grant writes share that exam lock.
+Candidate result reads acquire exam locks in UUID order and omit every score
+until both completed grading and authorized server-time release are confirmed.
+No worker broker, frontend scoring, new runtime dependency, or exam-engine rewrite
+was introduced. See `docs/milestone-8.md` for the complete contract.

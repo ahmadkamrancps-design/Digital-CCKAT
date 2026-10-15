@@ -44,6 +44,7 @@ from app.schemas.attempt import (
 )
 from app.schemas.exam_domain import QuestionWrite
 from app.services.auth_service import as_utc
+from app.services.auto_grading_service import grade_closed_subject
 from app.services.exam_domain_service import commit, get_record, question_response
 from app.services.session_event_service import record_event
 
@@ -180,6 +181,8 @@ def validate_papers(db: Session, exam_id: UUID) -> list[ExamSubject]:
 def authorize_start(db: Session, exam_id: UUID, authorized: bool) -> StartAuthorizationResponse:
     exam = get_record(db, Exam, exam_id, lock=True)
     if authorized:
+        if exam.results_released:
+            raise HTTPException(409, "Withhold results before enabling exam starts.")
         if not exam.is_published:
             raise HTTPException(409, "Publish this exam before authorizing starts.")
         if exam.status != ExamStatus.DRAFT:
@@ -237,6 +240,7 @@ def reconcile(
             subject.status = SubjectStatus.EXPIRED
             subject.submitted_at = subject.expires_at
             record_event(db, attempt, SessionEventType.SUBJECT_AUTO_SUBMITTED, now, subject)
+            grade_closed_subject(db, subject, now)
         elif subject.status == SubjectStatus.NOT_STARTED and end and end <= now:
             # The overall deadline closes papers the candidate never started, too.
             subject.status = SubjectStatus.EXPIRED
@@ -263,7 +267,12 @@ def finalize(
 
 
 def check_start(exam: Exam, now: datetime) -> None:
-    if not exam.is_published or not exam.is_start_authorized or exam.status != ExamStatus.DRAFT:
+    if (
+        not exam.is_published
+        or not exam.is_start_authorized
+        or exam.results_released
+        or exam.status != ExamStatus.DRAFT
+    ):
         raise HTTPException(403, "This exam is not authorized to start.")
     if exam.scheduled_start and as_utc(exam.scheduled_start) > now:
         raise HTTPException(409, "The exam has not opened yet.")
@@ -512,6 +521,7 @@ def submit_subject(
     if subject.status == SubjectStatus.ACTIVE:
         subject.status, subject.submitted_at = SubjectStatus.SUBMITTED, now
         record_event(db, attempt, SessionEventType.SUBJECT_SUBMITTED, now, subject)
+        grade_closed_subject(db, subject, now)
         finalize(db, attempt, subjects, now)
     commit(db)
     return attempt_response(attempt, subjects, now)

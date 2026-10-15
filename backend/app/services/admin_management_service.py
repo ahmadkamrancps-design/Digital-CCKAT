@@ -22,6 +22,7 @@ from app.schemas.attempt import AssignmentResponse
 from app.schemas.exam_domain import ExamResponse
 from app.services.attempt_service import assignment_response, validate_papers
 from app.services.exam_domain_service import commit, exam_response, get_record, utc_timestamp
+from app.services.result_service import validate_release
 
 
 def record_action(db: Session, actor_id: UUID, event_type: str, entity_id: UUID) -> None:
@@ -177,13 +178,10 @@ def release_results(
 ) -> ExamResponse:
     exam = get_record(db, Exam, exam_id, lock=True)
     if released:
-        raise HTTPException(
-            409,
-            "Results cannot be released until grading is implemented and verified in Milestone 8.",
-        )
-    exam.results_released = False
+        validate_release(db, exam)
+    exam.results_released = released
     exam.result_release_at = utc_timestamp(release_at)
-    record_action(db, actor_id, "RESULTS_WITHHELD", exam.id)
+    record_action(db, actor_id, "RESULTS_RELEASED" if released else "RESULTS_WITHHELD", exam.id)
     commit(db)
     return exam_response(exam, db)
 

@@ -1,8 +1,8 @@
-# Exam lifecycle through Milestone 7
+# Exam lifecycle through Milestone 8
 
 The backend implements authorized starts, independent subject deadlines, saved
-answers/review flags, submission, automatic expiry, and resume. Grading and results
-remain later milestones. The supplied frontend templates use live backend state
+answers/review flags, submission, automatic expiry, resume, grading, and released results.
+The supplied frontend templates use live backend state
 and receipts, with IndexedDB recovery and reconnection. A separate development-only
 layout preview keeps a paused timer and synthetic submission design.
 
@@ -83,7 +83,7 @@ unstarted subject closed by the exam cutoff has no started_at and no answers.
 The worker and APIs share the same expiry logic and database clock.
 
 The admin portal implements publication, start/pause controls, and withheld-result
-planning. Actual result publication depends on completed grading in Milestone 8.
+planning. Milestone 8 adds completed grading and explicitly authorized result publication.
 Session events and read-only proctor monitoring are implemented in Milestone 7.
 
 ## Live candidate interface (Milestone 4)
@@ -156,3 +156,19 @@ answers, and subject closure stops its reporter. Connection freshness becomes
 unknown/no recent contact rather than proof of misconduct. Offline browser reports
 can arrive later with their server receipt time; the bounded nonpersistent buffer
 may lose reports on closure/reload. This does not change durable answer recovery.
+
+## Grading and results (Milestone 8)
+
+Subject submission or expiry locks responses and records automatic MCQ/EXACT/NUMERIC
+marks in the same database transaction. Blank responses receive zero; nonblank
+MANUAL answers wait for an assigned examiner until the entire attempt is submitted.
+An invalid grading configuration leaves scoring pending without blocking subject
+closure. Completed legacy attempts can be backfilled through the admin grading action.
+
+After manual review, administrators pause starts and authorize results, optionally
+with a future server release timestamp. Every attempt must be submitted and fully
+graded. Grading completion alone never reveals a result. Result reads hide marks
+until release; withholding removes visibility on the next read. To correct published
+marks, first withhold, record a new revision with a reason, then authorize release
+again. Released exams cannot enable new starts. No result changes a submitted answer,
+restarts an attempt, or extends a deadline.
