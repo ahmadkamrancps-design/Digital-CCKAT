@@ -235,8 +235,11 @@ describe('live CCK candidate workflow', () => {
     await waitFor(() => expect(screen.getByRole('radio', { name: 'Alpha' })).toBeDisabled());
     expect(screen.getByRole('button', { name: 'Finish' })).toBeDisabled();
     expect(screen.queryByText('Test Submitted Successfully!')).not.toBeInTheDocument();
+    // Locked controls can render before the expiry effect's failed read completes.
+    // Observe the failure before reconnecting, so the automatic read cannot skip it.
+    const checkStatus = await screen.findByRole('button', { name: 'Check exam status' });
     fixture.controls.failReads = false; fixture.controls.expire = true;
-    await userEvent.click(await screen.findByRole('button', { name: 'Check exam status' }));
+    await userEvent.click(checkStatus);
     expect(await screen.findByRole('heading', { name: 'Subject time ended' })).toBeInTheDocument();
     expect(fixture.fetcher.mock.calls.filter(([, options]) => options?.method === 'PUT')).toHaveLength(0);
   });

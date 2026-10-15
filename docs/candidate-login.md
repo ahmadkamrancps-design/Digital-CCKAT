@@ -147,6 +147,10 @@ The first GitHub run also caught an order-dependent assertion in the new resume
 test: selecting any answer in a subject could inspect an unanswered question.
 The corrected assertion selects the saved exam question explicitly and verifies
 both its revision and selected option; application behavior was unchanged.
+The subsequent run passed all backend checks on PostgreSQL 17, then exposed a
+preexisting expiry-test race: network reads were restored before the failed
+expiry read was observed. The test now waits for its retry control before
+reconnecting, without changing application timers or increasing timeouts.
 
 Browser regression fixtures use mocked APIs; the separate real-service smoke
 check used a temporary schema in the test database and removed it afterward.
