@@ -11,7 +11,10 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     environment: Literal["development", "test", "production"] = "development"
-    database_url: str = "postgresql+psycopg://cck:cck_local_only@localhost:5432/cck_digital_test"
+    database_url: str = Field(
+        default="postgresql+psycopg://cck:cck_local_only@localhost:5432/cck_digital_test",
+        repr=False,
+    )
     google_client_id: str = ""
     frontend_origin: str = "http://localhost:5173"
     allowed_hosts: list[str] = ["localhost", "127.0.0.1"]
@@ -20,6 +23,8 @@ class Settings(BaseSettings):
     session_ttl_seconds: int = Field(default=28800, ge=300, le=86400)
     candidate_login_roll_limit: int = Field(default=10, ge=1, le=100)
     candidate_login_ip_limit: int = Field(default=1000, ge=10, le=100000)
+    google_login_ip_limit: int = Field(default=120, ge=1, le=100000)
+    max_request_bytes: int = Field(default=2097152, ge=65536, le=10485760)
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
 
     @model_validator(mode="after")
@@ -35,9 +40,14 @@ class Settings(BaseSettings):
             or origin.fragment
             or origin.username
             or origin.password
+            or any(character.isspace() for character in self.frontend_origin)
+            or origin.port == 0
         ):
             raise ValueError("FRONTEND_ORIGIN must be an exact HTTP(S) origin without a path")
-        if not self.allowed_hosts or "*" in self.allowed_hosts:
+        if not self.allowed_hosts or any(
+            not host or any(char in host for char in "*/:@?#[]") or any(c.isspace() for c in host)
+            for host in self.allowed_hosts
+        ):
             raise ValueError("ALLOWED_HOSTS must contain explicit hostnames")
         if self.google_client_id and not self.google_client_id.endswith(
             ".apps.googleusercontent.com"

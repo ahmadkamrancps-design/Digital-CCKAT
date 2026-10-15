@@ -8,7 +8,7 @@ from app.db.base import Base
 
 
 class AuditEvent(Base):
-    """Append-oriented staff action record; no answers or credentials in the event."""
+    """PostgreSQL-guarded staff history; no answers or credentials in the event."""
 
     __tablename__ = "audit_events"
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)

@@ -201,3 +201,32 @@ Upgrade and downgrade force existing result-release flags false, so removing or
 introducing grading cannot accidentally publish ungraded results. No existing
 user, candidate, paper, attempt, or answer is removed by this migration's upgrade.
 Downgrade removes grade history and examiner grants: back up before any rollback.
+
+## Milestone 9 security hardening
+
+`0008_security_hardening` adds `security_events` with nullable restrictive user FK,
+allowlisted event type/method, database timestamp, and timestamp index. No identity
+input, token, IP address, raw answer, or arbitrary metadata is stored there.
+Authentication failures and first throttle denials persist independently of denied
+credentials; successful sessions/logout events commit with the corresponding change.
+
+The migration creates a schema-local trigger function and statement-level BEFORE
+UPDATE/DELETE/TRUNCATE guards on `audit_events`, `session_events`, `grading_records`,
+and `security_events`. The guards reject bulk SQL even on empty tables. Grade
+corrections remain new revisions; existing raw answers/deadlines are untouched.
+SQLite metadata-only tests do not claim to enforce these PostgreSQL triggers.
+
+The upgrade does not modify existing rows. Downgrade removes the guards/function
+and discards the security event table, while retaining earlier histories; use it
+only in reviewed recovery or disposable tests. PostgreSQL tests cover roundtrip,
+model/schema agreement, direct bulk tampering, concurrent sessions, and a distinct
+runtime role provisioned with `backend/ops/grant-runtime.psql`.
+
+The runtime role must not own objects, be superuser, inherit an owner role, create
+roles/databases, replicate, or bypass RLS. The grant template permits normal CRUD
+on application tables and only SELECT/INSERT on histories; Alembic is read-only.
+It gives no schema creation or trigger/truncate privileges. Run migrations as a
+separate owner and reapply reviewed grants afterward. This is a tested template,
+not an automatic change to the existing development account. A schema owner can
+disable the guards; separate credentials, restricted network access, backups, and
+external audit retention remain production requirements.

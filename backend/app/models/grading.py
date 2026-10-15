@@ -29,7 +29,7 @@ class ExaminerExamAssignment(TimestampMixin, Base):
 
 
 class GradingRecord(Base):
-    """Append-only through application services; each correction is a new revision."""
+    """Each correction appends a revision; PostgreSQL history guards forbid rewrites."""
 
     __tablename__ = "grading_records"
     __table_args__ = (

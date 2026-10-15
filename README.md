@@ -1,7 +1,7 @@
 # CCK Digital Entry Test
 
 Foundation, exam domain, attempt engine, candidate interface, recovery, administration,
-proctor monitoring, and Milestone 8 grading/results for Cadet College Kohat's entry-test platform. React +
+proctor monitoring, grading/results, and Milestone 9 security hardening for Cadet College Kohat's entry-test platform. React +
 TypeScript, FastAPI, SQLAlchemy 2, PostgreSQL, and Alembic. Candidates sign in with
 their admissions roll number, full name, and father's name. Staff use Google Identity Services.
 The supplied CCK frontend now supports real assigned exams, server-derived timers,
@@ -54,7 +54,7 @@ python -m app.cli register-candidate \
   --name "Test Candidate" \
   --father-name "Test Father" \
   --roll-number "CCK-104"
-uvicorn app.main:app --reload --host 127.0.0.1 --port 8000 --no-access-log
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000 --no-access-log --no-proxy-headers --no-server-header
 ```
 
 Only provision candidates with actual admissions approval. The CLI creates a user
@@ -110,6 +110,15 @@ for older completed attempts there. Pause starts and finish all grading before
 authorizing result release. Candidates see only released totals at `/results`.
 The existing free-access preview includes a labeled sample result at the same route.
 See [Milestone 8 handover](docs/milestone-8.md) for rules, endpoints, and verification.
+
+After pulling Milestone 9, install `requirements-dev.lock` again (certificate caching
+adds CacheControl/msgpack), then run `alembic upgrade head` for
+`0008_security_hardening`. It adds authentication security events and PostgreSQL
+guards preventing changes to audit/session-event/grade/security history. All
+existing answer and exam tables are preserved. New sign-in limits and body caps
+have defaults; local preview and candidate login fields remain unchanged.
+See [Milestone 9 handover](docs/milestone-9.md) for the security review, test evidence,
+maintenance command, runtime-role template, and production limitations.
 
 Run the expiry worker in a separate backend terminal so deadlines are recorded
 even when no browser is connected:
@@ -347,10 +356,12 @@ exclude keys, accepted values, and grading configuration. See
 - [Milestone 6 handover, administration workflow, and verification results](docs/milestone-6.md)
 - [Milestone 7 handover, proctor workflow, and verification results](docs/milestone-7.md)
 - [Milestone 8 handover, grading/results workflow, and verification results](docs/milestone-8.md)
+- [Milestone 9 handover, security review, and verification results](docs/milestone-9.md)
 - [GitHub setup and progress history](docs/version-control.md)
 
-Milestone 8 preserves your CCK templates and adds backend scoring, versioned manual
-review, examiner access, and controlled candidate results.
-Next is Milestone 9: security review and hardening.
+Milestone 9 preserves your CCK templates, admissions login, and development preview
+while hardening authentication, HTTP boundaries, and database histories.
+Next is Milestone 10: production readiness, operational recovery, load testing,
+and a realistic mock examination. Production deployment is not implemented yet.
 Real Google acceptance testing remains necessary before the Milestone 1 exit
 criteria can be considered fully demonstrated.

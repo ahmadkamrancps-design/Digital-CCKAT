@@ -1,0 +1,17 @@
+-- Reviewed template for a dedicated CCK database/schema; run as the migration owner.
+-- First create a separate runtime LOGIN role with NOINHERIT, NOSUPERUSER,
+-- NOCREATEDB, NOCREATEROLE, NOREPLICATION, NOBYPASSRLS and no owner-role membership.
+-- It must not own the database, schema, tables, functions, or triggers.
+-- Supply schema_name and runtime_role using psql --set; assign secrets separately.
+-- Execute with --set=ON_ERROR_STOP=1 --single-transaction after each migration.
+REVOKE CREATE ON SCHEMA :"schema_name" FROM PUBLIC;
+REVOKE ALL ON SCHEMA :"schema_name" FROM :"runtime_role";
+GRANT USAGE ON SCHEMA :"schema_name" TO :"runtime_role";
+REVOKE ALL ON ALL TABLES IN SCHEMA :"schema_name" FROM :"runtime_role";
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA :"schema_name" TO :"runtime_role";
+REVOKE UPDATE, DELETE ON TABLE
+  :"schema_name".audit_events, :"schema_name".session_events,
+  :"schema_name".grading_records, :"schema_name".security_events FROM :"runtime_role";
+REVOKE ALL ON TABLE :"schema_name".alembic_version FROM :"runtime_role";
+GRANT SELECT ON TABLE :"schema_name".alembic_version TO :"runtime_role";
+REVOKE EXECUTE ON FUNCTION :"schema_name".cck_reject_history_change() FROM PUBLIC;

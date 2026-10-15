@@ -2,6 +2,8 @@
 
 import json
 from datetime import timedelta
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from threading import Thread
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -83,3 +85,56 @@ def test_real_signature_audience_issuer_and_expiry(
                 GoogleIdentityVerifier(CLIENT_ID).verify(credential)
         else:
             assert GoogleIdentityVerifier(CLIENT_ID).verify(credential).subject == "stable-sub"
+
+
+def test_public_certificates_are_cached_but_credentials_are_verified_each_time(
+    signing_material: tuple[RSASigner, str],
+) -> None:
+    signer, certificate = signing_material
+    requests = 0
+
+    class Certificates(BaseHTTPRequestHandler):
+        def do_GET(self) -> None:
+            nonlocal requests
+            requests += 1
+            body = json.dumps({"cck-test-key": certificate}).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Cache-Control", "public, max-age=3600")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, format: str, *args: object) -> None:
+            pass
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Certificates)
+    worker = Thread(target=server.serve_forever, daemon=True)
+    worker.start()
+    verifier = GoogleIdentityVerifier(CLIENT_ID)
+    now = int(utc_now().timestamp())
+    try:
+        with patch(
+            "google.oauth2.id_token._GOOGLE_OAUTH2_CERTS_URL",
+            f"http://127.0.0.1:{server.server_port}/certs",
+        ):
+            for subject in ["first-identity", "second-identity"]:
+                claims = {
+                    "sub": subject,
+                    "email": "test@gmail.com",
+                    "email_verified": True,
+                    "aud": CLIENT_ID,
+                    "iss": "https://accounts.google.com",
+                    "iat": now - 10,
+                    "exp": now + 300,
+                }
+                assert verifier.verify(jwt.encode(signer, claims).decode()).subject == subject
+            claims["exp"] = now - 1
+            with pytest.raises(InvalidGoogleCredential):
+                verifier.verify(jwt.encode(signer, claims).decode())
+            assert requests == 1
+    finally:
+        verifier.close()
+        server.shutdown()
+        server.server_close()
+        worker.join(timeout=5)

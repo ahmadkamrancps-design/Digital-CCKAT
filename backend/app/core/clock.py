@@ -4,8 +4,7 @@ from typing import Protocol
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.core.security import utc_now
-from app.services.auth_service import as_utc
+from app.core.security import as_utc, utc_now
 
 
 class Clock(Protocol):

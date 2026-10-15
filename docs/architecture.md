@@ -120,6 +120,15 @@ with an HTTPS reverse proxy. Docker Compose currently provides PostgreSQL only;
 backend and frontend Dockerfiles are development building blocks, not a completed
 production deployment.
 
+Milestone 9 keeps that architecture. Bounded-body/security-header ASGI middleware
+guards the HTTP boundary; `login_throttle_service` shares persistent sign-in limits
+without touching answer transactions. Certificate caching affects only Google's
+public signing certificates. Authentication appends minimal `security_events`;
+PostgreSQL guards prevent history rewrites, with a separate runtime-role grant
+template for deployment. Session expiry now uses the same database clock authority.
+The operator-only `auth_maintenance` command prunes expired authentication data
+without deleting exam/recovery/history records. See [security review](milestone-9.md).
+
 There is one explicit role per user initially: CANDIDATE, ADMIN, PROCTOR, EXAMINER.
 The trusted CLI provisions staff, including the first ADMIN. Authenticated ADMIN
 users can now provision/edit/disable candidates and import registrations atomically.

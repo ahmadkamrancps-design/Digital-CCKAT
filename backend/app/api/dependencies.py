@@ -41,5 +41,5 @@ CurrentAuth = Annotated[AuthContext, Depends(get_auth)]
 
 def require_csrf(request: Request, context: CurrentAuth) -> None:
     submitted = request.headers.get("x-csrf-token", "")
-    if not secrets.compare_digest(submitted, context.session.csrf_token):
+    if not submitted.isascii() or not secrets.compare_digest(submitted, context.session.csrf_token):
         raise HTTPException(403, "This request is not allowed. Refresh and try again.")

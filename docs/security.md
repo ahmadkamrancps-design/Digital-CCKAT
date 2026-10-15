@@ -39,7 +39,10 @@ integration: trusted staff must verify and enter/import official records.
 Google Identity Services provides an ID token through its JavaScript popup callback.
 The backend uses `google-auth` to verify Google's signature, token expiry/issued-at,
 issuer, and the configured OAuth audience. It requires `email_verified` to be true.
-Google certificate requests have a five-second timeout. Provider failures return
+Google certificate requests have a five-second timeout and use CacheControl's
+HTTP cache for public certificates, honoring their response cache lifetimes.
+The shared requests session is serialized within each worker; credentials and
+claims are verified on every sign-in and are never cached. Provider failures return
 a safe 503; invalid credentials return 401. No OAuth client secret is needed for
 this ID-token flow.
 
@@ -62,7 +65,8 @@ registered contact email remains administration-controlled.
 Session credentials are opaque random values delivered only in HttpOnly cookies,
 scoped to `/api`, with SameSite=Lax. PostgreSQL stores hashes, not raw cookie
 credentials. New sign-in revokes the previous session. Logout revokes the database
-record and clears the cookie. Production validation requires Secure cookies,
+record and clears the cookie. Session expiry now uses database time, matching the
+exam timing authority. Production validation requires Secure cookies,
 HTTPS frontend origin and separate database credentials. Staff Google login requires
 a configured Google client ID; candidate login does not.
 No app signing secret is required because these sessions are database-backed,
@@ -162,12 +166,12 @@ they support authorized human review and never trigger cheating judgments, score
 changes, time extensions, or automatic penalties. The bounded in-memory browser
 event buffer is best-effort and separate from durable answer recovery.
 
-Unfinished hardening: distributed rate limiting, certificate caching, an append-only
-database-enforced audit immutability, broader security-event coverage, OAuth replay/nonce policy,
-expired-session cleanup, security monitoring,
-production reverse proxy/CSP/HSTS configuration, dependency review, and concurrent
-login stress testing. Trusted-host and CORS settings are not substitutes for these.
-This milestone is not production-ready and does not authorize real examinations.
+Milestone 9 adds shared authentication throttling, certificate caching, authentication
+events, PostgreSQL history guards, cleanup tooling, request limits, response headers,
+dependency auditing, and concurrent successful-login tests. See the detailed review
+and remaining production risks in [Milestone 9](milestone-9.md). Deployment, operational
+monitoring, full HTML script policy, and stronger candidate verification remain
+unfinished. This system is not production-ready and does not authorize real examinations.
 
 Primary references:
 
@@ -194,6 +198,84 @@ subject totals, total marks, and server-computed percentage. Before release, mar
 maximum, percentage, and subject results are absent/null even if grading is done.
 The endpoint filters by the authenticated candidate and current exam assignment;
 it cannot accept a different candidate identity. Proctor responses remain unchanged.
-Database administrators can still change records directly; database least privilege,
-audit tamper resistance, request-rate policy, and operational review remain
-Milestone 9/10 work. These features alone do not establish production readiness.
+Database owners can still disable triggers or change schema/permissions. Milestone 9
+includes a tested least-privilege runtime-role grant template; production must actually
+use separate runtime and migration credentials. These features alone do not establish
+production readiness.
+
+## Milestone 9 controls and boundaries
+
+`RequestLimitsMiddleware` buffers only bounded API bodies before FastAPI parses
+JSON: 16 KiB for authentication and `MAX_REQUEST_BYTES` (2 MiB by default) elsewhere.
+It counts streamed chunks and does not trust Content-Length. Nonempty bodies require
+`application/json`; compressed bodies are rejected. Empty POST requests remain valid
+for start/submit/logout actions. These controls follow
+[OWASP REST input guidance](https://cheatsheetseries.owasp.org/cheatsheets/REST_Security_Cheat_Sheet.html).
+They do not replace ingress connection, header, concurrency, and slow-body timeouts.
+
+Google login consumes an atomic database IP bucket before token verification:
+`GOOGLE_LOGIN_IP_LIMIT=120` per 15 minutes, including successful requests. Candidate
+limits keep their existing roll/IP policy. Both use IP-before-account lock order,
+stop at the first blocked bucket, cap counters at limit + 2, and return Retry-After.
+Thus a blocked IP cannot create unlimited new roll buckets. Well-formed requests
+are limited; invalid JSON/schema requests still need ingress limits. No blanket
+answer-write throttle has been added: autosave retries retain existing behavior.
+On the development proxy all users share its loopback IP; tune deployment limits
+for the verified proxy topology and exam-center NAT.
+
+The Vite proxy strips incoming Forwarded/X-Forwarded-* identity headers; the backend
+Docker command disables proxy-header trust. Use `--no-proxy-headers` locally too.
+Production must overwrite forwarded headers at a trusted ingress and explicitly
+trust only its addresses if client-IP forwarding is enabled. Never expose a backend
+which trusts client-supplied IP claims. CORS/Host configuration alone cannot do this.
+
+`security_events` records LOGIN_SUCCESS, LOGIN_FAILURE, first LOGIN_THROTTLED for a
+bucket window, and LOGOUT, with method, nullable approved user ID, and server time.
+It stores no names, rolls, emails, IPs, credential hashes, tokens, answers, or notes.
+Unknown/denied login events have no user ID; they support aggregate review rather
+than identifying the source of an attack. Successful login/logout events commit
+with session changes. Unauthenticated validation, Origin/CSRF failures, provider
+outages, and all permission denials are not yet recorded in this table.
+There is no new public event endpoint; authorized database operators can inspect
+it with a read-only monitoring role. A retention/export/alerting policy still needs
+operational design. Avoid retaining unlimited failed-login events without monitoring.
+
+PostgreSQL migration `0008_security_hardening` rejects UPDATE, DELETE, and TRUNCATE
+on audit_events, session_events, grading_records, and security_events through
+statement triggers. Grading corrections must append revisions. Inserts still use
+existing foreign keys, checks, transactions, and allowlists. SQLite unit tests do
+not simulate this protection: dedicated PostgreSQL tests enforce it. A schema owner
+or superuser can remove the guards; the tested `ops/grant-runtime.psql` template
+also denies history mutation, DDL, and Alembic writes to a separate runtime role.
+Local development still uses its existing owner role; the template is not applied
+silently to that database. Backups/external log retention remain necessary.
+
+API responses, including generic failures, have no-store, nosniff, DENY framing,
+strict-origin referrer policy, and a CSP denying frames/objects/base URLs. Production
+API responses also set one-year HSTS without includeSubDomains/preload. The Vite
+development HTML adds framing protection, nosniff, and strict-origin referrer policy.
+API headers do not protect the separately served production HTML: configure and
+test its full CSP and HSTS at the production ingress in Milestone 10.
+See [OWASP response-header scope](https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Headers_Cheat_Sheet.html).
+
+Google ID tokens remain bearer credentials valid until Google's expiry. The current
+popup flow verifies signature/audience/issuer/time/email plus Origin, but has no
+single-use nonce/token replay registry. A stolen valid token could establish another
+session during that lifetime. Keep tokens out of logs/storage/URLs, enforce HTTPS,
+and assess nonce-bound sign-in with the actual staff Google configuration before
+production acceptance. Candidate login continues to require an existing approved
+record and intentionally retains the personal-information weakness described above.
+
+`python -m app.auth_maintenance --batch-size 1000` removes a bounded batch of expired
+sessions and throttle buckets using database time and skip-locked row locks. It
+preserves active sessions, accounts, attempts, answers, and every history table.
+Scheduling it and managing audit retention are operator responsibilities, not app
+startup side effects. Logout/rotation continue to revoke sessions immediately.
+
+Both lockfiles were audited with no known vulnerabilities reported on 14 October
+2026; CI now runs npm audit and pip-audit against pinned production/development
+dependencies. This is an advisory check, not a guarantee against unknown issues.
+Dependencies are pinned but Python artifact hashes and a full supply-chain attestation
+are not yet enforced. Build contexts already exclude real .env files; the tracked-file
+review found no credential-pattern matches. Production secrets must come from the
+deployment secret store and never from committed development examples.

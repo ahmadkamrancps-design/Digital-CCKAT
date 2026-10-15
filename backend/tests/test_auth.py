@@ -265,7 +265,8 @@ def test_candidate_cannot_use_admin_dependency(
 def test_validation_does_not_echo_credential(
     client: TestClient, login_headers: dict[str, str]
 ) -> None:
-    credential = "SENSITIVE_CREDENTIAL" * 1000
+    # Invalid schema length but below the outer 16 KiB authentication body limit.
+    credential = "SENSITIVE_CREDENTIAL" * 500
     response = client.post(
         "/api/auth/google", json={"credential": credential}, headers=login_headers
     )

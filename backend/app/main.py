@@ -9,7 +9,6 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.middleware.trustedhost import TrustedHostMiddleware
-from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app.api.dependencies import Db
 from app.api.routes import (
@@ -23,41 +22,31 @@ from app.api.routes import (
 )
 from app.config import Settings, load_settings
 from app.core.clock import DatabaseClock
+from app.core.http_security import (
+    RequestLimitsMiddleware,
+    SecurityHeadersMiddleware,
+    security_headers,
+)
 from app.db.session import create_db_engine, create_session_factory
 from app.services.google_identity import GoogleIdentityVerifier
 
 logger = logging.getLogger(__name__)
 
 
-class SecurityHeadersMiddleware:
-    def __init__(self, app: ASGIApp) -> None:
-        self.app = app
-
-    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        async def send_with_headers(message: Message) -> None:
-            if message["type"] == "http.response.start":
-                message.setdefault("headers", []).extend(
-                    [
-                        (b"cache-control", b"no-store"),
-                        (b"x-content-type-options", b"nosniff"),
-                        (b"referrer-policy", b"strict-origin-when-cross-origin"),
-                    ]
-                )
-            await send(message)
-
-        await self.app(scope, receive, send_with_headers)
-
-
 def create_app(settings: Settings | None = None) -> FastAPI:
     config = settings or load_settings()
     logging.basicConfig(level=config.log_level, format="%(levelname)s %(name)s %(message)s")
     engine = create_db_engine(config)
+    identity_verifier = GoogleIdentityVerifier(config.google_client_id)
 
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
         # Migrations run explicitly, never via metadata.create_all at startup.
-        yield
-        engine.dispose()
+        try:
+            yield
+        finally:
+            identity_verifier.close()
+            engine.dispose()
 
     app = FastAPI(
         title="CCK Digital Entry Test",
@@ -69,7 +58,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.state.settings = config
     app.state.session_factory = create_session_factory(engine)
-    app.state.identity_verifier = GoogleIdentityVerifier(config.google_client_id)
+    app.state.identity_verifier = identity_verifier
     app.state.clock = DatabaseClock()
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=config.allowed_hosts)
     app.add_middleware(
@@ -79,7 +68,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_methods=["GET", "POST", "PUT", "DELETE"],
         allow_headers=["Content-Type", "X-CSRF-Token"],
     )
-    app.add_middleware(SecurityHeadersMiddleware)
+    app.add_middleware(RequestLimitsMiddleware, max_bytes=config.max_request_bytes)
+    app.add_middleware(SecurityHeadersMiddleware, production=config.environment == "production")
 
     @app.exception_handler(RequestValidationError)
     async def validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
@@ -94,7 +84,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.exception_handler(Exception)
     async def unexpected_error(request: Request, exc: Exception) -> JSONResponse:
         logger.error("Request failed error_type=%s", type(exc).__name__)
-        return JSONResponse(status_code=500, content={"detail": "Unable to complete this request."})
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Unable to complete this request."},
+            headers=security_headers(config.environment == "production"),
+        )
 
     @app.get("/api/health", tags=["health"])
     def health() -> dict[str, str]:

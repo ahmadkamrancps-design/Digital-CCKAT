@@ -19,11 +19,13 @@ from app.models.proctor import (
     SessionEventType,
 )
 from app.models.question import AcceptedAnswer, GradingMode, Question, QuestionOption, QuestionType
+from app.models.security_event import SecurityEvent
 from app.models.session import AuthSession
 from app.models.subject import Subject
 from app.models.user import Role, User
 
 __all__ = [
+    "SecurityEvent",
     "ExaminerExamAssignment",
     "GradingRecord",
     "LoginThrottle",

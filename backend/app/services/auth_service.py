@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 
 from fastapi import HTTPException
 from sqlalchemy import delete, select
@@ -8,8 +8,10 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.config import Settings
-from app.core.security import new_token, token_hash, utc_now
-from app.models import AuthSession, Candidate, CandidateStatus, Role, User
+from app.core.clock import DatabaseClock
+from app.core.security import as_utc as as_utc
+from app.core.security import new_token, token_hash
+from app.models import AuthSession, Candidate, CandidateStatus, Role, SecurityEvent, User
 from app.schemas.auth import CandidateProfile, MeResponse, UserProfile
 from app.services.google_identity import GoogleIdentity
 
@@ -49,7 +51,12 @@ def login(db: Session, identity: GoogleIdentity, settings: Settings) -> tuple[Au
 
 
 def issue_session(
-    db: Session, user: User, candidate: Candidate | None, settings: Settings
+    db: Session,
+    user: User,
+    candidate: Candidate | None,
+    settings: Settings,
+    *,
+    method: str = "GOOGLE",
 ) -> tuple[AuthContext, str]:
     # Callers hold the user lock, serializing login with admissions record edits.
     raw_token = new_token()
@@ -57,11 +64,12 @@ def issue_session(
         user_id=user.id,
         token_hash=token_hash(raw_token),
         csrf_token=new_token(),
-        expires_at=utc_now() + timedelta(seconds=settings.session_ttl_seconds),
+        expires_at=DatabaseClock().now(db) + timedelta(seconds=settings.session_ttl_seconds),
     )
     try:
         db.execute(delete(AuthSession).where(AuthSession.user_id == user.id))
         db.add(session)
+        db.add(SecurityEvent(user_id=user.id, event_type="LOGIN_SUCCESS", method=method))
         db.commit()
     except IntegrityError as exc:
         db.rollback()
@@ -72,16 +80,11 @@ def issue_session(
     return AuthContext(user, candidate, session), raw_token
 
 
-def as_utc(value: datetime) -> datetime:
-    # SQLite unit tests lose timezone metadata; PostgreSQL uses TIMESTAMPTZ.
-    return value.replace(tzinfo=UTC) if value.tzinfo is None else value.astimezone(UTC)
-
-
 def authenticate(db: Session, raw_token: str | None) -> AuthContext:
     if not raw_token or len(raw_token) > 128:
         raise HTTPException(401, "Please sign in to continue.")
     session = db.scalar(select(AuthSession).where(AuthSession.token_hash == token_hash(raw_token)))
-    if session is None or as_utc(session.expires_at) <= utc_now():
+    if session is None or as_utc(session.expires_at) <= DatabaseClock().now(db):
         raise HTTPException(401, "Your session has ended. Please sign in again.")
     user = db.get(User, session.user_id)
     if user is None:

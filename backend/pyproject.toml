@@ -16,6 +16,7 @@ dependencies = [
   "pydantic-settings>=2.7,<3",
   "google-auth>=2.38,<3",
   "requests>=2.32,<3",
+  "CacheControl>=0.14.4,<0.15",
   "email-validator>=2.2,<3",
 ]
 
