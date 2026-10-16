@@ -1,6 +1,7 @@
 """Adversarial HTTP, role boundaries, and PostgreSQL history protection."""
 
 import asyncio
+import logging
 import os
 import re
 import uuid
@@ -142,6 +143,7 @@ def test_unexpected_error_is_safe_and_has_security_headers(application: FastAPI)
 def test_private_exception_does_not_escape_to_server_logs(
     application: FastAPI,
     caplog: pytest.LogCaptureFixture,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     @application.get("/api/test-only-private-error")
     def fail() -> None:
@@ -159,7 +161,16 @@ def test_private_exception_does_not_escape_to_server_logs(
             assert "PRIVATE" not in response.text
             assert response.headers["cache-control"] == "no-store"
 
-    asyncio.run(request())
+    # The PostgreSQL fixture invokes Alembic fileConfig, which replaces root
+    # handlers and disables existing loggers. Capture this logger directly after
+    # fixture setup so the security assertion is identical for both databases.
+    logger = logging.getLogger("app.core.http_security")
+    monkeypatch.setattr(logger, "disabled", False)
+    logger.addHandler(caplog.handler)
+    try:
+        asyncio.run(request())
+    finally:
+        logger.removeHandler(caplog.handler)
     assert "error_type=RuntimeError" in caplog.text
     assert "PRIVATE" not in caplog.text
 

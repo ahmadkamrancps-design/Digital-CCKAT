@@ -112,6 +112,13 @@ original exception message from reaching Uvicorn's traceback logger. A strict
 ASGI-transport regression verifies safe JSON, headers, no escaped exception, and
 logs containing only the exception type.
 
+The first PostgreSQL CI run of that regression passed the response/containment
+checks but could not capture the log: the migration fixture's Alembic logging
+configuration replaces pytest's root handlers and disables existing loggers. The
+test now attaches its capture handler to the application logger after fixture
+setup and restores it afterward. Application error handling is unchanged by this
+test correction.
+
 Both `npm audit` and pip-audit of production/development locks reported no known
 vulnerabilities on 14 October 2026. This is not a penetration test, artifact-hash
 guarantee, or production security certification. CI runs the audits on every push/PR.
