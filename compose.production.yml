@@ -1,0 +1,212 @@
+name: digital-cckat
+
+x-runtime: &runtime
+  image: cck-api:${CCK_IMAGE_TAG:-local}
+  build: ./backend
+  init: true
+  restart: unless-stopped
+  read_only: true
+  tmpfs: [/tmp:size=64m,mode=1777]
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  environment: &application-environment
+    ENVIRONMENT: production
+    DATABASE_URL_FILE: /run/secrets/database_url
+    FRONTEND_ORIGIN: ${CCK_PUBLIC_ORIGIN:?Set CCK_PUBLIC_ORIGIN}
+    ALLOWED_HOSTS: '["${CCK_HOSTNAME:?Set CCK_HOSTNAME}"]'
+    SESSION_COOKIE_SECURE: 'true'
+    GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+    CANDIDATE_LOGIN_IP_LIMIT: ${CANDIDATE_LOGIN_IP_LIMIT:-20000}
+    DATABASE_POOL_SIZE: ${DATABASE_POOL_SIZE:-5}
+    DATABASE_MAX_OVERFLOW: ${DATABASE_MAX_OVERFLOW:-0}
+    REQUIRE_EXPIRY_WORKER: 'true'
+    LOG_LEVEL: INFO
+  secrets:
+    - source: runtime_database_url
+      target: database_url
+  networks: [database]
+  logging:
+    driver: json-file
+    options: {max-size: 20m, max-file: '5'}
+
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${CCK_DATABASE_NAME:-cck_production}
+      POSTGRES_USER: cck_bootstrap
+      POSTGRES_PASSWORD_FILE: /run/secrets/bootstrap_password
+      POSTGRES_INITDB_ARGS: --encoding=UTF8 --auth-host=scram-sha-256
+    command: [postgres, -c, max_connections=120, -c, shared_buffers=512MB, -c, log_statement=none, -c, log_min_error_statement=panic, -c, log_error_verbosity=terse, -c, log_parameter_max_length_on_error=0]
+    secrets: [bootstrap_password, owner_password, runtime_password]
+    volumes:
+      - production_postgres:/var/lib/postgresql/data
+      - ./ops/postgres/init-roles.sh:/docker-entrypoint-initdb.d/10-cck-roles.sh:ro
+    networks: [database]
+    shm_size: 512mb
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U cck_bootstrap -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    logging:
+      driver: json-file
+      options: {max-size: 20m, max-file: '5'}
+
+  migrate:
+    <<: *runtime
+    restart: 'no'
+    command: [python, -m, app.migrate]
+    environment:
+      <<: *application-environment
+      REQUIRE_EXPIRY_WORKER: 'false'
+      DATABASE_STATEMENT_TIMEOUT_MS: '0'
+    secrets:
+      - source: owner_database_url
+        target: database_url
+    depends_on:
+      db: {condition: service_healthy}
+
+  api:
+    <<: *runtime
+    command: [uvicorn, app.main:app, --host, 0.0.0.0, --port, '8000', --workers, '${API_WORKERS:-4}', --limit-concurrency, '200', --timeout-keep-alive, '10', --proxy-headers, --forwarded-allow-ips, '${CCK_INGRESS_IP:-172.30.40.10}', --no-access-log, --no-server-header]
+    networks: [database, ingress]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    deploy:
+      replicas: ${API_REPLICAS:-2}
+    healthcheck:
+      test: [CMD, python, -m, app.operational_probe, readiness]
+      interval: 15s
+      timeout: 8s
+      start_period: 30s
+      retries: 3
+    ulimits: {nofile: {soft: 16384, hard: 16384}}
+    stop_grace_period: 40s
+
+  expiry-worker:
+    <<: *runtime
+    command: [python, -m, app.expiry_worker, --interval, '0.5', --batch-size, '100']
+    environment:
+      <<: *application-environment
+      DATABASE_POOL_SIZE: '1'
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    healthcheck:
+      test: [CMD, python, -m, app.operational_probe, worker]
+      interval: 10s
+      timeout: 8s
+      start_period: 20s
+      retries: 3
+    stop_grace_period: 40s
+
+  auth-maintenance:
+    <<: *runtime
+    command: [sh, -c, 'while true; do python -m app.auth_maintenance --batch-size 1000 || exit 1; sleep 300; done']
+    environment:
+      <<: *application-environment
+      DATABASE_POOL_SIZE: '1'
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+
+  gateway:
+    image: cck-gateway:${CCK_IMAGE_TAG:-local}
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.production
+      args:
+        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+    restart: unless-stopped
+    read_only: true
+    tmpfs: [/tmp:size=128m,mode=1777]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    environment:
+      CCK_SERVER_NAME: ${CCK_HOSTNAME:?Set CCK_HOSTNAME}
+      CCK_PUBLIC_ORIGIN: ${CCK_PUBLIC_ORIGIN:?Set CCK_PUBLIC_ORIGIN}
+    secrets: [tls_certificate, tls_private_key]
+    ports:
+      - '${CCK_BIND_ADDRESS:-0.0.0.0}:${CCK_HTTP_PORT:-80}:8080'
+      - '${CCK_BIND_ADDRESS:-0.0.0.0}:${CCK_HTTPS_PORT:-443}:8443'
+    networks:
+      ingress:
+        ipv4_address: ${CCK_INGRESS_IP:-172.30.40.10}
+    depends_on:
+      api: {condition: service_healthy}
+      expiry-worker: {condition: service_healthy}
+    ulimits: {nofile: {soft: 65536, hard: 65536}}
+    healthcheck:
+      test: [CMD, wget, -q, --spider, http://127.0.0.1:8080/_gateway/health]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+    logging:
+      driver: json-file
+      options: {max-size: 20m, max-file: '5'}
+
+  backup:
+    image: cck-backup:${CCK_IMAGE_TAG:-local}
+    build: {context: ., dockerfile: ops/Dockerfile.backup}
+    restart: unless-stopped
+    user: '${CCK_BACKUP_UID:-1000}:${CCK_BACKUP_GID:-1000}'
+    read_only: true
+    tmpfs: [/tmp:size=64m,mode=1777]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    secrets:
+      - source: owner_database_url
+        target: database_url
+      - backup_certificate
+    volumes:
+      - '${CCK_BACKUP_DIRECTORY:-./backups}:/backups'
+    networks: [database]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    healthcheck:
+      test: [CMD, python3, /usr/local/bin/cck-backup.py, status]
+      interval: 60s
+      timeout: 5s
+      start_period: 120s
+      retries: 3
+    logging:
+      driver: json-file
+      options: {max-size: 20m, max-file: '5'}
+
+  restore:
+    image: cck-backup:${CCK_IMAGE_TAG:-local}
+    build: {context: ., dockerfile: ops/Dockerfile.backup}
+    profiles: [restore]
+    user: '${CCK_BACKUP_UID:-1000}:${CCK_BACKUP_GID:-1000}'
+    read_only: true
+    tmpfs: [/tmp:size=1g,mode=1777]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    secrets:
+      - source: restore_database_url
+        target: database_url
+      - backup_certificate
+      - backup_private_key
+    volumes:
+      - '${CCK_BACKUP_DIRECTORY:-./backups}:/backups:ro'
+    networks: [database]
+
+networks:
+  database: {internal: true}
+  ingress:
+    ipam:
+      config:
+        - subnet: ${CCK_INGRESS_SUBNET:-172.30.40.0/24}
+volumes:
+  production_postgres:
+secrets:
+  bootstrap_password: {file: '${CCK_SECRET_DIRECTORY:?Set CCK_SECRET_DIRECTORY}/bootstrap_password'}
+  owner_password: {file: '${CCK_SECRET_DIRECTORY}/owner_password'}
+  runtime_password: {file: '${CCK_SECRET_DIRECTORY}/runtime_password'}
+  owner_database_url: {file: '${CCK_SECRET_DIRECTORY}/owner_database_url'}
+  runtime_database_url: {file: '${CCK_SECRET_DIRECTORY}/runtime_database_url'}
+  tls_certificate: {file: '${CCK_SECRET_DIRECTORY}/tls_certificate.pem'}
+  tls_private_key: {file: '${CCK_SECRET_DIRECTORY}/tls_private_key.pem'}
+  backup_certificate: {file: '${CCK_SECRET_DIRECTORY}/backup_certificate.pem'}
+  backup_private_key: {file: '${CCK_SECRET_DIRECTORY}/backup_private_key.pem'}
+  restore_database_url: {file: '${CCK_SECRET_DIRECTORY}/restore_database_url'}

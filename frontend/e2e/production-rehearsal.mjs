@@ -1,0 +1,113 @@
+/** Real HTTPS/DB rehearsal. It is intentionally separate from mocked Playwright specs. */
+import { readFileSync } from 'node:fs';
+import { chromium, expect } from '@playwright/test';
+
+const manifest = JSON.parse(readFileSync(process.env.CCK_REHEARSAL_MANIFEST, 'utf8'));
+if (manifest.kind !== 'CCK_REHEARSAL_ONLY') throw new Error('Only synthetic rehearsal manifests are accepted.');
+const base = process.env.CCK_BASE_URL || manifest.origin;
+const browser = await chromium.launch({ headless: true });
+const contexts = [];
+async function context() {
+  const value = await browser.newContext({ ignoreHTTPSErrors: process.env.CCK_LOCAL_SELF_SIGNED === 'true', viewport: { width: 1366, height: 900 } });
+  await value.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//, (route) => route.abort());
+  contexts.push(value);
+  return value;
+}
+async function api(owner, method, path, body, csrf, statuses = [200]) {
+  const response = await owner.request.fetch(`${base}/api${path}`, { method, headers: { Origin: manifest.origin, 'Content-Type': 'application/json', ...(csrf ? { 'X-CSRF-Token': csrf } : {}) }, ...(body === undefined ? {} : { data: body }) });
+  if (!statuses.includes(response.status())) throw new Error(`Rehearsal API failed: ${method} ${path.replace(/[a-f0-9-]{36}/g, ':id')} status ${response.status()}`);
+  return response.status() === 204 ? null : response.json();
+}
+try {
+  const candidate = await context();
+  const page = await candidate.newPage();
+  const initial = await page.goto(`${base}/dashboard`);
+  expect(initial.headers()['strict-transport-security']).toContain('max-age=');
+  expect(initial.headers()['content-security-policy']).toContain("script-src 'self'");
+  await expect(page.getByLabel('Roll number')).toBeVisible();
+  await expect(page.getByText(/Development preview/)).toHaveCount(0);
+  const credentials = manifest.candidates[0];
+  await page.getByLabel('Roll number').fill(credentials.roll_number);
+  await page.getByLabel('Full name').fill(credentials.full_name);
+  await page.getByLabel('Father’s name').fill(credentials.father_name);
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect(page.getByRole('heading', { name: `Welcome, ${credentials.full_name}.` })).toBeVisible();
+  await page.goto(`${base}/system-check`);
+  await expect(page.getByText('Checks passed. Wait for your proctor before starting.')).toBeVisible();
+  await page.goto(`${base}/instructions`);
+  await page.getByRole('link', { name: 'My Exam →' }).click();
+  await page.getByRole('link', { name: 'View instructions →' }).click();
+  await page.getByRole('button', { name: 'Open assigned exam' }).click();
+  await page.getByRole('button', { name: 'Start English' }).click();
+  await expect(page.getByRole('heading', { name: 'Question 1 of 30' })).toBeVisible();
+  const attemptId = new URL(page.url()).searchParams.get('attempt');
+  let session = await api(candidate, 'GET', '/me');
+  let attempt = await api(candidate, 'GET', `/candidate/attempts/${attemptId}`);
+  const firstDeadline = attempt.subjects[0].expires_at;
+  await page.getByRole('radio').first().check();
+  await page.getByRole('button', { name: 'Mark for Review' }).click();
+  await expect(page.getByText('Saved', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await page.getByLabel('Your answer', { exact: true }).fill('light');
+  await expect(page.getByText('Saved', { exact: true })).toBeVisible();
+  await candidate.setOffline(true);
+  await page.getByLabel('Your answer', { exact: true }).fill('offline recovery answer');
+  await expect(page.getByText('Offline / waiting to sync', { exact: true })).toBeVisible();
+  await candidate.setOffline(false);
+  await expect(page.getByText('Saved', { exact: true })).toBeVisible({ timeout: 20000 });
+  await page.reload();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await expect(page.getByLabel('Your answer', { exact: true })).toHaveValue('offline recovery answer');
+  attempt = await api(candidate, 'GET', `/candidate/attempts/${attemptId}`);
+  expect(attempt.subjects[0].expires_at).toBe(firstDeadline);
+  await page.getByRole('button', { name: 'Finish', exact: true }).click();
+  await page.getByRole('button', { name: 'Submit subject', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Test Submitted Successfully!' })).toBeVisible();
+  await page.getByRole('link', { name: 'Continue to Mathematics' }).click();
+  await page.getByRole('button', { name: 'Start Mathematics' }).click();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await page.getByLabel('Your answer', { exact: true }).fill('3');
+  await expect(page.getByText('Saved', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Finish', exact: true }).click();
+  await page.getByRole('button', { name: 'Submit subject', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Test Submitted Successfully!' })).toBeVisible();
+  await page.getByRole('link', { name: 'Continue to Urdu' }).click();
+  await page.getByRole('button', { name: 'Start Urdu' }).click();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await page.getByLabel('Your answer', { exact: true }).fill('اردو');
+  await expect(page.getByText('Saved', { exact: true })).toBeVisible();
+  expect(await page.locator('.question-body').getAttribute('dir')).toBe('rtl');
+  await page.getByRole('button', { name: 'Finish', exact: true }).click();
+  await page.getByRole('button', { name: 'Submit subject', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Test Submitted Successfully!' })).toBeVisible();
+  await page.goto(`${base}/results`);
+  await expect(page.getByText('Your result is not available yet. Administration will release results when ready.')).toBeVisible();
+  const admin = await context();
+  await admin.addCookies([{ name: 'cck_session', value: manifest.admin.cookie, domain: new URL(base).hostname, path: '/api', httpOnly: true, secure: true, sameSite: 'Lax' }]);
+  const csrf = manifest.admin.profile.csrf_token;
+  const pending = await api(admin, 'GET', `/grading/exams/${manifest.exam_id}/queue?limit=100`);
+  for (const row of pending) {
+    await api(admin, 'POST', `/grading/answers/${row.answer_id}/grade`, { expected_revision: 0, marks_awarded: '0.50', notes: 'Synthetic rehearsal manual mark' }, csrf);
+  }
+  // Other synthetic load candidates may also need manual marks; fetch successive pages
+  // from the shrinking pending queue so publication is a real completeness check.
+  for (let pass = 0; pass < 1000; pass++) {
+    const remaining = await api(admin, 'GET', `/grading/exams/${manifest.exam_id}/queue?limit=100`);
+    if (remaining.length === 0) break;
+    for (const row of remaining) await api(admin, 'POST', `/grading/answers/${row.answer_id}/grade`, { expected_revision: 0, marks_awarded: '0.50', notes: 'Synthetic rehearsal manual mark' }, csrf);
+  }
+  await api(admin, 'POST', `/admin/exams/${manifest.exam_id}/start-authorization`, { authorized: false }, csrf);
+  await api(admin, 'POST', `/admin/exams/${manifest.exam_id}/result-release`, { released: true, result_release_at: null }, csrf);
+  await page.reload();
+  await expect(page.getByText('Result released', { exact: true })).toBeVisible();
+  const results = await api(candidate, 'GET', '/candidate/results');
+  expect(results.find((value) => value.attempt_id === attemptId).publication_status).toBe('RELEASED');
+  expect(results.find((value) => value.attempt_id === attemptId).marks_awarded).toBe('2.50');
+  await api(admin, 'POST', `/admin/exams/${manifest.exam_id}/result-release`, { released: false, result_release_at: null }, csrf);
+  await page.reload();
+  await expect(page.getByText('Your result is not available yet. Administration will release results when ready.')).toBeVisible();
+  console.log('PASS: production HTTPS, secure login, readiness, MCQ/short answer, review, offline recovery, refresh, three subjects, manual grading, release and withholding');
+} finally {
+  for (const value of contexts) await value.close();
+  await browser.close();
+}

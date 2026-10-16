@@ -125,7 +125,9 @@ describe('live CCK candidate workflow', () => {
     const fixture = backend(); const view = renderApp();
     await userEvent.click(await screen.findByRole('radio', { name: 'Alpha' }));
     await userEvent.click(screen.getByRole('button', { name: 'Mark for Review' }));
-    await waitFor(() => expect(fixture.paper.questions[0].answer).toMatchObject({ selected_option_id: 'a', is_marked_for_review: true, revision: 1 }));
+    // Selection and review are separate edits; a save can finish between clicks.
+    await waitFor(() => expect(fixture.paper.questions[0].answer).toMatchObject({ selected_option_id: 'a', is_marked_for_review: true }));
+    expect(fixture.paper.questions[0].answer.revision).toBeGreaterThanOrEqual(1);
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
     expect(screen.getByRole('textbox')).toHaveAttribute('dir', 'rtl');
     await userEvent.type(screen.getByRole('textbox'), 'پاکستان');

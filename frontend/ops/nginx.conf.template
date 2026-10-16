@@ -1,0 +1,116 @@
+worker_processes auto;
+pid /tmp/cck-nginx.pid;
+error_log /dev/stderr crit;
+events { worker_connections 16384; }
+http {
+    include ${CCK_MIME_TYPES_FILE};
+    default_type application/octet-stream;
+    server_tokens off;
+    log_format cck escape=json '{"time":"$time_iso8601","request_id":"$request_id","method":"$request_method","status":$status,"seconds":$request_time,"upstream_seconds":"$upstream_response_time"}';
+    access_log /dev/stdout cck;
+    sendfile on;
+    keepalive_timeout 30;
+    keepalive_requests 1000;
+    client_header_timeout 10s;
+    client_body_timeout 10s;
+    send_timeout 30s;
+    client_max_body_size 2m;
+    client_body_temp_path /tmp/cck-client-body;
+    proxy_temp_path /tmp/cck-proxy;
+    fastcgi_temp_path /tmp/cck-fastcgi;
+    uwsgi_temp_path /tmp/cck-uwsgi;
+    scgi_temp_path /tmp/cck-scgi;
+    map $uri $cck_cache_control {
+        default "no-store";
+        ~^/assets/ "public, max-age=3600";
+    }
+    # Shared-center NAT is expected: these are ingress abuse limits, not per-candidate limits.
+    limit_req_zone $binary_remote_addr zone=cck_api:10m rate=2000r/s;
+    limit_req_zone $binary_remote_addr zone=cck_login:10m rate=200r/s;
+    limit_conn_zone $server_name zone=cck_inflight:1m;
+    limit_req_status 429;
+    limit_conn_status 503;
+    upstream cck_backend {
+        zone cck_backend 64k;
+        resolver ${CCK_RESOLVER} valid=10s ipv6=off;
+        least_conn;
+        server ${CCK_API_UPSTREAM} resolve;
+        keepalive 64;
+    }
+    server {
+        listen ${CCK_HTTP_LISTEN} default_server;
+        server_name _;
+        location = /_gateway/health { access_log off; return 200 "ok\n"; }
+        location / { return 444; }
+    }
+    server {
+        listen ${CCK_HTTP_LISTEN};
+        server_name ${CCK_SERVER_NAME};
+        return 308 ${CCK_PUBLIC_ORIGIN}$request_uri;
+    }
+    server {
+        listen ${CCK_HTTPS_LISTEN} ssl default_server;
+        http2 on;
+        server_name ${CCK_SERVER_NAME};
+        if ($host != ${CCK_SERVER_NAME}) { return 444; }
+        ssl_certificate ${CCK_TLS_CERTIFICATE};
+        ssl_certificate_key ${CCK_TLS_KEY};
+        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_session_cache shared:CCKTLS:20m;
+        ssl_session_timeout 1h;
+        ssl_session_tickets off;
+        root ${CCK_STATIC_ROOT};
+        include ${CCK_HEADERS_FILE};
+        location / { try_files $uri $uri/ /index.html; }
+        location /assets/ { try_files $uri =404; }
+        location /api/ {
+            limit_req zone=cck_api burst=10000 nodelay;
+            limit_conn cck_inflight 1024;
+            proxy_pass http://cck_backend;
+            proxy_http_version 1.1;
+            proxy_set_header Connection "";
+            proxy_set_header Host $host;
+            proxy_set_header X-Forwarded-For $remote_addr;
+            proxy_set_header X-Forwarded-Proto https;
+            proxy_set_header X-Forwarded-Host $host;
+            proxy_set_header Forwarded "";
+            proxy_set_header X-Request-ID $request_id;
+            proxy_hide_header Cache-Control;
+            proxy_hide_header Content-Security-Policy;
+            proxy_hide_header X-Frame-Options;
+            proxy_hide_header X-Content-Type-Options;
+            proxy_hide_header Referrer-Policy;
+            proxy_hide_header Strict-Transport-Security;
+            proxy_hide_header X-Request-ID;
+            proxy_connect_timeout 3s;
+            proxy_read_timeout 35s;
+            proxy_send_timeout 15s;
+            proxy_next_upstream off;
+        }
+        location /api/auth/ {
+            limit_req zone=cck_login burst=1000 nodelay;
+            client_max_body_size 16k;
+            # Include the same proxy directives; no alternate authentication route.
+            proxy_pass http://cck_backend;
+            proxy_http_version 1.1;
+            proxy_set_header Connection "";
+            proxy_set_header Host $host;
+            proxy_set_header X-Forwarded-For $remote_addr;
+            proxy_set_header X-Forwarded-Proto https;
+            proxy_set_header X-Forwarded-Host $host;
+            proxy_set_header Forwarded "";
+            proxy_set_header X-Request-ID $request_id;
+            proxy_hide_header Cache-Control;
+            proxy_hide_header Content-Security-Policy;
+            proxy_hide_header X-Frame-Options;
+            proxy_hide_header X-Content-Type-Options;
+            proxy_hide_header Referrer-Policy;
+            proxy_hide_header Strict-Transport-Security;
+            proxy_hide_header X-Request-ID;
+            proxy_connect_timeout 3s;
+            proxy_read_timeout 35s;
+            proxy_send_timeout 15s;
+            proxy_next_upstream off;
+        }
+    }
+}

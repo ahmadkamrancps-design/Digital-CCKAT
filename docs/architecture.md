@@ -219,3 +219,16 @@ Candidate result reads acquire exam locks in UUID order and omit every score
 until both completed grading and authorized server-time release are confirmed.
 No worker broker, frontend scoring, new runtime dependency, or exam-engine rewrite
 was introduced. See `docs/milestone-8.md` for the complete contract.
+
+Milestone 10 adds a separate production Compose deployment and HTTPS rehearsal.
+The gateway serves the same production React build and proxies `/api` on one origin.
+Only the gateway publishes ports; owner migrations gate restricted-runtime APIs
+and workers. Bounded SQLAlchemy pools preserve existing connection options. Initial
+exam/subject starts now acquire shared exam configuration locks, permitting distinct
+candidates to start concurrently while administrative exclusive locks still gate
+control changes. Start authorization validates and freezes papers, so first entry
+loads ordered subject configuration without reloading every private answer key.
+Existing answer/deadline/version rules are unchanged and regression-tested.
+Operational worker heartbeats drive readiness. Separate encrypted backup/recovery
+tools and synthetic load/browser rehearsals have no public route. See
+[Milestone 10](milestone-10.md) for acceptance gaps and deployment documentation.

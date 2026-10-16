@@ -1,0 +1,18 @@
+FROM node:24-alpine AS build
+WORKDIR /build
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+ARG VITE_GOOGLE_CLIENT_ID=""
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID VITE_ENABLE_UI_PREVIEW=false
+RUN npm run build
+
+FROM nginx:stable-alpine
+COPY --from=build /build/dist /usr/share/nginx/html
+COPY ops/nginx.conf.template /etc/cck/nginx.conf.template
+COPY ops/security-headers.conf /etc/cck/security-headers.conf
+COPY ops/start-gateway.sh /usr/local/bin/start-gateway
+RUN chmod 755 /usr/local/bin/start-gateway
+USER 101:101
+EXPOSE 8080 8443
+ENTRYPOINT ["/usr/local/bin/start-gateway"]

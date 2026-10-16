@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+export CCK_OWNER_PASSWORD="$(cat /run/secrets/owner_password)"
+export CCK_RUNTIME_PASSWORD="$(cat /run/secrets/runtime_password)"
+psql --set=ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<'SQL'
+\getenv owner_password CCK_OWNER_PASSWORD
+\getenv runtime_password CCK_RUNTIME_PASSWORD
+CREATE ROLE cck_owner LOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD :'owner_password';
+CREATE ROLE cck_runtime LOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD :'runtime_password';
+ALTER SCHEMA public OWNER TO cck_owner;
+REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+SQL
+unset CCK_OWNER_PASSWORD CCK_RUNTIME_PASSWORD

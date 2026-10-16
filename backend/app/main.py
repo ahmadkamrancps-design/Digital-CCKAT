@@ -6,7 +6,6 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
@@ -30,6 +29,7 @@ from app.core.http_security import (
 )
 from app.db.session import create_db_engine, create_session_factory
 from app.services.google_identity import GoogleIdentityVerifier
+from app.services.operations_service import check_readiness, migration_head
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +39,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     logging.basicConfig(level=config.log_level, format="%(levelname)s %(name)s %(message)s")
     engine = create_db_engine(config)
     identity_verifier = GoogleIdentityVerifier(config.google_client_id)
+    expected_head = migration_head()
 
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
@@ -98,7 +99,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/api/health/ready", tags=["health"])
     def readiness(db: Db) -> dict[str, str]:
-        db.execute(text("SELECT 1 FROM users LIMIT 1"))
+        check_readiness(db, config, expected_head)
         return {"status": "ready"}
 
     app.include_router(auth.router, prefix="/api")

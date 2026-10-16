@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Literal
 from urllib.parse import urlsplit
 
@@ -15,6 +16,14 @@ class Settings(BaseSettings):
         default="postgresql+psycopg://cck:cck_local_only@localhost:5432/cck_digital_test",
         repr=False,
     )
+    database_url_file: Path | None = Field(default=None, repr=False, exclude=True)
+    database_pool_size: int = Field(default=5, ge=1, le=100)
+    database_max_overflow: int = Field(default=0, ge=0, le=100)
+    database_pool_timeout_seconds: int = Field(default=5, ge=1, le=60)
+    database_statement_timeout_ms: int = Field(default=30000, ge=0, le=600000)
+    database_lock_timeout_ms: int = Field(default=5000, ge=0, le=60000)
+    require_expiry_worker: bool = False
+    expiry_worker_stale_seconds: int = Field(default=30, ge=5, le=300)
     google_client_id: str = ""
     frontend_origin: str = "http://localhost:5173"
     allowed_hosts: list[str] = ["localhost", "127.0.0.1"]
@@ -29,6 +38,15 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_configuration(self) -> "Settings":
+        if self.database_url_file:
+            if "database_url" in self.model_fields_set:
+                raise ValueError("Set DATABASE_URL or DATABASE_URL_FILE, never both")
+            try:
+                if self.database_url_file.stat().st_size > 8192:
+                    raise ValueError("Invalid database secret")
+                self.database_url = self.database_url_file.read_text().strip()
+            except OSError:
+                raise ValueError("Unable to read database secret") from None
         if make_url(self.database_url).drivername != "postgresql+psycopg":
             raise ValueError("DATABASE_URL must use postgresql+psycopg")
         origin = urlsplit(self.frontend_origin)

@@ -281,7 +281,7 @@ def check_start(exam: Exam, now: datetime) -> None:
 
 
 def begin_exam(db: Session, exam_id: UUID, candidate_id: UUID, clock: Clock) -> AttemptResponse:
-    exam = get_record(db, Exam, exam_id, lock=True)
+    exam = locked_start_configuration(db, exam_id)
     assignment = assignment_for(db, exam_id, candidate_id)
     attempt = db.scalar(
         select(ExamAttempt).where(ExamAttempt.assignment_id == assignment.id).with_for_update()
@@ -289,7 +289,17 @@ def begin_exam(db: Session, exam_id: UUID, candidate_id: UUID, clock: Clock) -> 
     if attempt is None:
         now = clock.now(db)
         check_start(exam, now)
-        papers = validate_papers(db, exam_id)
+        # Authorization validated these papers and freezes all public configuration
+        # edits. Do not reload private keys or revalidate every question per candidate.
+        papers = list(
+            db.scalars(
+                select(ExamSubject)
+                .where(ExamSubject.exam_id == exam_id)
+                .order_by(ExamSubject.sequence)
+            )
+        )
+        if not papers:
+            raise HTTPException(409, "No subjects are configured for this exam.")
         attempt = ExamAttempt(
             assignment_id=assignment.id, candidate_id=candidate_id, exam_id=exam_id, started_at=now
         )
@@ -315,6 +325,20 @@ def begin_exam(db: Session, exam_id: UUID, candidate_id: UUID, clock: Clock) -> 
     return attempt_response(attempt, subjects, now)
 
 
+def locked_start_configuration(db: Session, exam_id: UUID) -> Exam:
+    # Shared readers can start concurrently. Administrative configuration/start/
+    # publication writes still take an exclusive lock and cannot race these reads.
+    exam = db.scalar(
+        select(Exam)
+        .where(Exam.id == exam_id)
+        .with_for_update(read=True)
+        .execution_options(populate_existing=True)
+    )
+    if exam is None:
+        raise HTTPException(404, "The requested record was not found.")
+    return exam
+
+
 def resume_exam(db: Session, attempt_id: UUID, candidate_id: UUID, clock: Clock) -> AttemptResponse:
     attempt = owned_attempt(db, attempt_id, candidate_id)
     subjects, now = reconcile(db, attempt, clock)
@@ -335,7 +359,7 @@ def begin_subject(
     initial = get_record(db, ExamAttempt, attempt_id)
     if initial.candidate_id != candidate_id:
         raise HTTPException(404, "The requested attempt was not found.")
-    exam = get_record(db, Exam, initial.exam_id, lock=True)
+    exam = locked_start_configuration(db, initial.exam_id)
     attempt = owned_attempt(db, attempt_id, candidate_id)
     subjects, now = reconcile(db, attempt, clock)
     subject = find_subject(subjects, subject_id)

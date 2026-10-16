@@ -11,6 +11,7 @@ from app.models.candidate import Candidate, CandidateStatus
 from app.models.exam import Exam, ExamQuestion, ExamStatus, ExamSubject
 from app.models.grading import ExaminerExamAssignment, GradingRecord
 from app.models.login_throttle import LoginThrottle
+from app.models.operations import WorkerHeartbeat
 from app.models.proctor import (
     AttemptPresence,
     EventSource,
@@ -25,6 +26,7 @@ from app.models.subject import Subject
 from app.models.user import Role, User
 
 __all__ = [
+    "WorkerHeartbeat",
     "SecurityEvent",
     "ExaminerExamAssignment",
     "GradingRecord",

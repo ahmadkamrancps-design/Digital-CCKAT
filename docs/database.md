@@ -230,3 +230,14 @@ separate owner and reapply reviewed grants afterward. This is a tested template,
 not an automatic change to the existing development account. A schema owner can
 disable the guards; separate credentials, restricted network access, backups, and
 external audit retention remain production requirements.
+
+## Milestone 10 operational readiness
+
+`0009_operational_readiness` creates `worker_heartbeats`, keyed by worker name,
+with a server-derived last-success timestamp and nonnegative processed count.
+This mutable operational signal is separate from append-only exam/audit histories.
+It changes no existing candidate, attempt, answer, grade, or deadline. Downgrade
+removes only the signal table; production readiness requires the current migration
+head and a fresh expiry-worker heartbeat. The production migrator reapplies the
+reviewed runtime grants after upgrading. See [operations](production-operations.md)
+for credential separation, encrypted snapshots, and recovery limitations.

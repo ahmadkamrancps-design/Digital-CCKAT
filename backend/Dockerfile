@@ -6,6 +6,7 @@ RUN pip install --no-cache-dir -r requirements.lock
 COPY app ./app
 COPY alembic ./alembic
 COPY alembic.ini ./
+COPY ops ./ops
 RUN useradd --create-home cck
 USER cck
 EXPOSE 8000

@@ -1,5 +1,12 @@
 # Authentication and authorization foundation
 
+Milestone 10 deployment controls and remaining release gates are documented in
+[production operations](production-operations.md) and the [handover](milestone-10.md).
+They add TLS/CSP, trusted ingress, runtime/owner credential separation, bounded
+connections, safe gateway logs, worker readiness and encrypted recovery. They do
+not resolve the candidate personal-information impersonation risk or constitute
+production acceptance. Local free preview remains a development feature only.
+
 Candidates now use admissions roll number, full name, and father's name via
 `POST /api/auth/candidate`. Only existing APPROVED candidates linked to an active
 CANDIDATE user can receive a session. The endpoint cannot create accounts, bind

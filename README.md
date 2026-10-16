@@ -1,7 +1,7 @@
 # CCK Digital Entry Test
 
 Foundation, exam domain, attempt engine, candidate interface, recovery, administration,
-proctor monitoring, grading/results, and Milestone 9 security hardening for Cadet College Kohat's entry-test platform. React +
+proctor monitoring, grading/results, security hardening, and Milestone 10 deployment/recovery rehearsals for Cadet College Kohat's entry-test platform. React +
 TypeScript, FastAPI, SQLAlchemy 2, PostgreSQL, and Alembic. Candidates sign in with
 their admissions roll number, full name, and father's name. Staff use Google Identity Services.
 The supplied CCK frontend now supports real assigned exams, server-derived timers,
@@ -357,11 +357,14 @@ exclude keys, accepted values, and grading configuration. See
 - [Milestone 7 handover, proctor workflow, and verification results](docs/milestone-7.md)
 - [Milestone 8 handover, grading/results workflow, and verification results](docs/milestone-8.md)
 - [Milestone 9 handover, security review, and verification results](docs/milestone-9.md)
+- [Milestone 10 handover and remaining acceptance gates](docs/milestone-10.md)
+- [Production deployment, monitoring, and recovery](docs/production-operations.md)
+- [Capacity profiles and supervised mock examination](docs/capacity-and-rehearsal.md)
 - [GitHub setup and progress history](docs/version-control.md)
 
-Milestone 9 preserves your CCK templates, admissions login, and development preview
-while hardening authentication, HTTP boundaries, and database histories.
-Next is Milestone 10: production readiness, operational recovery, load testing,
-and a realistic mock examination. Production deployment is not implemented yet.
-Real Google acceptance testing remains necessary before the Milestone 1 exit
-criteria can be considered fully demonstrated.
+Milestone 10 preserves the CCK templates, admissions login, and development preview.
+The deployment candidate is configured for `digital.cckat.edu.pk`, with a 7,000
+simultaneous-candidate planning target. Production DNS/hosting/TLS, full capacity
+and supervised acceptance tests, staff Google acceptance, stronger or supervised
+candidate verification, and durable off-site/PITR recovery remain required.
+See the handover and operational runbooks before any public deployment.

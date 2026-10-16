@@ -2,6 +2,7 @@ import { Link, Navigate } from 'react-router-dom';
 import CandidateSidebar from '../components/CandidateSidebar';
 import { useAuth } from '../features/auth/AuthProvider';
 import { previewCandidate } from '../features/preview/preview';
+import { DeviceReadiness } from '../features/candidate/DeviceReadiness';
 
 const sections = {
   instructions: {
@@ -10,7 +11,7 @@ const sections = {
   },
   'system-check': {
     title: 'System check',
-    description: 'Device readiness checks will be added in a later milestone. No device check is being performed yet.',
+    description: 'Check your browser, recovery storage, and connection before the examination.',
   },
   profile: { title: 'Candidate profile', description: 'Your candidate registration details.' },
   help: {
@@ -19,7 +20,7 @@ const sections = {
   },
 };
 
-/** General candidate guidance/profile; device checks and account editing remain future work. */
+/** Candidate guidance and readiness, preserving the existing CCK page shell. */
 export function CandidateInfoPage({ section }: { section: keyof typeof sections }) {
   const { profile, isPreview } = useAuth();
   const displayProfile = isPreview ? previewCandidate : profile;
@@ -35,6 +36,9 @@ export function CandidateInfoPage({ section }: { section: keyof typeof sections 
         <h1 id="page-heading">{title}</h1>
         <p>{section === 'instructions' && !isPreview
           ? 'Open My Exam to view your assigned subjects, their durations, and start authorization.' : description}</p>
+        {section === 'system-check' && (isPreview
+          ? <p>Development preview: live device and service checks run after candidate sign-in.</p>
+          : <DeviceReadiness />)}
         {section === 'instructions' && !isPreview && <>
           <ol>
             <li>Choose Start subject only when instructed. Each subject has an independent timer.</li>
