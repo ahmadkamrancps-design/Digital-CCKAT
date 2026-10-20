@@ -1307,9 +1307,55 @@ a.dashboard-action {
   width: 76px;
   height: 76px;
   margin: 0 auto 16px;
-  background: #28a565;
   border-radius: 50%;
-  color: white;
+  color: var(--green);
+}
+
+.submission-success-icon > svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.submission-success-ring {
+  opacity: 0;
+}
+
+.submission-success-check {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .submission-success-icon.is-animated .submission-success-disc {
+    transform-origin: center;
+    animation: submission-success-pop 420ms ease-out both;
+  }
+
+  .submission-success-icon.is-animated .submission-success-check {
+    animation: submission-success-draw 360ms 240ms ease-out both;
+  }
+
+  .submission-success-icon.is-animated .submission-success-ring {
+    transform-origin: center;
+    animation: submission-success-ring 650ms 200ms ease-out both;
+  }
+}
+
+@keyframes submission-success-pop {
+  0% { transform: scale(0.65); opacity: 0; }
+  70% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes submission-success-draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes submission-success-ring {
+  from { transform: scale(1); opacity: 0.4; }
+  to { transform: scale(1.45); opacity: 0; }
 }
 
 .submission-card h1 {

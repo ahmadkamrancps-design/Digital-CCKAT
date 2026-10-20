@@ -245,6 +245,21 @@ The implementation follows [web.dev's animation performance guidance](https://we
 on transforms and [W3C technique C39](https://www.w3.org/WAI/WCAG22/Techniques/css/C39.html)
 on respecting reduced motion, researched on 19 October 2026.
 
+## Submission confirmation animation
+
+`SubmissionSuccessIcon.tsx` is shared by the preview and server-confirmed receipt.
+It plays one short sequence: a green circle appears, the white check draws, and a
+soft ring expands and fades. The sequence finishes within 850ms and leaves the
+complete check visible. Each subject receipt mounts its own icon; ordinary
+rerenders do not restart it. The text, receipt details and Continue control are
+available immediately, independent of the animation.
+
+The SVG is decorative and hidden from assistive technology; the existing focused
+receipt heading communicates status. Reduced-motion users see the final static
+check immediately. Live pending/error receipts never mount the icon, and expired
+subjects use the static version. No animation library, submission delay, audio,
+confetti or looping motion is added.
+
 ## Candidate instructions and support
 
 `CandidateInfoPage.tsx` preserves the CCK sidebar/card shell for `/instructions`,

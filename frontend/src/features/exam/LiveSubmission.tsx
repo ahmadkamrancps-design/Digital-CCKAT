@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, BookOpen, Check, FileText, Info, Timer } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import CCKLogo from '../../components/CCKLogo';
+import { SubmissionSuccessIcon } from '../../components/SubmissionSuccessIcon';
 import { examApi } from '../../services/exam';
 import type { Attempt, SubjectAttempt } from '../../types/attempt';
 import { useExamSessions, useOpenExamSession } from './ExamSessions';
@@ -55,7 +56,7 @@ export function LiveSubmission() {
   const timestamp = new Date(subject.submitted_at!);
   return <main className="submission-page" id="main" tabIndex={-1}><section className="submission-card" aria-labelledby="submission-heading">
     <div className="submission-brand"><CCKLogo size={74} /><div><strong className="cck-serif">Cadet College Kohat</strong><span>Digital Entry Test</span></div></div>
-    <div className="submission-success-icon" aria-hidden="true"><Check size={42} strokeWidth={3.5} /></div>
+    <SubmissionSuccessIcon key={subject.id} animate={subject.status === 'SUBMITTED'} />
     <h1 ref={heading} tabIndex={-1} id="submission-heading">{subject.status === 'EXPIRED' ? 'Subject time ended' : 'Test Submitted Successfully!'}</h1>
     <p className="submission-intro">{subject.status === 'EXPIRED' ? 'The server has closed this subject. Saved answers are locked.' : 'Your subject has been submitted and answers are locked.'}</p>
     {sessions.get(subject.id)?.queue.dirty() && <p className="exam-alert" role="alert">Some local changes were not acknowledged before this subject closed. Only answers saved by the server are included in the submission.</p>}

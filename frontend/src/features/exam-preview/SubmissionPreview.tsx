@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { ArrowRight, BookOpen, Check, FileText, Info, Timer } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import CCKLogo from '../../components/CCKLogo';
+import { SubmissionSuccessIcon } from '../../components/SubmissionSuccessIcon';
 import type { ExamSubjectPreview } from '../../types/exam';
 
 interface Props {
@@ -25,7 +26,7 @@ export function SubmissionPreview({ subject, nextSubject, onContinue, onRestart,
         <CCKLogo size={74} />
         <div><strong className="cck-serif">Cadet College Kohat</strong><span>Online Entry Test 2026</span></div>
       </div>
-      <div className="submission-success-icon" aria-hidden="true"><Check size={42} strokeWidth={3.5} /></div>
+      <SubmissionSuccessIcon key={subject.id} />
       <h1 ref={heading} tabIndex={-1} id="submission-heading">Test Submitted Successfully!</h1>
       <p className="submission-intro">{nextSubject ? 'Please continue to the next subject.' : 'You have reached the end of the subject preview.'}</p>
       <p className="submission-preview-label">Design preview — no test has been submitted to CCK.</p>
