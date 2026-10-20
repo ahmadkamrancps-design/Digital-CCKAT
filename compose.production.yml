@@ -6,7 +6,7 @@ x-runtime: &runtime
   init: true
   restart: unless-stopped
   read_only: true
-  tmpfs: [/tmp:size=64m,mode=1777]
+  tmpfs: ['/tmp:size=64m,mode=1777']
   cap_drop: [ALL]
   security_opt: [no-new-privileges:true]
   environment: &application-environment
@@ -119,7 +119,7 @@ services:
         VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
     restart: unless-stopped
     read_only: true
-    tmpfs: [/tmp:size=128m,mode=1777]
+    tmpfs: ['/tmp:size=128m,mode=1777']
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
     environment:
@@ -151,7 +151,7 @@ services:
     restart: unless-stopped
     user: '${CCK_BACKUP_UID:-1000}:${CCK_BACKUP_GID:-1000}'
     read_only: true
-    tmpfs: [/tmp:size=64m,mode=1777]
+    tmpfs: ['/tmp:size=64m,mode=1777']
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
     secrets:
@@ -179,7 +179,7 @@ services:
     profiles: [restore]
     user: '${CCK_BACKUP_UID:-1000}:${CCK_BACKUP_GID:-1000}'
     read_only: true
-    tmpfs: [/tmp:size=1g,mode=1777]
+    tmpfs: ['/tmp:size=1g,mode=1777']
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
     secrets:
