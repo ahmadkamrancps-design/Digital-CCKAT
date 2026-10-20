@@ -6,6 +6,11 @@ rehearsal_directory="$PWD/test-results/production-rehearsal"
 python3 ops/prepare_staging.py --directory "$rehearsal_directory"
 compose=(docker compose -p cck-rehearsal --env-file "$rehearsal_directory/staging.env" -f compose.production.yml)
 cleanup() {
+  rehearsal_status=$?
+  if [ "$rehearsal_status" -ne 0 ]; then
+    # This standalone tool emits safe error types/events, never raw DSNs or tokens.
+    "${compose[@]}" logs --no-color --tail 40 backup || true
+  fi
   "${compose[@]}" ps --all
   "${compose[@]}" down --volumes --remove-orphans
 }

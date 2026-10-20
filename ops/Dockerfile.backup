@@ -1,7 +1,8 @@
 FROM postgres:17
-RUN apt-get update && apt-get install -y --no-install-recommends python3-minimal openssl \
+RUN apt-get update && apt-get install -y --no-install-recommends python3 openssl \
     && rm -rf /var/lib/apt/lists/*
 COPY backend/app/backup.py /usr/local/bin/cck-backup.py
+RUN python3 /usr/local/bin/cck-backup.py --help > /dev/null
 USER 1000:1000
 ENTRYPOINT ["python3", "/usr/local/bin/cck-backup.py"]
 CMD ["loop"]
