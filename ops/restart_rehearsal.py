@@ -48,6 +48,8 @@ def run_browser_with_restarts(
             stdout=log,
             stderr=log,
         )
+        last_status: int | None = None
+        transport_error: str | None = None
 
         def wait_until(predicate: Callable[[], bool], stage: str, timeout: float = 90) -> None:
             deadline = time.monotonic() + timeout
@@ -57,25 +59,37 @@ def run_browser_with_restarts(
                         f"Browser stopped during {stage}; inspect private browser.log."
                     )
                 if time.monotonic() >= deadline:
-                    raise RuntimeError(f"Restart rehearsal timed out during {stage}.")
+                    raise RuntimeError(
+                        f"Restart rehearsal timed out during {stage}; "
+                        f"last HTTP status={last_status}, transport error={transport_error}."
+                    )
                 time.sleep(0.2)
 
         def status(path: str) -> int:
+            nonlocal last_status, transport_error
+            transport_error = None
             try:
-                with urlopen(origin + path, context=context, timeout=3) as response:
-                    return int(response.status)
+                # Exceed the gateway's 3-second upstream-connect timeout so a
+                # stopped container can return HTTP 504 rather than client timeout.
+                with urlopen(origin + path, context=context, timeout=6) as response:
+                    last_status = int(response.status)
             except HTTPError as error:
-                return error.code
-            except (URLError, OSError):
-                return 0
+                last_status = error.code
+                error.close()
+            except (URLError, OSError) as error:
+                last_status = 0
+                reason = error.reason if isinstance(error, URLError) else error
+                transport_error = type(reason).__name__
+            return last_status
 
         def marker(name: str) -> None:
             (control / name).touch(mode=0o600, exist_ok=False)
 
         try:
+            wait_until(lambda: status("/api/health") == 200, "verified HTTPS liveness", 20)
             wait_until(lambda: (control / "before-restart").exists(), "candidate preparation")
             stop_services()
-            wait_until(lambda: status("/api/health") in {502, 503}, "API outage")
+            wait_until(lambda: status("/api/health") in {502, 503, 504}, "API outage")
             marker("services-stopped")
             wait_until(lambda: (control / "draft-preserved").exists(), "local draft preservation")
             start_api()

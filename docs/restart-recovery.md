@@ -14,7 +14,9 @@ The helper `ops/restart_rehearsal.py` coordinates these checks:
 1. A synthetic approved candidate starts English and saves an MCQ, review flag
    and short answer. The browser retains the authoritative start/deadline values.
 2. The operator stops **only the disposable API and expiry-worker services**.
-   The HTTPS gateway remains running and returns an upstream failure for API calls.
+   The HTTPS gateway remains running and returns an upstream failure for API calls
+   (502, 503 or 504). The probe waits longer than the gateway's upstream-connect
+   timeout, distinguishing an actual HTTP gateway failure from a client timeout.
 3. The candidate edits the short answer during that outage. The browser must show
    `Offline / waiting to sync` and confirm that a local recovery copy is preserved.
 4. The API restarts while the worker remains stopped. Liveness must recover; after
