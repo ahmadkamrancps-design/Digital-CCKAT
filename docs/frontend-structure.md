@@ -226,6 +226,25 @@ See the root README for Ubuntu/WSL development commands. Milestone 1's real Goog
 browser acceptance check still requires the configured OAuth client and approved
 test account.
 
+## Button interaction feedback
+
+`index.css` gives native buttons, button-styled links and candidate/staff sidebar
+links a restrained pressed effect: a 1px downward shift and 2% compression over
+80ms, returning over 160ms on release. These durations are a CCK design choice.
+Only `transform` is transitioned, so surrounding layout stays fixed. Existing
+colors, selected states and keyboard focus outlines remain in place.
+
+Motion is enabled only with `prefers-reduced-motion: no-preference`. Disabled
+controls (including those inside disabled fieldsets), `aria-disabled="true"`
+controls and busy controls do not receive the pressed effect. Native activation
+and React handlers run immediately; there are no animation event handlers,
+timers, new dependencies or changes to exam/save behavior. MCQ answer text stays
+stationary, and Google's embedded sign-in control keeps its provider styling.
+
+The implementation follows [web.dev's animation performance guidance](https://web.dev/articles/animations-guide)
+on transforms and [W3C technique C39](https://www.w3.org/WAI/WCAG22/Techniques/css/C39.html)
+on respecting reduced motion, researched on 19 October 2026.
+
 ## Candidate instructions and support
 
 `CandidateInfoPage.tsx` preserves the CCK sidebar/card shell for `/instructions`,

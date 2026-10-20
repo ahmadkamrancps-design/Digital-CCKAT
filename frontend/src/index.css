@@ -59,6 +59,29 @@ button {
   cursor: pointer;
 }
 
+:where(a.primary-button, a.secondary-button, a.admin-link) {
+  display: inline-block;
+}
+
+/* Native pressed feedback never delays navigation, saving, or submission. */
+@media (prefers-reduced-motion: no-preference) {
+  :where(button, a.primary-button, a.secondary-button, a.admin-link,
+    .candidate-sidebar nav a, .admin-sidebar nav a) {
+    transition: transform 160ms ease-out;
+  }
+
+  :where(button, a.primary-button, a.secondary-button, a.admin-link,
+    .candidate-sidebar nav a, .admin-sidebar nav a):not(:disabled,
+    [aria-disabled="true"], [aria-busy="true"]):active {
+    transform: translateY(1px) scale(0.98);
+    transition-duration: 80ms;
+  }
+
+  :where(button:disabled, [aria-disabled="true"], [aria-busy="true"]) {
+    transition: none;
+  }
+}
+
 .cck-serif {
   font-family: "Libre Baskerville", Georgia, serif;
 }
