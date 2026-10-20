@@ -29,6 +29,7 @@ frontend/
 │   │   └── SubmissionPage.tsx
 │   ├── data/mockExam.ts
 │   ├── features/auth/
+│   ├── features/candidate/CandidateGuidance.tsx, DeviceReadiness.tsx
 │   ├── features/admin/
 │   │   ├── AdminLayout.tsx, admin.css
 │   │   ├── CandidatesPage.tsx, candidateCsv.ts
@@ -185,7 +186,9 @@ in memory; the last subject links back to the dashboard. Restart clears only the
 current subject's preview responses. There is no automatic redirect.
 `/submission` also shows this design directly in development preview; an optional
 `subject` query selects the sample subject. The paused timer does not represent
-an active examination. Information pages do not implement exam or device-check logic.
+an active examination. Information pages never start an attempt. System Check
+tests browser capabilities in preview without API requests; only signed-in live
+mode checks server readiness.
 Set the flag to false and restart Vite to restore the real login workflow.
 
 ## Image assets
@@ -222,6 +225,41 @@ offline/reload, lost acknowledgement, tab handoff, expiry, and conflict scenario
 See the root README for Ubuntu/WSL development commands. Milestone 1's real Google
 browser acceptance check still requires the configured OAuth client and approved
 test account.
+
+## Candidate instructions and support
+
+`CandidateInfoPage.tsx` preserves the CCK sidebar/card shell for `/instructions`,
+`/system-check`, `/profile`, and `/help`. `CandidateGuidance.tsx` provides exam
+instructions (timing, answering, review, synchronization, submission and conduct),
+workstation preparation, an unsaved English/Urdu typing field, recovery FAQs and
+admissions contacts. The page does not prescribe an unconfigured marking policy,
+calculator allowance, break duration, test date or reporting time.
+
+Live instructions reuse `AssignedExams`, reading subjects/durations/start state
+from the candidate API without creating an attempt. Preview subject information
+comes from the existing labeled synthetic fixture. Profile reads the signed-in
+candidate's name, roll and registration state; optional email is shown only when
+present. Father's name remains outside the public profile contract and cannot be
+edited here. Registration corrections go through authorized admissions staff.
+
+`DeviceReadiness` checks secure context, Web Locks and an actual temporary IndexedDB
+write/read/delete in both modes. Preview explicitly leaves the server check
+unverified and makes no API request. Live mode retains `/api/health/ready` and the
+proctor-before-start message. Practice text stays only in the input and is never
+submitted or persisted.
+
+The bundled `public/assets/fonts/NotoNaskhArabic.ttf` supplies Urdu glyphs for the
+guide, typing field and existing Urdu question renderer without requiring an
+external font request or OS font installation. Its SIL OFL 1.1 license, pinned
+upstream source and checksum are retained beside the asset. English CCK typography
+and the existing navy/gold interface remain in place.
+
+The help page distinguishes urgent on-site proctor assistance from registration
+enquiries. Published contacts were checked against the
+[CCK admissions page](https://www.cck.edu.pk/academic/admissions_process/) and
+[college website](https://www.cck.edu.pk/) on 19 October 2026. No support mailbox,
+ticket backend or guaranteed response time is implemented. Confirm published
+contacts with CCK before deployment; update the rendered content if they change.
 
 ## Milestone 8 grading and candidate results
 

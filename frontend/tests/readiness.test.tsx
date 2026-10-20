@@ -28,3 +28,11 @@ it('warns when the browser cannot preserve recovery drafts', async () => {
   expect(await screen.findByText('Answer recovery storage: Needs attention')).toBeInTheDocument();
   expect(screen.queryByText('Checks passed. Wait for your proctor before starting.')).not.toBeInTheDocument();
 });
+
+it('checks browser storage in preview without contacting or claiming readiness of the server', async () => {
+  render(<DeviceReadiness preview />);
+  expect(await screen.findByText('Browser checks passed. Server readiness will be checked after sign-in.')).toBeInTheDocument();
+  expect(screen.getByText('Answer recovery storage: Passed')).toBeInTheDocument();
+  expect(screen.getByText(/Exam service connection: Not checked in development preview/)).toBeInTheDocument();
+  expect(fetch).not.toHaveBeenCalled();
+});

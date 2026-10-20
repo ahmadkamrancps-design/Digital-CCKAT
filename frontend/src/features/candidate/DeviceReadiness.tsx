@@ -30,7 +30,7 @@ async function probeStorage(): Promise<void> {
 }
 
 /** Readiness guidance only. No candidate data, exam clocks, or permissions are changed. */
-export function DeviceReadiness() {
+export function DeviceReadiness({ preview = false }: { preview?: boolean }) {
   const [checks, setChecks] = useState<Check[] | null>(null);
   const [pending, setPending] = useState(false);
   const [run, setRun] = useState(0);
@@ -49,21 +49,27 @@ export function DeviceReadiness() {
       ];
       try { await probeStorage(); results.push({ label: 'Answer recovery storage', passed: true, detail: 'Browser storage can save and read recovery data.' }); }
       catch { results.push({ label: 'Answer recovery storage', passed: false, detail: 'Enable site storage and leave private browsing. Ask your proctor for help before starting.' }); }
-      try { const health = await api<{ status: string }>('/health/ready'); if (health.status !== 'ready') throw new Error(); results.push({ label: 'Exam service connection', passed: true, detail: 'The server is reachable and ready.' }); }
-      catch { results.push({ label: 'Exam service connection', passed: false, detail: 'Cannot reach a ready exam service. Check your connection and ask your proctor before starting.' }); }
+      if (!preview) {
+        try { const health = await api<{ status: string }>('/health/ready'); if (health.status !== 'ready') throw new Error(); results.push({ label: 'Exam service connection', passed: true, detail: 'The server is reachable and ready.' }); }
+        catch { results.push({ label: 'Exam service connection', passed: false, detail: 'Cannot reach a ready exam service. Check your connection and ask your proctor before starting.' }); }
+      }
       if (active) { window.clearTimeout(timer); setChecks(results); setPending(false); }
     })();
     return () => { active = false; window.clearTimeout(timer); };
-  }, [run]);
+  }, [run, preview]);
   const ready = !pending && !!checks?.every((check) => check.passed);
+  const successMessage = preview
+    ? 'Browser checks passed. Server readiness will be checked after sign-in.'
+    : 'Checks passed. Wait for your proctor before starting.';
   return <section aria-labelledby="readiness-heading" aria-busy={pending}>
     <h2 id="readiness-heading">Device and connection readiness</h2>
     <p>Use an updated desktop browser. Keep one exam tab open and connect your laptop to power.</p>
-    {pending ? <p role="status">Checking this browser and the exam service…</p> : <>
-      <p role="status">{ready ? 'Checks passed. Wait for your proctor before starting.' : 'Resolve the checks below before starting your test.'}</p>
+    {pending ? <p role="status">{preview ? 'Checking this browser…' : 'Checking this browser and the exam service…'}</p> : <>
+      <p role="status">{ready ? successMessage : 'Resolve the checks below before starting your test.'}</p>
       <dl>{checks?.map((check) => <div key={check.label}><dt><strong>{check.label}: {check.passed ? 'Passed' : 'Needs attention'}</strong></dt><dd>{check.detail}</dd></div>)}</dl>
+      {preview && <p>Exam service connection: Not checked in development preview. No exam has been authorized or started.</p>}
     </>}
     <button type="button" className="secondary-button" disabled={pending} onClick={() => setRun((value) => value + 1)}>Run checks again</button>
-    <p>These checks confirm current browser capabilities and server contact. They cannot guarantee continuous connectivity or recover work after the server deadline.</p>
+    <p>These checks confirm current browser capabilities{!preview && ' and server contact'}. They cannot guarantee continuous connectivity or recover work after the server deadline.</p>
   </section>;
 }
