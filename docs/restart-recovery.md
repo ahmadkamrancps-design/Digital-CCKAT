@@ -41,7 +41,10 @@ helper fixes the disposable project name to `cck-rehearsal`; it is not a general
 production restart tool.
 
 Each phase has a timeout. Failure stops the rehearsal and triggers cleanup rather
-than reporting success. Browser diagnostics stay in private ignored `browser.log`;
+than reporting success. The browser records fixed phase labels; after a failed
+workflow the operator prints only the phase and an allowlisted error category.
+This identifies the failing step in CI without publishing Playwright assertions,
+answers, credentials or response bodies. Full browser diagnostics stay in private ignored `browser.log`;
 do not publish this file, the manifest, secrets or browser storage. Successful runs
 write `restart-report.json` with aggregate check outcomes and no answers/tokens.
 The native aggregate report also records `restart_recovery`.

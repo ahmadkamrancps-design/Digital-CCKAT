@@ -3,6 +3,7 @@
 import argparse
 import json
 import os
+import re
 import ssl
 import subprocess
 import time
@@ -103,8 +104,23 @@ def run_browser_with_restarts(
             wait_until(lambda: status("/api/health/ready") == 200, "worker recovery")
             marker("worker-restarted")
             if browser.wait(timeout=180) != 0:
+                # Never echo raw browser errors, responses, tokens or answer text.
+                # Only the driver's fixed-format phase/category marker is public.
+                safe_failure = re.findall(
+                    r"^REHEARSAL_FAILURE phase=([a-z_]{1,40}) "
+                    r"category=(timeout|assertion_or_request)$",
+                    (directory / "browser.log").read_text(errors="replace"),
+                    re.MULTILINE,
+                )
+                detail = (
+                    f" Phase={safe_failure[-1][0]}, category={safe_failure[-1][1]}."
+                    if safe_failure
+                    else ""
+                )
                 raise RuntimeError(
-                    "Browser recovery verification failed; inspect private browser.log."
+                    "Browser recovery verification failed."
+                    + detail
+                    + " Inspect private browser.log."
                 )
             (directory / "restart-report.json").write_text(
                 json.dumps(

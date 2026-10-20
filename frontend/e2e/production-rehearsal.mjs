@@ -9,6 +9,11 @@ const base = process.env.CCK_BASE_URL || manifest.origin;
 const browser = await chromium.launch({ headless: true });
 const contexts = [];
 const restartControl = process.env.CCK_RESTART_CONTROL_DIRECTORY;
+let phase = 'browser_start';
+function checkpoint(next) {
+  phase = next;
+  console.log(`REHEARSAL_PHASE ${phase}`);
+}
 async function waitForRestartMarker(name) {
   const deadline = Date.now() + 150000;
   while (!existsSync(join(restartControl, name))) {
@@ -31,6 +36,7 @@ async function api(owner, method, path, body, csrf, statuses = [200]) {
   return response.status() === 204 ? null : response.json();
 }
 try {
+  checkpoint('candidate_login');
   const candidate = await context();
   const page = await candidate.newPage();
   const initial = await page.goto(`${base}/dashboard`);
@@ -45,12 +51,14 @@ try {
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(page.getByRole('heading', { name: `Welcome, ${credentials.full_name}.` })).toBeVisible();
   await page.goto(`${base}/system-check`);
+  checkpoint('device_readiness');
   await expect(page.getByText('Checks passed. Wait for your proctor before starting.')).toBeVisible();
   await page.goto(`${base}/instructions`);
   await page.getByRole('link', { name: 'My Exam →' }).click();
   await page.getByRole('link', { name: 'View instructions →' }).click();
   await page.getByRole('button', { name: 'Open assigned exam' }).click();
   await page.getByRole('button', { name: 'Start English' }).click();
+  checkpoint('english_answers');
   await expect(page.getByRole('heading', { name: 'Question 1 of 30' })).toBeVisible();
   const attemptId = new URL(page.url()).searchParams.get('attempt');
   let session = await api(candidate, 'GET', '/me');
@@ -63,6 +71,7 @@ try {
   await page.getByLabel('Your answer', { exact: true }).fill('light');
   await expect(page.getByText('Saved', { exact: true })).toBeVisible();
   if (restartControl) {
+    checkpoint('service_restart');
     const subjectPath = `/candidate/attempts/${attemptId}/subjects/${attempt.subjects[0].id}`;
     const before = await api(candidate, 'GET', subjectPath + '/questions');
     restartMarker('before-restart');
@@ -82,6 +91,7 @@ try {
     expect(resumed.subjects[0].started_at).toBe(attempt.subjects[0].started_at);
     restartMarker('api-recovery-verified');
     await waitForRestartMarker('worker-restarted');
+    checkpoint('relogin_resume');
     session = await api(candidate, 'POST', '/auth/candidate', credentials);
     const reopened = await api(candidate, 'POST', `/candidate/exams/${manifest.exam_id}/attempt`, undefined, session.csrf_token);
     expect(reopened.id).toBe(attemptId);
@@ -90,6 +100,7 @@ try {
     await page.getByRole('button', { name: 'Next', exact: true }).click();
     await expect(page.getByLabel('Your answer', { exact: true })).toHaveValue('restart recovery answer');
   }
+  checkpoint('offline_recovery');
   await candidate.setOffline(true);
   await page.getByLabel('Your answer', { exact: true }).fill('offline recovery answer');
   await expect(page.getByText('Offline / waiting to sync', { exact: true })).toBeVisible();
@@ -100,31 +111,38 @@ try {
   await expect(page.getByLabel('Your answer', { exact: true })).toHaveValue('offline recovery answer');
   attempt = await api(candidate, 'GET', `/candidate/attempts/${attemptId}`);
   expect(attempt.subjects[0].expires_at).toBe(firstDeadline);
+  checkpoint('english_submission');
   await page.getByRole('button', { name: 'Finish', exact: true }).click();
   await page.getByRole('button', { name: 'Submit subject', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Test Submitted Successfully!' })).toBeVisible();
   await page.getByRole('link', { name: 'Continue to Mathematics' }).click();
+  checkpoint('mathematics_answers');
   await page.getByRole('button', { name: 'Start Mathematics' }).click();
   await page.getByRole('button', { name: 'Next', exact: true }).click();
   await page.getByLabel('Your answer', { exact: true }).fill('3');
   await expect(page.getByText('Saved', { exact: true })).toBeVisible();
+  checkpoint('mathematics_submission');
   await page.getByRole('button', { name: 'Finish', exact: true }).click();
   await page.getByRole('button', { name: 'Submit subject', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Test Submitted Successfully!' })).toBeVisible();
   await page.getByRole('link', { name: 'Continue to Urdu' }).click();
+  checkpoint('urdu_answers');
   await page.getByRole('button', { name: 'Start Urdu' }).click();
   await page.getByRole('button', { name: 'Next', exact: true }).click();
   await page.getByLabel('Your answer', { exact: true }).fill('اردو');
   await expect(page.getByText('Saved', { exact: true })).toBeVisible();
   expect(await page.locator('.question-body').getAttribute('dir')).toBe('rtl');
+  checkpoint('urdu_submission');
   await page.getByRole('button', { name: 'Finish', exact: true }).click();
   await page.getByRole('button', { name: 'Submit subject', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Test Submitted Successfully!' })).toBeVisible();
   await page.goto(`${base}/results`);
+  checkpoint('withheld_results');
   await expect(page.getByText('Your result is not available yet. Administration will release results when ready.')).toBeVisible();
   const admin = await context();
   await admin.addCookies([{ name: 'cck_session', value: manifest.admin.cookie, domain: new URL(base).hostname, path: '/api', httpOnly: true, secure: true, sameSite: 'Lax' }]);
   const csrf = manifest.admin.profile.csrf_token;
+  checkpoint('manual_grading');
   const pending = await api(admin, 'GET', `/grading/exams/${manifest.exam_id}/queue?limit=100`);
   for (const row of pending) {
     await api(admin, 'POST', `/grading/answers/${row.answer_id}/grade`, { expected_revision: 0, marks_awarded: '0.50', notes: 'Synthetic rehearsal manual mark' }, csrf);
@@ -137,16 +155,24 @@ try {
     for (const row of remaining) await api(admin, 'POST', `/grading/answers/${row.answer_id}/grade`, { expected_revision: 0, marks_awarded: '0.50', notes: 'Synthetic rehearsal manual mark' }, csrf);
   }
   await api(admin, 'POST', `/admin/exams/${manifest.exam_id}/start-authorization`, { authorized: false }, csrf);
+  checkpoint('result_release');
   await api(admin, 'POST', `/admin/exams/${manifest.exam_id}/result-release`, { released: true, result_release_at: null }, csrf);
   await page.reload();
   await expect(page.getByText('Result released', { exact: true })).toBeVisible();
   const results = await api(candidate, 'GET', '/candidate/results');
   expect(results.find((value) => value.attempt_id === attemptId).publication_status).toBe('RELEASED');
   expect(results.find((value) => value.attempt_id === attemptId).marks_awarded).toBe('2.50');
+  checkpoint('result_withholding');
   await api(admin, 'POST', `/admin/exams/${manifest.exam_id}/result-release`, { released: false, result_release_at: null }, csrf);
   await page.reload();
   await expect(page.getByText('Your result is not available yet. Administration will release results when ready.')).toBeVisible();
   console.log('PASS: production HTTPS, secure login, readiness, MCQ/short answer, review, offline recovery, refresh, three subjects, manual grading, release and withholding');
+} catch (error) {
+  // Publish only fixed phase labels and an allowlisted error category. Playwright's
+  // full error can contain answer text or credentials and stays in private logs.
+  const category = error?.name === 'TimeoutError' ? 'timeout' : 'assertion_or_request';
+  console.log(`REHEARSAL_FAILURE phase=${phase} category=${category}`);
+  throw error;
 } finally {
   for (const value of contexts) await value.close();
   await browser.close();
