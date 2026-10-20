@@ -104,6 +104,11 @@ Production commands and required secret/certificate names:
 [production operations](production-operations.md). Repeatable Docker/native/mock
 and 7,000-client profiles: [capacity and rehearsal](capacity-and-rehearsal.md).
 
+The rehearsal also includes [API/worker restart recovery](restart-recovery.md):
+a candidate edits during a real API outage, the pending draft synchronizes after
+API recovery, worker readiness fails and recovers, and re-login preserves the
+existing attempt/deadline. This runs only against disposable local synthetic data.
+
 ## Acceptance gaps
 
 The domain needs institutional DNS control, a deployment host, and valid renewable

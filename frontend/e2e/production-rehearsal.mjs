@@ -1,5 +1,6 @@
 /** Real HTTPS/DB rehearsal. It is intentionally separate from mocked Playwright specs. */
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { chromium, expect } from '@playwright/test';
 
 const manifest = JSON.parse(readFileSync(process.env.CCK_REHEARSAL_MANIFEST, 'utf8'));
@@ -7,6 +8,17 @@ if (manifest.kind !== 'CCK_REHEARSAL_ONLY') throw new Error('Only synthetic rehe
 const base = process.env.CCK_BASE_URL || manifest.origin;
 const browser = await chromium.launch({ headless: true });
 const contexts = [];
+const restartControl = process.env.CCK_RESTART_CONTROL_DIRECTORY;
+async function waitForRestartMarker(name) {
+  const deadline = Date.now() + 150000;
+  while (!existsSync(join(restartControl, name))) {
+    if (Date.now() >= deadline) throw new Error(`Timed out waiting for restart stage: ${name}`);
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
+}
+function restartMarker(name) {
+  writeFileSync(join(restartControl, name), '', { mode: 0o600, flag: 'wx' });
+}
 async function context() {
   const value = await browser.newContext({ ignoreHTTPSErrors: process.env.CCK_LOCAL_SELF_SIGNED === 'true', viewport: { width: 1366, height: 900 } });
   await value.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//, (route) => route.abort());
@@ -50,6 +62,34 @@ try {
   await page.getByRole('button', { name: 'Next', exact: true }).click();
   await page.getByLabel('Your answer', { exact: true }).fill('light');
   await expect(page.getByText('Saved', { exact: true })).toBeVisible();
+  if (restartControl) {
+    const subjectPath = `/candidate/attempts/${attemptId}/subjects/${attempt.subjects[0].id}`;
+    const before = await api(candidate, 'GET', subjectPath + '/questions');
+    restartMarker('before-restart');
+    await waitForRestartMarker('services-stopped');
+    await page.getByLabel('Your answer', { exact: true }).fill('restart recovery answer');
+    await expect(page.getByText('Offline / waiting to sync', { exact: true })).toBeVisible({ timeout: 20000 });
+    await expect(page.getByText('Saved on this device · awaiting server confirmation', { exact: true })).toBeVisible();
+    restartMarker('draft-preserved');
+    await waitForRestartMarker('api-restarted');
+    await expect(page.getByText('Saved', { exact: true })).toBeVisible({ timeout: 20000 });
+    const recovered = await api(candidate, 'GET', subjectPath + '/questions');
+    expect(recovered.questions[1].answer.short_answer_text).toBe('restart recovery answer');
+    expect(recovered.questions[1].answer.revision).toBe(before.questions[1].answer.revision + 1);
+    expect(recovered.questions[0].answer).toEqual(before.questions[0].answer);
+    const resumed = await api(candidate, 'GET', `/candidate/attempts/${attemptId}`);
+    expect(resumed.subjects[0].expires_at).toBe(firstDeadline);
+    expect(resumed.subjects[0].started_at).toBe(attempt.subjects[0].started_at);
+    restartMarker('api-recovery-verified');
+    await waitForRestartMarker('worker-restarted');
+    session = await api(candidate, 'POST', '/auth/candidate', credentials);
+    const reopened = await api(candidate, 'POST', `/candidate/exams/${manifest.exam_id}/attempt`, undefined, session.csrf_token);
+    expect(reopened.id).toBe(attemptId);
+    expect(reopened.subjects[0].expires_at).toBe(firstDeadline);
+    await page.reload();
+    await page.getByRole('button', { name: 'Next', exact: true }).click();
+    await expect(page.getByLabel('Your answer', { exact: true })).toHaveValue('restart recovery answer');
+  }
   await candidate.setOffline(true);
   await page.getByLabel('Your answer', { exact: true }).fill('offline recovery answer');
   await expect(page.getByText('Offline / waiting to sync', { exact: true })).toBeVisible();

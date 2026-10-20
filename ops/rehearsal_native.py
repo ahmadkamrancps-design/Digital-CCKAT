@@ -23,6 +23,7 @@ from app.rehearsal_seed import seed
 from app.rehearsal_verify import verify_expiry
 from prepare_staging import prepare
 from psycopg import sql
+from restart_rehearsal import run_browser_with_restarts
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 
@@ -215,15 +216,35 @@ def main() -> None:
                 flush=True,
             )
         env["LD_LIBRARY_PATH"] = "/tmp/cck-browser-libs/root/usr/lib/x86_64-linux-gnu"
-        browser = subprocess.run(
-            ["node", "e2e/production-rehearsal.mjs"],
-            cwd=root / "frontend",
-            env=env,
-            capture_output=True,
+
+        def stop_service(index: int) -> None:
+            process = processes[index]
+            if process.poll() is None:
+                os.killpg(process.pid, signal.SIGTERM)
+                process.wait(timeout=20)
+
+        def start_service(index: int) -> None:
+            processes[index] = subprocess.Popen(
+                commands[index],
+                cwd=root / "backend",
+                env=env,
+                stdout=logs[index],
+                stderr=logs[index],
+                start_new_session=True,
+            )
+
+        def stop_exam_services() -> None:
+            stop_service(0)
+            stop_service(1)
+
+        run_browser_with_restarts(
+            root,
+            directory,
+            env,
+            stop_exam_services,
+            lambda: start_service(0),
+            lambda: start_service(1),
         )
-        (directory / "browser.log").write_bytes(browser.stdout + browser.stderr)
-        if browser.returncode:
-            raise RuntimeError("Real-browser rehearsal failed; inspect private browser report")
         print(
             "PASS: real Chromium candidate workflow, recovery, submission and results",
             flush=True,
@@ -263,6 +284,7 @@ def main() -> None:
                     "load": "passed" if args.k6_bin else "not_run",
                     "encrypted_restore": "passed",
                     "unattended_expiry": "passed",
+                    "restart_recovery": "passed",
                     "production_capacity_certified": False,
                 },
                 indent=2,

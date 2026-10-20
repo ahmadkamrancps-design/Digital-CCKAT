@@ -29,7 +29,7 @@ docker run --rm --network host --user "$(id -u):$(id -g)" \
   grafana/k6:2.3.0 run --summary-export /rehearsal/load-summary.json /scripts/exam.js
 CCK_REHEARSAL_MANIFEST="$rehearsal_directory/manifest.json" \
 CCK_BASE_URL=https://localhost:8443 CCK_LOCAL_SELF_SIGNED=true \
-  node frontend/e2e/production-rehearsal.mjs
+  python3 ops/restart_rehearsal.py --directory "$rehearsal_directory"
 "${compose[@]}" run --rm --no-deps "${operator[@]}" api \
   python -m app.rehearsal_verify expiry --manifest /rehearsal/manifest.json
 "${compose[@]}" run --rm --no-deps backup backup

@@ -28,10 +28,19 @@ request triggering reconciliation. Account 0 is reserved for the browser, accoun
 
 It runs a 20-client k6 functional load check, a real Chromium workflow against the
 HTTPS API/database, runtime-role checks, and an encrypted restore into a fresh
-database. Cleanup removes **only the disposable Compose project's volumes**.
+database. During the browser workflow it stops the disposable API and expiry
+worker, verifies local draft preservation, restarts the API while the worker
+remains stopped, checks stale-worker readiness failure, recovers autosave, then
+restarts the worker and verifies readiness recovery. Re-login and refresh must
+retain the same attempt, deadline, saved response and review flags. See
+[restart recovery](restart-recovery.md) for the exact scope.
+Cleanup removes **only the disposable Compose project's volumes**.
 The private manifest contains synthetic credentials and an administrator session;
 do not upload it, secrets, browser storage, or database dumps as CI artifacts.
 The load summary contains aggregate measurements and sanitized route labels.
+`restart-report.json` records safe pass/fail evidence without credentials or answers;
+`restart-control/` contains only private synchronization markers for the operator
+and browser. There is no public service-control endpoint.
 To rerun, retain desired aggregate evidence then move/remove the old rehearsal
 directory deliberately; the script refuses to overwrite it.
 

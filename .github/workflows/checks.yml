@@ -32,6 +32,11 @@ jobs:
       - run: ruff check .
       - run: ruff format --check .
       - run: mypy app
+      - name: Check operational tooling
+        working-directory: .
+        run: |
+          ruff check ops --config backend/pyproject.toml
+          ruff format --check ops --config backend/pyproject.toml
       - run: |
           if [ ! -x /usr/lib/postgresql/17/bin/pg_dump ]; then
             . /etc/os-release
