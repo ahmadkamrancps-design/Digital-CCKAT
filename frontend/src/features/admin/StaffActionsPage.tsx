@@ -1,7 +1,14 @@
 import { useState } from "react";
 import { useAdminApi } from "../../services/admin";
 import type { StaffAction } from "../../types/admin";
-import { Pager, RemoteStatus, useRemote } from "./shared";
+import {
+  AdminPageHeader,
+  EmptyState,
+  Pager,
+  RemoteStatus,
+  useRemote,
+} from "./shared";
+import { actionLabel } from "./AdminOverview";
 
 export function StaffActionsPage() {
   const client = useAdminApi();
@@ -14,11 +21,10 @@ export function StaffActionsPage() {
   );
   return (
     <>
-      <h1>Staff action history</h1>
-      <p className="admin-muted">
-        Server-recorded administrator actions. This list contains record
-        identifiers and action types; it does not display candidate answers.
-      </p>
+      <AdminPageHeader
+        title="Staff action history"
+        description="Review who changed a record and when. Entries are recorded by the server and contain no candidate answers."
+      />
       <section className="admin-panel">
         <button
           onClick={() => {
@@ -36,7 +42,7 @@ export function StaffActionsPage() {
                 <th>Server time</th>
                 <th>Action</th>
                 <th>Record ID</th>
-                <th>Staff ID</th>
+                <th>Staff</th>
               </tr>
             </thead>
             <tbody>
@@ -47,14 +53,22 @@ export function StaffActionsPage() {
                       {new Date(item.server_timestamp).toLocaleString()}
                     </time>
                   </td>
-                  <td>{item.event_type}</td>
+                  <td>{actionLabel(item.event_type)}</td>
                   <td>{item.entity_id}</td>
-                  <td>{item.user_id}</td>
+                  <td>
+                    <bdi>{item.actor_name || item.user_id}</bdi>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+        {!list.loading && !list.error && list.data?.length === 0 && (
+          <EmptyState
+            title="No staff actions yet"
+            description="Actions will appear here after an administrator saves a change."
+          />
+        )}
         <Pager
           offset={offset}
           count={list.data?.length || 0}

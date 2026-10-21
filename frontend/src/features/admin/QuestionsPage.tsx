@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Plus } from "lucide-react";
 import { allAdminRows, useAdminApi } from "../../services/admin";
 import type {
   AdminGrading,
@@ -6,7 +8,15 @@ import type {
   AdminQuestionWrite,
   AdminSubject,
 } from "../../types/admin";
-import { Pager, RemoteStatus, TaskStatus, useRemote, useTask } from "./shared";
+import {
+  AdminPageHeader,
+  EmptyState,
+  Pager,
+  RemoteStatus,
+  TaskStatus,
+  useRemote,
+  useTask,
+} from "./shared";
 
 export function QuestionsPage() {
   const client = useAdminApi();
@@ -34,21 +44,27 @@ export function QuestionsPage() {
   );
   return (
     <>
-      <h1>Question bank</h1>
-      <p className="admin-muted">
-        MCQs and short answers only. Keys and grading rules are available to
-        administrators. Remove a question from every editable paper before
-        changing it.
-      </p>
-      <button
-        className="primary-button"
-        disabled={editing !== null}
-        onClick={() => setEditing("new")}
-      >
-        Create question
-      </button>
+      <AdminPageHeader
+        title="Question bank"
+        description="Create and organize MCQs and short-answer questions. Review the marking rules before adding a question to an exam."
+        actions={
+          <button
+            className="primary-button"
+            disabled={editing !== null}
+            onClick={() => setEditing("new")}
+          >
+            <Plus size={16} aria-hidden="true" /> Create question
+          </button>
+        }
+      />
       <TaskStatus task={task} />
       <RemoteStatus resource={subjects} />
+      {subjects.data && !subjects.data.some((item) => item.is_active) && (
+        <p className="admin-alert">
+          Create an active subject before adding questions.{" "}
+          <Link to="/admin/subjects">Open subject catalog →</Link>
+        </p>
+      )}
       {editing && subjects.data && (
         <QuestionEditor
           key={editing === "new" ? "new" : editing.id}
@@ -117,6 +133,12 @@ export function QuestionsPage() {
           </label>
         </div>
         <RemoteStatus resource={list} />
+        {!list.loading && !list.error && list.data?.length === 0 && (
+          <EmptyState
+            title="No questions found"
+            description="Change your filters, or create a question to start building your bank."
+          />
+        )}
         <ul className="admin-bank-list">
           {list.data?.map((item) => (
             <li key={item.id}>

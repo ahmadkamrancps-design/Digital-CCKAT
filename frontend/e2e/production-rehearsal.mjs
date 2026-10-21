@@ -142,6 +142,14 @@ try {
   const admin = await context();
   await admin.addCookies([{ name: 'cck_session', value: manifest.admin.cookie, domain: new URL(base).hostname, path: '/api', httpOnly: true, secure: true, sameSite: 'Lax' }]);
   const csrf = manifest.admin.profile.csrf_token;
+  checkpoint('admin_overview');
+  const staffPage = await admin.newPage();
+  await staffPage.goto(`${base}/admin`);
+  await expect(staffPage.getByRole('heading', { name: 'Administration overview' })).toBeVisible();
+  await expect(staffPage.getByRole('link', { name: /Registered candidates/ })).toContainText(String(manifest.candidates.length));
+  await staffPage.getByRole('navigation', { name: 'Administration', exact: true }).getByRole('link', { name: 'Candidates', exact: true }).click();
+  await expect(staffPage.getByRole('heading', { name: 'Candidate management' })).toBeVisible();
+  await expect(staffPage.getByText(manifest.candidates[0].roll_number, { exact: true })).toBeVisible();
   checkpoint('manual_grading');
   const pending = await api(admin, 'GET', `/grading/exams/${manifest.exam_id}/queue?limit=100`);
   for (const row of pending) {

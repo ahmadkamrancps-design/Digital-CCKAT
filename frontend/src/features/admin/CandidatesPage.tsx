@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Plus, Upload } from "lucide-react";
 import { allAdminRows, useAdminApi } from "../../services/admin";
 import type {
   AdminCandidate,
@@ -6,7 +7,16 @@ import type {
   AdminExam,
 } from "../../types/admin";
 import { candidateCsv } from "./candidateCsv";
-import { Pager, RemoteStatus, TaskStatus, useRemote, useTask } from "./shared";
+import {
+  AdminPageHeader,
+  EmptyState,
+  Pager,
+  RemoteStatus,
+  StatusPill,
+  TaskStatus,
+  useRemote,
+  useTask,
+} from "./shared";
 
 export function CandidatesPage() {
   const client = useAdminApi();
@@ -33,34 +43,35 @@ export function CandidatesPage() {
   );
   return (
     <>
-      <h1>Candidate management</h1>
-      <p className="admin-muted">
-        Manage approved identities and exam assignments. Disabling a candidate
-        blocks further authenticated access.
-      </p>
-      <div className="admin-actions">
-        <button
-          className="primary-button"
-          disabled={panelOpen}
-          onClick={() => {
-            setEditing("new");
-            setAssigned(null);
-            setImporting(false);
-          }}
-        >
-          Create candidate
-        </button>
-        <button
-          disabled={panelOpen}
-          onClick={() => {
-            setImporting(true);
-            setEditing(null);
-            setAssigned(null);
-          }}
-        >
-          Import CSV
-        </button>
-      </div>
+      <AdminPageHeader
+        title="Candidate management"
+        description="Register candidates using official admission details, then assign them to the right exam."
+        actions={
+          <>
+            <button
+              className="primary-button"
+              disabled={panelOpen}
+              onClick={() => {
+                setEditing("new");
+                setAssigned(null);
+                setImporting(false);
+              }}
+            >
+              <Plus size={16} aria-hidden="true" /> Create candidate
+            </button>
+            <button
+              disabled={panelOpen}
+              onClick={() => {
+                setImporting(true);
+                setEditing(null);
+                setAssigned(null);
+              }}
+            >
+              <Upload size={16} aria-hidden="true" /> Import CSV
+            </button>
+          </>
+        }
+      />
       {editing && (
         <CandidateEditor
           key={editing === "new" ? "new" : editing.id}
@@ -95,6 +106,7 @@ export function CandidatesPage() {
           <label>
             Search candidates{" "}
             <input
+              type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Name, roll number, or email"
@@ -132,6 +144,20 @@ export function CandidatesPage() {
               ))}
             </select>
           </label>
+          {(query || search || status || exam) && (
+            <button
+              type="button"
+              onClick={() => {
+                setQuery("");
+                setSearch("");
+                setStatus("");
+                setExam("");
+                setOffset(0);
+              }}
+            >
+              Clear filters
+            </button>
+          )}
         </form>
         <RemoteStatus resource={exams} />
         <RemoteStatus resource={list} />
@@ -144,7 +170,7 @@ export function CandidatesPage() {
                   <tr>
                     <th>Roll number</th>
                     <th>Name</th>
-                    <th>Authorized email</th>
+                    <th>Father’s name</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
@@ -159,12 +185,21 @@ export function CandidatesPage() {
                         <bdi>{item.full_name}</bdi>
                       </td>
                       <td>
-                        <bdi>{item.email}</bdi>
+                        <bdi>{item.father_name || "Not supplied"}</bdi>
                       </td>
-                      <td>{item.status}</td>
+                      <td>
+                        <StatusPill
+                          tone={
+                            item.status === "APPROVED" ? "success" : "neutral"
+                          }
+                        >
+                          {item.status === "APPROVED" ? "Approved" : "Disabled"}
+                        </StatusPill>
+                      </td>
                       <td>
                         <div className="admin-actions">
                           <button
+                            aria-label={`Edit ${item.roll_number}`}
                             disabled={panelOpen}
                             onClick={() => {
                               setEditing(item);
@@ -172,9 +207,10 @@ export function CandidatesPage() {
                               setImporting(false);
                             }}
                           >
-                            Edit {item.roll_number}
+                            Edit
                           </button>
                           <button
+                            aria-label={`Assign ${item.roll_number}`}
                             disabled={panelOpen}
                             onClick={() => {
                               setAssigned(item);
@@ -182,7 +218,7 @@ export function CandidatesPage() {
                               setImporting(false);
                             }}
                           >
-                            Assign {item.roll_number}
+                            Assign exam
                           </button>
                         </div>
                       </td>
@@ -191,7 +227,12 @@ export function CandidatesPage() {
                 </tbody>
               </table>
             </div>
-            {!list.data.length && <p>No candidates match these filters.</p>}
+            {!list.data.length && (
+              <EmptyState
+                title="No candidates match these filters"
+                description="Try another search or clear the filters. New registrations can be added individually or imported from CSV."
+              />
+            )}
             <Pager
               offset={offset}
               count={list.data.length}
@@ -229,6 +270,11 @@ function CandidateEditor({
   return (
     <section className="admin-panel">
       <h2>{candidate ? "Edit candidate" : "Create candidate"}</h2>
+      <p className="admin-muted">
+        New registrations require the full name, father’s name and roll number
+        from the official admission record. Email and Google identity are
+        optional.
+      </p>
       <TaskStatus task={task} />
       <form
         className="admin-form"
@@ -266,7 +312,7 @@ function CandidateEditor({
           });
         }}
       >
-        <fieldset disabled={task.pending}>
+        <fieldset className="admin-registration-fields" disabled={task.pending}>
           <legend>Candidate registration</legend>
           <label>
             Full name
@@ -297,7 +343,10 @@ function CandidateEditor({
               onChange={(event) => patch({ roll_number: event.target.value })}
             />
           </label>
-          <p className="admin-muted">Use the roll number and names from the official admission record. This system does not issue admission roll numbers.</p>
+          <p className="admin-muted">
+            Use the roll number and names from the official admission record.
+            This system does not issue admission roll numbers.
+          </p>
           <label>
             Authorized email
             <input
@@ -318,10 +367,10 @@ function CandidateEditor({
             />
           </label>
           <p className="admin-muted">
-            Email and Google identity are optional for candidate roll-number login.
-            Enter a subject identifier only after independent verification.
-            Gmail/verified Workspace identities can bind to the approved email
-            on first sign-in.
+            Email and Google identity are optional for candidate roll-number
+            login. Enter a subject identifier only after independent
+            verification. Gmail/verified Workspace identities can bind to the
+            approved email on first sign-in.
           </p>
           <label>
             Candidate status
@@ -376,9 +425,10 @@ function CandidateImporter({
       <h2>Import candidates</h2>
       <p className="admin-muted">
         Required headers: roll_number,full_name,father_name. Optional:
-        email,google_subject,status. Blank status means APPROVED. Maximum 500 rows;
-        any rejected row prevents the entire import.
-        Legacy email-based files are supported; records without a father’s name cannot use candidate sign-in.
+        email,google_subject,status. Blank status means APPROVED. Maximum 500
+        rows; any rejected row prevents the entire import. Legacy email-based
+        files are supported; records without a father’s name cannot use
+        candidate sign-in.
       </p>
       <TaskStatus task={task} />
       {error && (
@@ -449,8 +499,9 @@ function CandidateImporter({
               <ul>
                 {rows.slice(0, 10).map((item) => (
                   <li key={item.roll_number}>
-                    <bdi>{item.full_name}</bdi> · <bdi>{item.father_name || "Father’s name missing"}</bdi> · <bdi>{item.roll_number}</bdi>{" "}
-                    · {item.status}
+                    <bdi>{item.full_name}</bdi> ·{" "}
+                    <bdi>{item.father_name || "Father’s name missing"}</bdi> ·{" "}
+                    <bdi>{item.roll_number}</bdi> · {item.status}
                   </li>
                 ))}
               </ul>

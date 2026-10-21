@@ -21,7 +21,7 @@ test('candidate identity text stays inert and the portal cannot be framed', asyn
   expect(await page.evaluate(() => 'untrustedScriptRan' in window)).toBe(false);
 });
 
-for (const path of ['/admin', '/proctor', '/grading']) {
+for (const path of ['/admin', '/proctor', '/grading', '/preview/admin']) {
   test(`anonymous navigation to ${path} never fetches staff data`, async ({ page, context }) => {
     const requested: string[] = [];
     await context.route('**/api/**', (route) => {

@@ -115,7 +115,21 @@ export interface AdminAssignment {
 export interface StaffAction {
   id: string;
   user_id: string;
+  actor_name?: string | null;
   event_type: string;
   entity_id: string;
   server_timestamp: string;
+}
+
+export interface AdminOverview {
+  candidate_count: number;
+  approved_candidates: number;
+  exam_count: number;
+  published_exams: number;
+  question_count: number;
+  active_questions: number;
+  subject_count: number;
+  active_subjects: number;
+  recent_exams: Pick<AdminExam, 'id' | 'title' | 'status' | 'is_published' | 'is_start_authorized' | 'results_released' | 'scheduled_start'>[];
+  recent_actions: { id: string; event_type: string; actor_name: string; server_timestamp: string }[];
 }

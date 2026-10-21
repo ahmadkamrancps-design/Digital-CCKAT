@@ -12,7 +12,7 @@ from pydantic import (
     field_validator,
 )
 
-from app.models import CandidateStatus
+from app.models import CandidateStatus, ExamStatus
 
 Text = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 
@@ -59,6 +59,37 @@ class ReleaseWrite(BaseModel):
 class StaffActionResponse(BaseModel):
     id: UUID
     user_id: UUID
+    actor_name: str | None = None
     event_type: str
     entity_id: UUID
     server_timestamp: datetime
+
+
+class OverviewExam(BaseModel):
+    id: UUID
+    title: str
+    status: ExamStatus
+    is_published: bool
+    is_start_authorized: bool
+    results_released: bool
+    scheduled_start: datetime | None
+
+
+class OverviewAction(BaseModel):
+    id: UUID
+    event_type: str
+    actor_name: str
+    server_timestamp: datetime
+
+
+class AdminOverview(BaseModel):
+    candidate_count: int
+    approved_candidates: int
+    exam_count: int
+    published_exams: int
+    question_count: int
+    active_questions: int
+    subject_count: int
+    active_subjects: int
+    recent_exams: list[OverviewExam]
+    recent_actions: list[OverviewAction]

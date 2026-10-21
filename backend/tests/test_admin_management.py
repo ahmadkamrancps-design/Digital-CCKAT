@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.models import AuditEvent, Candidate, Role, User
+from app.models import AuditEvent, Candidate, CandidateStatus, Role, User
 from app.services.google_identity import GoogleIdentity
 from tests.conftest import FakeIdentityVerifier
 from tests.test_exam_domain import create, mcq, setup_paper
@@ -80,7 +80,7 @@ def test_management_rbac(
     ).json()
     headers = {**login_headers, "X-CSRF-Token": signed["csrf_token"]}
     expected = 200 if role == Role.ADMIN else 403
-    for path in ["candidates", "actions"]:
+    for path in ["candidates", "actions", "overview"]:
         assert client.get(f"/api/admin/{path}").status_code == expected
     result = client.post("/api/admin/candidates", json=registration(), headers=headers)
     assert result.status_code == (201 if role == Role.ADMIN else 403)
@@ -90,8 +90,95 @@ def test_management_rbac(
 
 
 def test_anonymous_management_denied(client: TestClient) -> None:
+    assert client.get("/api/admin/overview").status_code == 401
     assert client.get("/api/admin/candidates").status_code == 401
     assert client.post("/api/admin/candidates", json=registration()).status_code == 401
+
+
+def test_admin_overview_empty_workspace(client: TestClient, admin_headers: dict[str, str]) -> None:
+    response = client.get("/api/admin/overview")
+    assert response.status_code == 200
+    assert response.json() == {
+        "candidate_count": 0,
+        "approved_candidates": 0,
+        "exam_count": 0,
+        "published_exams": 0,
+        "question_count": 0,
+        "active_questions": 0,
+        "subject_count": 0,
+        "active_subjects": 0,
+        "recent_exams": [],
+        "recent_actions": [],
+    }
+
+
+def test_admin_overview_counts_all_records_and_limits_recent_details(
+    client: TestClient,
+    admin_headers: dict[str, str],
+    db_factory: sessionmaker[Session],
+) -> None:
+    with db_factory() as db:
+        users = [
+            User(display_name=f"Candidate {number}", role=Role.CANDIDATE) for number in range(51)
+        ]
+        db.add_all(users)
+        db.flush()
+        db.add_all(
+            Candidate(
+                user_id=user.id,
+                full_name=user.display_name,
+                father_name="Registered Father",
+                roll_number=f"OVERVIEW-{number:03}",
+                status=CandidateStatus.DISABLED if number == 50 else CandidateStatus.APPROVED,
+            )
+            for number, user in enumerate(users)
+        )
+        db.commit()
+    subject, _, _ = setup_paper(client, admin_headers)
+    question = create(client, admin_headers, "questions", mcq(subject))
+    other = create(
+        client,
+        admin_headers,
+        "questions",
+        {**mcq(subject), "prompt": "PRIVATE QUESTION PROMPT"},
+    )
+    assert (
+        client.post(
+            f"/api/admin/questions/{other['id']}/archive", headers=admin_headers
+        ).status_code
+        == 200
+    )
+    create(
+        client,
+        admin_headers,
+        "subjects",
+        {"name": "Archived subject", "code": "OLD", "is_active": False},
+    )
+    for number in range(6):
+        create(
+            client,
+            admin_headers,
+            "exams",
+            {"title": f"Another exam {number}", "is_published": False},
+        )
+    result = client.get("/api/admin/overview").json()
+    assert result["candidate_count"] == 51 and result["approved_candidates"] == 50
+    assert result["exam_count"] == 7
+    assert result["question_count"] == 2 and result["active_questions"] == 1
+    assert result["subject_count"] == 2 and result["active_subjects"] == 1
+    assert len(result["recent_exams"]) == 5 and len(result["recent_actions"]) == 5
+    assert all(action["actor_name"] == "Admin" for action in result["recent_actions"])
+    serialized = str(result)
+    for private in [
+        "is_correct",
+        "accepted_answers",
+        "PRIVATE QUESTION PROMPT",
+        question["prompt"],
+        "csrf_token",
+        "father_name",
+    ]:
+        assert private not in serialized
+    assert client.get("/api/admin/actions").json()[0]["actor_name"] == "Admin"
 
 
 def test_create_search_filters_and_actions(

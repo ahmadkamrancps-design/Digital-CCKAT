@@ -31,7 +31,7 @@ export default function LoginPage() {
           CCK Online Entry Test 2026
         </p>
 
-        {isPreview ? <Link className="primary-button preview-entry" to="/dashboard">Explore without login →</Link>
+        {isPreview ? <><Link className="primary-button preview-entry" to="/dashboard">Explore without login →</Link><Link className="admin-preview-entry" to="/preview/admin">Explore administration design →</Link></>
           : loading ? <p className="login-session-status" role="status">Checking your session…</p>
           : <>
             {error && <div className="login-session-error" role="alert">

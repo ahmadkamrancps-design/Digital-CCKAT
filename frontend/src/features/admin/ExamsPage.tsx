@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Plus } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { allAdminRows, useAdminApi } from "../../services/admin";
 import type {
@@ -10,6 +11,9 @@ import type {
 } from "../../types/admin";
 import {
   localDate,
+  AdminPageHeader,
+  EmptyState,
+  StatusPill,
   Pager,
   RemoteStatus,
   TaskStatus,
@@ -34,25 +38,29 @@ export function ExamsPage() {
   );
   return (
     <>
-      <h1>Exam management</h1>
-      <p className="admin-muted">
-        Configure papers, schedule the test, publish assignments, and authorize
-        starts.
-      </p>
-      <Link className="admin-link" to="/admin/exams/new">
-        Create exam
-      </Link>
+      <AdminPageHeader
+        title="Exam management"
+        description="Build papers, set the schedule and control when assigned candidates can start. Results stay withheld until you release them."
+        actions={
+          <Link className="admin-link primary-button" to="/admin/exams/new">
+            <Plus size={16} aria-hidden="true" />
+            Create exam
+          </Link>
+        }
+      />
       <section className="admin-panel">
-        <label>
-          Search exams{" "}
-          <input
-            value={search}
-            onChange={(event) => {
-              setSearch(event.target.value);
-              setOffset(0);
-            }}
-          />
-        </label>
+        <div className="admin-toolbar">
+          <label>
+            Search exams{" "}
+            <input
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setOffset(0);
+              }}
+            />
+          </label>
+        </div>
         <RemoteStatus resource={list} />
         <div className="admin-table-wrap">
           <table className="admin-table">
@@ -74,11 +82,21 @@ export function ExamsPage() {
                     <br />
                     <span className="admin-muted">{item.status}</span>
                   </td>
-                  <td>{item.is_published ? "Published" : "Unpublished"}</td>
                   <td>
-                    {item.is_start_authorized
-                      ? "Starts enabled"
-                      : "Starts paused"}
+                    <StatusPill
+                      tone={item.is_published ? "success" : "neutral"}
+                    >
+                      {item.is_published ? "Published" : "Unpublished"}
+                    </StatusPill>
+                  </td>
+                  <td>
+                    <StatusPill
+                      tone={item.is_start_authorized ? "success" : "warning"}
+                    >
+                      {item.is_start_authorized
+                        ? "Starts enabled"
+                        : "Starts paused"}
+                    </StatusPill>
                   </td>
                   <td>
                     {item.scheduled_start
@@ -86,8 +104,12 @@ export function ExamsPage() {
                       : "Not scheduled"}
                   </td>
                   <td>
-                    <Link className="admin-link" to={`/admin/exams/${item.id}`}>
-                      Manage {item.title}
+                    <Link
+                      className="admin-link"
+                      aria-label={`Manage ${item.title}`}
+                      to={`/admin/exams/${item.id}`}
+                    >
+                      Manage exam
                     </Link>
                   </td>
                 </tr>
@@ -95,6 +117,12 @@ export function ExamsPage() {
             </tbody>
           </table>
         </div>
+        {!list.loading && !list.error && list.data?.length === 0 && (
+          <EmptyState
+            title="No exams found"
+            description="Create a new exam or try another search. New exams begin unpublished."
+          />
+        )}
         <Pager
           offset={offset}
           count={list.data?.length || 0}
@@ -107,7 +135,15 @@ export function ExamsPage() {
 export function CreateExamPage() {
   return (
     <>
-      <h1>Create exam</h1>
+      <AdminPageHeader
+        title="Create exam"
+        description="Start with the exam details. You can add subjects, build papers and assign staff after saving."
+        actions={
+          <Link className="admin-link" to="/admin/exams">
+            ← All exams
+          </Link>
+        }
+      />
       <ExamEditor />
     </>
   );
@@ -255,19 +291,43 @@ export function ExamDetailPage() {
       data.exam.status === "ARCHIVED");
   return (
     <>
-      <h1>{data?.exam.title || "Exam workspace"}</h1>
-      <Link to="/admin/exams">← All exams</Link>
+      <AdminPageHeader
+        title={data?.exam.title || "Exam workspace"}
+        description="Prepare this exam, review its papers, and control publication and test-day access."
+        actions={
+          <Link className="admin-link" to="/admin/exams">
+            ← All exams
+          </Link>
+        }
+      />
       <RemoteStatus resource={resource} />
       <TaskStatus task={task} />
       {data && (
         <>
-          <ProctorAssignments key={data.exam.id} examId={data.exam.id} />
-          <ExamEditor
-            key={`${data.exam.id}:${data.exam.updated_at}:${data.exam.is_start_authorized}:${data.exam.has_attempts}`}
-            exam={data.exam}
-            saved={resource.reload}
-          />
-          <section className="admin-panel">
+          <nav className="admin-section-nav" aria-label="Exam setup sections">
+            {[
+              ["exam-section-details", "Details & schedule"],
+              ["exam-section-papers", "Subjects & papers"],
+              ["exam-section-proctors", "Proctors"],
+              ["exam-section-access", "Publication & starts"],
+              ["exam-section-results", "Results"],
+            ].map(([id, label]) => (
+              <a key={id} href={`#${id}`}>
+                {label}
+              </a>
+            ))}
+          </nav>
+          <div id="exam-section-proctors">
+            <ProctorAssignments key={data.exam.id} examId={data.exam.id} />
+          </div>
+          <div id="exam-section-details">
+            <ExamEditor
+              key={`${data.exam.id}:${data.exam.updated_at}:${data.exam.is_start_authorized}:${data.exam.has_attempts}`}
+              exam={data.exam}
+              saved={resource.reload}
+            />
+          </div>
+          <section className="admin-panel" id="exam-section-access">
             <h2>Publication and test-day access</h2>
             <p>
               Visibility:{" "}
@@ -328,20 +388,24 @@ export function ExamDetailPage() {
             </div>
           </section>
           <ExaminerAssignments examId={examId} />
-          <ResultControls
-            key={`${data.exam.id}:${data.exam.result_release_at}`}
-            exam={data.exam}
-            saved={resource.reload}
-          />
-          <SubjectConfiguration
-            key={data.exam.id}
-            exam={data.exam}
-            papers={data.papers}
-            subjects={data.subjects}
-            frozen={frozen}
-            saved={resource.reload}
-            choosePaper={setPaperId}
-          />
+          <div id="exam-section-results">
+            <ResultControls
+              key={`${data.exam.id}:${data.exam.result_release_at}`}
+              exam={data.exam}
+              saved={resource.reload}
+            />
+          </div>
+          <div id="exam-section-papers">
+            <SubjectConfiguration
+              key={data.exam.id}
+              exam={data.exam}
+              papers={data.papers}
+              subjects={data.subjects}
+              frozen={frozen}
+              saved={resource.reload}
+              choosePaper={setPaperId}
+            />
+          </div>
           {paperId && data.papers.some((item) => item.id === paperId) && (
             <PaperBuilder
               key={paperId}
@@ -376,8 +440,9 @@ function ResultControls({
         <strong>{exam.results_released ? "Released" : "Withheld"}</strong>
       </p>
       <p className="admin-muted">
-        Pause new starts and finish grading all attempts before authorizing release.
-        A future release time delays visibility. Withhold results before correcting marks.
+        Pause new starts and finish grading all attempts before authorizing
+        release. A future release time delays visibility. Withhold results
+        before correcting marks.
       </p>
       <TaskStatus task={task} />
       <form
@@ -401,10 +466,22 @@ function ResultControls({
         <button disabled={task.pending}>
           Save release plan / keep withheld
         </button>
-        <button type="button" disabled={task.pending || exam.is_start_authorized} onClick={() => {
-          if (!window.confirm('Authorize publication of completed results? Candidates will see marks at the selected time, or immediately if no time is set.')) return;
-          void task.run(async () => { await client.release(exam.id, utcDate(date)); await saved(); }, 'Result publication authorized.');
-        }}>
+        <button
+          type="button"
+          disabled={task.pending || exam.is_start_authorized}
+          onClick={() => {
+            if (
+              !window.confirm(
+                "Authorize publication of completed results? Candidates will see marks at the selected time, or immediately if no time is set.",
+              )
+            )
+              return;
+            void task.run(async () => {
+              await client.release(exam.id, utcDate(date));
+              await saved();
+            }, "Result publication authorized.");
+          }}
+        >
           Authorize result release
         </button>
       </form>

@@ -87,6 +87,12 @@ Migration `0004_admin_portal` adds publication/result-control fields and staff
 action records. See [Milestone 6 handover](docs/milestone-6.md) for the admin workflow,
 CSV format, migration compatibility, and current result-release limits.
 
+The administration portal opens on an overview with database totals, recent exams,
+staff activity, and shortcuts for common tasks. Its CCK sidebar leads to candidate
+registration/import, subjects, the question bank, exam building, and action history.
+Exam pages group scheduling, papers, staff assignments, publication, starts, and
+results into clearly labeled sections. See the [administration guide](docs/administration-portal.md).
+
 After pulling Milestone 7, run `alembic upgrade head` to apply
 `0005_proctor_monitoring`. Provision approved proctor staff once:
 
@@ -179,6 +185,14 @@ registration details and support information; preview makes no backend requests.
 
 Production builds ignore this flag and require authentication. Set it to `false`
 and restart Vite when testing actual candidate or staff sign-in.
+
+For a **read-only administration design preview**, open
+**http://localhost:5173/preview/admin** with that development flag enabled, or choose
+**Explore administration design** on the login page. Sample candidates, exams,
+subjects, questions and staff actions show the layout without creating a session
+or contacting the backend. Search/filter controls work locally; write controls are
+disabled. This preview grants no access to `/admin` or its APIs and is absent from
+production routing.
 
 With preview disabled and approved candidate records loaded, the dashboard displays assigned
 exams and configurable subject cards. Open an exam's instructions, explicitly

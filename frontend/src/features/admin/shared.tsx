@@ -1,4 +1,63 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import { ClipboardList } from "lucide-react";
+
+export function AdminPageHeader({
+  title,
+  description,
+  actions,
+}: {
+  title: string;
+  description: string;
+  actions?: ReactNode;
+}) {
+  return (
+    <div className="admin-page-heading">
+      <div>
+        <p className="admin-eyebrow">CCK administrator workspace</p>
+        <h1>{title}</h1>
+        <p className="admin-page-description">{description}</p>
+      </div>
+      {actions && <div className="admin-actions">{actions}</div>}
+    </div>
+  );
+}
+
+export function StatusPill({
+  children,
+  tone = "neutral",
+}: {
+  children: ReactNode;
+  tone?: "neutral" | "success" | "warning";
+}) {
+  return (
+    <span className={`admin-status admin-status-${tone}`}>
+      <span aria-hidden="true" />
+      {children}
+    </span>
+  );
+}
+
+export function EmptyState({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="admin-empty">
+      <ClipboardList size={26} aria-hidden="true" />
+      <strong>{title}</strong>
+      <p>{description}</p>
+    </div>
+  );
+}
 
 export function useRemote<T>(key: string, load: () => Promise<T>) {
   const loader = useRef(load);
@@ -109,6 +168,7 @@ export function Pager({
   count: number;
   setOffset: (offset: number) => void;
 }) {
+  if (offset === 0 && count === 0) return null;
   return (
     <nav className="admin-pager" aria-label="Record pages">
       <button

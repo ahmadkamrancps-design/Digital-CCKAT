@@ -123,6 +123,20 @@ selectors page through all catalogs rather than silently truncating to 50 rows.
 CSV is parsed in the browser and previewed before its typed rows are validated and
 imported atomically by the backend. See [Milestone 6](milestone-6.md).
 
+The index is now `AdminOverviewPage`: aggregate server totals, five recent exams,
+five staff actions, preparation guidance, and shortcuts. `AdminShell` provides the
+responsive sidebar, account header, breadcrumb and skip link. Shared page headers,
+status pills and empty states keep management pages consistent. Exam detail anchor
+links lead to its existing scheduling, subject/paper, proctor and release controls.
+`GET /api/admin/overview` is ADMIN-only and uses bounded queries; it never downloads
+the candidate catalog or exposes question content for dashboard counts.
+
+`/preview/admin/:section?` is a separate, development-only, view-only route using
+synthetic fixtures in `AdminPreview.tsx`. It shares presentation components with the
+live workspace, without importing a write client, creating a profile, storing tokens,
+or making backend requests. Both `import.meta.env.DEV` and the existing preview flag
+must be enabled. `/admin` remains guarded. See [administration guide](administration-portal.md).
+
 `/proctor` requires a verified PROCTOR or ADMIN profile and shows a separate CCK
 monitoring workspace. Candidate preview grants no staff access. Exam selection,
 search, active-subject filtering, paging, monotonic remaining time, contact freshness,

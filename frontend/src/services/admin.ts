@@ -5,6 +5,7 @@ import type { ProctorAssignment } from "../types/proctor";
 import type { ExaminerAssignment } from "../types/grading";
 import type {
   AdminAssignment,
+  AdminOverview,
   AdminCandidate,
   AdminCandidateWrite,
   AdminExam,
@@ -28,6 +29,7 @@ export function adminApi(csrf: string) {
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
   return {
+    overview: () => api<AdminOverview>('/admin/overview'),
     assignExaminer: (exam: string, user: string, is_active: boolean) => write<ExaminerAssignment[]>(`/exams/${exam}/examiners/${user}`, 'PUT', { is_active }),
     release: (id: string, result_release_at: string | null) => write<AdminExam>(`/exams/${id}/result-release`, 'POST', { released: true, result_release_at }),
     proctorAssignments: (exam: string) => api<ProctorAssignment[]>(`/admin/exams/${exam}/proctors`),

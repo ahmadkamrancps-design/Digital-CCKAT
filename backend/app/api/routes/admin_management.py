@@ -7,6 +7,7 @@ from app.api.dependencies import Db, require_csrf, require_origin
 from app.core.permissions import require_roles
 from app.models import CandidateStatus, Role
 from app.schemas.admin_management import (
+    AdminOverview,
     CandidateImport,
     CandidateResponse,
     CandidateWrite,
@@ -26,6 +27,11 @@ router = APIRouter(
 mutations = [Depends(require_origin), Depends(require_csrf)]
 Limit = Annotated[int, Query(ge=1, le=100)]
 Offset = Annotated[int, Query(ge=0)]
+
+
+@router.get("/overview", response_model=AdminOverview)
+def overview(db: Db) -> AdminOverview:
+    return service.overview(db)
 
 
 @router.get("/candidates", response_model=list[CandidateResponse])

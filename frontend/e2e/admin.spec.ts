@@ -48,8 +48,25 @@ async function backend(
       });
     if (role !== "ADMIN")
       return send({ detail: "Administrator access required." }, 403);
-    if (path === '/api/admin/proctors' || path.endsWith('/proctors')) return send([]);
-    if (path === '/api/admin/examiners' || path.endsWith('/examiners')) return send([]);
+    if (path === "/api/admin/overview")
+      return send({
+        candidate_count: candidates.length,
+        approved_candidates: candidates.filter(
+          (row) => row.status === "APPROVED",
+        ).length,
+        exam_count: exams.length,
+        published_exams: exams.filter((row) => row.is_published).length,
+        question_count: questions.length,
+        active_questions: questions.filter((row) => row.is_active).length,
+        subject_count: subjects.length,
+        active_subjects: subjects.filter((row) => row.is_active).length,
+        recent_exams: exams.slice(-5),
+        recent_actions: [],
+      });
+    if (path === "/api/admin/proctors" || path.endsWith("/proctors"))
+      return send([]);
+    if (path === "/api/admin/examiners" || path.endsWith("/examiners"))
+      return send([]);
     if (
       method !== "GET" &&
       request.headers()["x-csrf-token"] !== "browser-csrf"
@@ -257,6 +274,47 @@ test.beforeEach(async ({ page }) => {
   page.on("dialog", (dialog) => {
     void dialog.accept();
   });
+});
+
+test("administrator overview guides exam creation and refreshes its server totals", async ({
+  page,
+  context,
+}) => {
+  const fixture = await backend(context);
+  await page.goto("/admin");
+  await expect(
+    page.getByRole("heading", { name: "Administration overview" }),
+  ).toBeVisible();
+  await expect(page.getByText("Your first exam starts here")).toBeVisible();
+  const initialLoads = fixture.requests.filter(
+    (path) => path === "GET /api/admin/overview",
+  ).length;
+  await page.getByRole("link", { name: "Create an exam", exact: true }).click();
+  await page.getByLabel("Exam title").fill("Overview workflow test");
+  await page
+    .getByRole("button", { name: "Create unpublished exam", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Overview workflow test" }),
+  ).toBeVisible();
+  await page
+    .getByRole("navigation", { name: "Administration", exact: true })
+    .getByRole("link", { name: "Overview", exact: true })
+    .click();
+  await expect(
+    page.getByRole("link", { name: /Configured exams/ }),
+  ).toContainText("1");
+  await expect(
+    page.getByRole("link", {
+      name: "Manage Overview workflow test",
+      exact: true,
+    }),
+  ).toBeVisible();
+  // Development StrictMode can load twice on each mount. Returning must fetch fresh totals.
+  expect(
+    fixture.requests.filter((path) => path === "GET /api/admin/overview")
+      .length,
+  ).toBeGreaterThan(initialLoads);
 });
 
 test("admin creates and disables a candidate, reviews CSV, and preserves a rejected import", async ({

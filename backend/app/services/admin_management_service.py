@@ -2,7 +2,7 @@ from datetime import datetime
 from uuid import UUID
 
 from fastapi import HTTPException
-from sqlalchemy import delete, or_, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -14,10 +14,19 @@ from app.models import (
     CandidateStatus,
     Exam,
     ExamStatus,
+    Question,
     Role,
+    Subject,
     User,
 )
-from app.schemas.admin_management import CandidateResponse, CandidateWrite, StaffActionResponse
+from app.schemas.admin_management import (
+    AdminOverview,
+    CandidateResponse,
+    CandidateWrite,
+    OverviewAction,
+    OverviewExam,
+    StaffActionResponse,
+)
 from app.schemas.attempt import AssignmentResponse
 from app.schemas.exam_domain import ExamResponse
 from app.services.attempt_service import assignment_response, validate_papers
@@ -27,6 +36,64 @@ from app.services.result_service import validate_release
 
 def record_action(db: Session, actor_id: UUID, event_type: str, entity_id: UUID) -> None:
     db.add(AuditEvent(user_id=actor_id, event_type=event_type, entity_id=entity_id))
+
+
+def overview(db: Session) -> AdminOverview:
+    """Aggregate counts without loading candidate records, questions or answer keys."""
+    candidates = db.execute(
+        select(
+            func.count(Candidate.id),
+            func.count().filter(Candidate.status == CandidateStatus.APPROVED),
+        )
+    ).one()
+    exams = db.execute(
+        select(
+            func.count(Exam.id),
+            func.count().filter(Exam.is_published.is_(True), Exam.status == ExamStatus.DRAFT),
+        )
+    ).one()
+    questions = db.execute(
+        select(func.count(Question.id), func.count().filter(Question.is_active.is_(True)))
+    ).one()
+    subjects = db.execute(
+        select(func.count(Subject.id), func.count().filter(Subject.is_active.is_(True)))
+    ).one()
+    return AdminOverview(
+        candidate_count=candidates[0],
+        approved_candidates=candidates[1],
+        exam_count=exams[0],
+        published_exams=exams[1],
+        question_count=questions[0],
+        active_questions=questions[1],
+        subject_count=subjects[0],
+        active_subjects=subjects[1],
+        recent_exams=[
+            OverviewExam(
+                id=exam.id,
+                title=exam.title,
+                status=exam.status,
+                is_published=exam.is_published,
+                is_start_authorized=exam.is_start_authorized,
+                results_released=exam.results_released,
+                scheduled_start=exam.scheduled_start,
+            )
+            for exam in db.scalars(select(Exam).order_by(Exam.updated_at.desc(), Exam.id).limit(5))
+        ],
+        recent_actions=[
+            OverviewAction(
+                id=action.id,
+                event_type=action.event_type,
+                actor_name=name,
+                server_timestamp=action.server_timestamp,
+            )
+            for action, name in db.execute(
+                select(AuditEvent, User.display_name)
+                .join(User, User.id == AuditEvent.user_id)
+                .order_by(AuditEvent.server_timestamp.desc(), AuditEvent.id)
+                .limit(5)
+            )
+        ],
+    )
 
 
 def candidate_response(candidate: Candidate, user: User) -> CandidateResponse:
@@ -191,12 +258,14 @@ def actions(db: Session, limit: int, offset: int) -> list[StaffActionResponse]:
         StaffActionResponse(
             id=row.id,
             user_id=row.user_id,
+            actor_name=name,
             event_type=row.event_type,
             entity_id=row.entity_id,
             server_timestamp=row.server_timestamp,
         )
-        for row in db.scalars(
-            select(AuditEvent)
+        for row, name in db.execute(
+            select(AuditEvent, User.display_name)
+            .join(User, User.id == AuditEvent.user_id)
             .order_by(AuditEvent.server_timestamp.desc(), AuditEvent.id)
             .limit(limit)
             .offset(offset)
