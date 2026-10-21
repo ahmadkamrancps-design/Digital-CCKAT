@@ -262,6 +262,19 @@ def test_encrypted_backup_tamper_rejection_and_fresh_database_restore(
             connection.execute(text("UPDATE recovery_json_fixture SET payload=NULL WHERE id=1"))
         assert verify_restored_content(source, target) == counts
         with target.begin() as connection:
+            connection.execute(
+                text("""ALTER TABLE proctor_exam_assignments
+                     ALTER COLUMN created_at TYPE timestamp without time zone""")
+            )
+        with pytest.raises(ValueError, match="table proctor_exam_assignments"):
+            verify_restored_content(source, target)
+        with target.begin() as connection:
+            connection.execute(
+                text("""ALTER TABLE proctor_exam_assignments
+                     ALTER COLUMN created_at TYPE timestamp with time zone""")
+            )
+        assert verify_restored_content(source, target) == counts
+        with target.begin() as connection:
             connection.execute(text("ALTER TABLE proctor_exam_assignments ADD COLUMN extra bool"))
         with pytest.raises(ValueError, match="table proctor_exam_assignments"):
             verify_restored_content(source, target)

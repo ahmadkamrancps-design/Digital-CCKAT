@@ -11,7 +11,7 @@ API, a production database repair tool or a declaration of production readiness.
 including the migration version, candidate assignments, exam/question/key
 configuration, attempts, answer values/revisions/review flags/save timestamps,
 grading history, audit/security/session history and result-release configuration.
-It also compares table names, column names/reflected types/nullability and primary
+It also compares table names, column names/PostgreSQL types/nullability and primary
 key columns, including empty tables. Missing/extra tables or differing content
 cause the rehearsal to fail.
 
@@ -65,8 +65,8 @@ checks rejection. Owner-only trigger disabling for the grading/audit fault fixtu
 is confined to those disposable restored tables; guards are re-enabled before
 each check. A separate assertion still verifies append-only protection survives
 the actual restore. Different source/target session time zones, equivalent JSON
-object key order, SQL NULL versus JSON `null`, an altered empty table and a missing
-table are covered.
+object key order, SQL NULL versus JSON `null`, a changed timestamp time-zone type
+in an empty table, an extra column and a missing table are covered.
 
 ## Limits and remaining acceptance
 

@@ -82,7 +82,11 @@ def _restore_snapshot(engine: Engine) -> dict[str, _TableSnapshot]:
         quote = engine.dialect.identifier_preparer.quote_identifier
         for name in sorted(reflection.get_table_names(schema="public")):
             columns = tuple(
-                (column["name"], str(column["type"]), bool(column["nullable"]))
+                (
+                    column["name"],
+                    column["type"].compile(dialect=engine.dialect),
+                    bool(column["nullable"]),
+                )
                 for column in reflection.get_columns(name, schema="public")
             )
             primary_key = tuple(
