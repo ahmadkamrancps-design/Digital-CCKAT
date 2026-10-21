@@ -15,8 +15,12 @@ from sqlalchemy.orm import Session
 
 from alembic import command
 from app.backup import BackupError, backup, database_environment, latest_backup_age, restore
-from app.models import User
+from app.core.clock import DatabaseClock
+from app.models import AuditEvent, Candidate, User
 from app.rehearsal_seed import seed
+from app.rehearsal_verify import verify_restored_content
+from app.schemas.attempt import AnswerWrite
+from app.services import attempt_service
 
 
 def test_database_credentials_stay_in_private_pgpass_and_restore_names_are_bounded(
@@ -43,6 +47,15 @@ def test_database_credentials_stay_in_private_pgpass_and_restore_names_are_bound
 def test_no_backup_is_not_reported_healthy(tmp_path: Path) -> None:
     with pytest.raises(BackupError, match="No completed backup"):
         latest_backup_age(tmp_path)
+
+
+def test_restore_verification_rejects_non_postgresql_databases() -> None:
+    engine = create_engine("sqlite://")
+    try:
+        with pytest.raises(ValueError, match="PostgreSQL is required"):
+            verify_restored_content(engine, engine)
+    finally:
+        engine.dispose()
 
 
 @pytest.mark.postgres
@@ -75,10 +88,63 @@ def test_encrypted_backup_tamper_rejection_and_fresh_database_restore(
         monkeypatch.setenv("DATABASE_URL", source_url.render_as_string(hide_password=False))
         command.upgrade(Config("alembic.ini"), "head")
         source = create_engine(source_url, hide_parameters=True)
-        target = create_engine(restored_url, hide_parameters=True)
+        target = create_engine(
+            restored_url,
+            hide_parameters=True,
+            connect_args={"options": "-ctimezone=Asia/Karachi"},
+        )
         engines += [source, target]
         with Session(source, expire_on_commit=False) as db:
             seed(db, 3, 60, tmp_path / "private-manifest.json")
+            manifest = json.loads((tmp_path / "private-manifest.json").read_text())
+            candidate = db.scalar(
+                select(Candidate).where(Candidate.roll_number == "REHEARSAL-00000")
+            )
+            assert candidate is not None
+            clock = DatabaseClock()
+            attempt = attempt_service.begin_exam(
+                db, uuid.UUID(manifest["exam_id"]), candidate.id, clock
+            )
+            subject_id = attempt.subjects[0].id
+            attempt_service.begin_subject(db, attempt.id, subject_id, candidate.id, clock)
+            paper = attempt_service.subject_paper(db, attempt.id, subject_id, candidate.id, clock)
+            for question, selected, short in [
+                (paper.questions[0], paper.questions[0].options[0].id, None),
+                (paper.questions[1], None, "light پاکستان"),
+            ]:
+                attempt_service.save_answer(
+                    db,
+                    attempt.id,
+                    subject_id,
+                    question.exam_question_id,
+                    candidate.id,
+                    AnswerWrite(
+                        expected_revision=0,
+                        selected_option_id=selected,
+                        short_answer_text=short,
+                        is_marked_for_review=True,
+                    ),
+                    clock,
+                )
+            attempt_service.submit_subject(db, attempt.id, subject_id, candidate.id, clock)
+            db.add(
+                AuditEvent(
+                    user_id=uuid.UUID(manifest["admin"]["profile"]["user"]["id"]),
+                    event_type="REHEARSAL_RECOVERY_FIXTURE",
+                    entity_id=attempt.id,
+                )
+            )
+            db.commit()
+        with source.begin() as connection:
+            # Exercise JSON key-order normalization and SQL NULL versus JSON null
+            # without introducing any application table or production migration.
+            connection.execute(
+                text("CREATE TABLE recovery_json_fixture (id integer PRIMARY KEY, payload json)")
+            )
+            connection.execute(
+                text("""INSERT INTO recovery_json_fixture VALUES
+                     (1, NULL), (2, '{"b": 2, "a": 1}'::json)""")
+            )
         certificate, key = tmp_path / "cert.pem", tmp_path / "key.pem"
         subprocess.run(
             [
@@ -126,6 +192,83 @@ def test_encrypted_backup_tamper_rejection_and_fresh_database_restore(
         with Session(target) as db:
             assert db.scalar(select(func.count()).select_from(User)) == 4
         assert set(inspect(source).get_table_names()) == set(inspect(target).get_table_names())
+        counts = verify_restored_content(source, target)
+        assert counts["answers"] == 31
+        assert counts["grading_records"] == 30
+        assert all(isinstance(count, int) for count in counts.values())
+        with pytest.raises(ValueError, match="dedicated restore database"):
+            verify_restored_content(source, source)
+        with pytest.raises(ValueError, match="dedicated rehearsal database"):
+            verify_restored_content(admin, target)
+
+        def change(
+            table: str,
+            column: str,
+            row_id: uuid.UUID,
+            expression: str,
+            parameters: dict[str, object],
+        ) -> None:
+            guarded = table in {"grading_records", "audit_events"}
+            with target.begin() as connection:
+                # The schema owner can inject a storage-corruption fixture;
+                # append-only guards remain enabled outside this transaction.
+                if guarded:
+                    connection.execute(text(f"ALTER TABLE {table} DISABLE TRIGGER USER"))
+                connection.execute(
+                    text(f"UPDATE {table} SET {column}={expression} WHERE id=:id"),
+                    {"id": row_id, **parameters},
+                )
+                if guarded:
+                    connection.execute(text(f"ALTER TABLE {table} ENABLE TRIGGER USER"))
+
+        # These committed changes keep row counts identical. Simulate corruption
+        # only in the disposable restored copy, never through application routes.
+        for table, column, replacement in [
+            ("answers", "short_answer_text", "'CORRUPTED recovery answer'"),
+            ("answers", "revision", "revision + 1"),
+            ("answers", "is_marked_for_review", "NOT is_marked_for_review"),
+            ("subject_attempts", "expires_at", "expires_at + interval '1 second'"),
+            ("question_options", "option_text", "'CORRUPTED option'"),
+            ("grading_records", "marks_awarded", "0.25"),
+            ("audit_events", "entity_id", f"'{uuid.uuid4()}'::uuid"),
+            ("exams", "results_released", "NOT results_released"),
+        ]:
+            with target.connect() as connection:
+                original = connection.execute(
+                    text(f"SELECT id, {column} FROM {table} WHERE {column} IS NOT NULL LIMIT 1")
+                ).one()
+            change(table, column, original.id, replacement, {})
+            try:
+                with pytest.raises(ValueError, match=f"table {table}") as failure:
+                    verify_restored_content(source, target)
+                assert "CORRUPTED" not in str(failure.value)
+                assert "پاکستان" not in str(failure.value)
+            finally:
+                change(table, column, original.id, ":original", {"original": original[1]})
+        assert verify_restored_content(source, target) == counts
+        with target.begin() as connection:
+            connection.execute(
+                text("""UPDATE recovery_json_fixture SET payload='{"a": 1, "b": 2}'::json
+                     WHERE id=2""")
+            )
+        assert verify_restored_content(source, target) == counts
+        with target.begin() as connection:
+            connection.execute(
+                text("UPDATE recovery_json_fixture SET payload='null'::json WHERE id=1")
+            )
+        with pytest.raises(ValueError, match="table recovery_json_fixture"):
+            verify_restored_content(source, target)
+        with target.begin() as connection:
+            connection.execute(text("UPDATE recovery_json_fixture SET payload=NULL WHERE id=1"))
+        assert verify_restored_content(source, target) == counts
+        with target.begin() as connection:
+            connection.execute(text("ALTER TABLE proctor_exam_assignments ADD COLUMN extra bool"))
+        with pytest.raises(ValueError, match="table proctor_exam_assignments"):
+            verify_restored_content(source, target)
+        with target.begin() as connection:
+            connection.execute(text("DROP TABLE proctor_exam_assignments"))
+        with pytest.raises(ValueError, match="table set"):
+            verify_restored_content(source, target)
         with target.connect() as connection:
             with pytest.raises(DBAPIError):
                 connection.execute(text("DELETE FROM security_events"))

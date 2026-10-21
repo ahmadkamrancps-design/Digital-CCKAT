@@ -109,6 +109,13 @@ a candidate edits during a real API outage, the pending draft synchronizes after
 API recovery, worker readiness fails and recovers, and re-login preserves the
 existing attempt/deadline. This runs only against disposable local synthetic data.
 
+The [recovered-data verification](restore-verification.md) now compares every
+application table's row contents and column/primary-key metadata after freezing
+the disposable writers. This supersedes the earlier row-count-only comparison;
+same-count changes to answers, revisions, deadlines, grades, audit history or
+result visibility fail verification. The native aggregate report also records
+the duration of backup, restore and verification without claiming a production RTO.
+
 ## Acceptance gaps
 
 The domain needs institutional DNS control, a deployment host, and valid renewable

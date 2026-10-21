@@ -173,8 +173,9 @@ with a green check, sample time, subject/question details, and a Continue button
 for the next subject. View the design directly at `http://localhost:5173/submission`.
 It is explicitly labeled as a preview, not a server receipt. The timer is paused; responses live
 only in page memory and reset on refresh. It does not start a real exam, persist
-answers, create a server session, or change backend authorization. Other sidebar
-destinations remain information scaffolds.
+answers, create a server session, or change backend authorization. Instructions,
+system check, profile and help include exam guidance, local device checks, sample
+registration details and support information; preview makes no backend requests.
 
 Production builds ignore this flag and require authentication. Set it to `false`
 and restart Vite when testing actual candidate or staff sign-in.

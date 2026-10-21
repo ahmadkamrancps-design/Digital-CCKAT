@@ -32,6 +32,9 @@ CCK_BASE_URL=https://localhost:8443 CCK_LOCAL_SELF_SIGNED=true \
   python3 ops/restart_rehearsal.py --directory "$rehearsal_directory"
 "${compose[@]}" run --rm --no-deps "${operator[@]}" api \
   python -m app.rehearsal_verify expiry --manifest /rehearsal/manifest.json
+# Stop only synthetic writers so the dump and comparison share a stable recovery
+# point. In particular, worker heartbeats and auth maintenance must not drift.
+"${compose[@]}" stop api expiry-worker auth-maintenance
 "${compose[@]}" run --rm --no-deps backup backup
 archive_name="$(python3 -c 'import pathlib,sys; print(max(pathlib.Path(sys.argv[1]).glob("*.dump.cms"), key=lambda p:p.stat().st_mtime).name)' "$rehearsal_directory/backups")"
 "${compose[@]}" exec -T db psql -X --set=ON_ERROR_STOP=1 -U cck_bootstrap -d postgres \

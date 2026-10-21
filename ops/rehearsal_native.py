@@ -20,7 +20,7 @@ from alembic.config import Config
 from app.backup import backup, restore
 from app.config import load_settings
 from app.rehearsal_seed import seed
-from app.rehearsal_verify import verify_expiry
+from app.rehearsal_verify import verify_expiry, verify_restored_content
 from prepare_staging import prepare
 from psycopg import sql
 from restart_rehearsal import run_browser_with_restarts
@@ -251,6 +251,11 @@ def main() -> None:
         )
         verify_expiry(engine, directory / "manifest.json")
         print("PASS: worker expired an unattended subject without API contact", flush=True)
+        # Freeze only this disposable rehearsal's writers before taking its dump.
+        # Counts/content must represent the same recovery point, including heartbeat
+        # and presence tables that normally keep changing in the background.
+        stop_exam_services()
+        recovery_started = time.monotonic()
         archive = backup(source_secret, secrets / "backup_certificate.pem", directory / "backups")
         restore(
             target_secret,
@@ -260,21 +265,11 @@ def main() -> None:
         )
         restored = create_engine(target_url, hide_parameters=True)
         try:
-            with engine.connect() as before, restored.connect() as after:
-                for table in [
-                    "users",
-                    "answers",
-                    "grading_records",
-                    "audit_events",
-                    "security_events",
-                    "session_events",
-                ]:
-                    assert before.scalar(text(f"SELECT count(*) FROM {table}")) == after.scalar(
-                        text(f"SELECT count(*) FROM {table}")
-                    )
+            restored_counts = verify_restored_content(engine, restored)
         finally:
             restored.dispose()
-        print("PASS: encrypted backup restored all critical row counts", flush=True)
+        recovery_seconds = round(time.monotonic() - recovery_started, 3)
+        print("PASS: encrypted backup restored all table contents and counts", flush=True)
         (directory / "report.json").write_text(
             json.dumps(
                 {
@@ -283,6 +278,9 @@ def main() -> None:
                     "browser": "passed",
                     "load": "passed" if args.k6_bin else "not_run",
                     "encrypted_restore": "passed",
+                    "restored_content": "verified",
+                    "restored_counts": restored_counts,
+                    "backup_restore_verify_seconds": recovery_seconds,
                     "unattended_expiry": "passed",
                     "restart_recovery": "passed",
                     "production_capacity_certified": False,
@@ -292,6 +290,8 @@ def main() -> None:
         )
         print(f"Aggregate evidence: {directory / 'report.json'}", flush=True)
         if args.keep_running:
+            start_service(0)
+            start_service(1)
             print(
                 "Rehearsal only; Ctrl+C cleans up isolated services and databases.",
                 flush=True,

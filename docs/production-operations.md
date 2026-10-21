@@ -148,6 +148,12 @@ restored copy. Reapply the runtime grants when provisioning a replacement databa
 archives deliberately omit original ownership and ACLs. Switching the application
 to a recovered copy requires an operator-reviewed recovery plan and new credentials.
 
+The disposable [restore rehearsal](restore-verification.md) automatically compares
+all row contents and column/primary-key metadata, including answer revisions,
+deadlines, grades and release settings. Its verifier requires synthetic rehearsal
+and restore database names and must not be pointed at production records. It does
+not replace the operator's schema, privilege and application acceptance checks.
+
 **Hourly logical snapshots can lose up to an hour of acknowledged answers if the
 database/storage is lost. They are insufficient as the sole exam recovery strategy.**
 Before real exams, provide tested PostgreSQL WAL/PITR or a managed equivalent,

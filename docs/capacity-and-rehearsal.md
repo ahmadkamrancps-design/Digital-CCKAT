@@ -28,7 +28,8 @@ request triggering reconciliation. Account 0 is reserved for the browser, accoun
 
 It runs a 20-client k6 functional load check, a real Chromium workflow against the
 HTTPS API/database, runtime-role checks, and an encrypted restore into a fresh
-database. During the browser workflow it stops the disposable API and expiry
+database. The [restore check](restore-verification.md) freezes disposable writers
+and compares all table contents as well as counts. During the browser workflow it stops the disposable API and expiry
 worker, verifies local draft preservation, restarts the API while the worker
 remains stopped, checks stale-worker readiness failure, recovers autosave, then
 restarts the worker and verifies readiness recovery. Re-login and refresh must
