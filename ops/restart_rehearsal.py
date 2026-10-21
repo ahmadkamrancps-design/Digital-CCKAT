@@ -9,9 +9,12 @@ import subprocess
 import time
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
 from urllib.request import urlopen
+
+from app.monitoring import MonitorConfig, MonitorError, run_once
 
 
 def run_browser_with_restarts(
@@ -40,6 +43,22 @@ def run_browser_with_restarts(
     control = directory / "restart-control"
     control.mkdir(mode=0o700)
     context = ssl.create_default_context(cafile=str(directory / "secrets/tls_certificate.pem"))
+    monitor_config = MonitorConfig(
+        origin=origin,
+        ca_file=directory / "secrets/tls_certificate.pem",
+        certificate_warning_days=0,  # Rehearsal certificates deliberately last only two days.
+        failure_threshold=1,
+        recovery_threshold=1,
+    )
+    monitoring_observations: list[dict[str, Any]] = []
+
+    def monitor(stage: str, healthy: bool) -> dict[str, Any]:
+        observation = run_once(monitor_config, directory / "monitoring-state.json")
+        if observation["healthy"] is not healthy:
+            raise RuntimeError(f"Operational monitor disagreed with rehearsal stage {stage}.")
+        monitoring_observations.append({"stage": stage, **observation})
+        return observation
+
     browser_env = {**env, "CCK_RESTART_CONTROL_DIRECTORY": str(control)}
     with (directory / "browser.log").open("wb") as log:
         browser = subprocess.Popen(
@@ -89,8 +108,15 @@ def run_browser_with_restarts(
         try:
             wait_until(lambda: status("/api/health") == 200, "verified HTTPS liveness", 20)
             wait_until(lambda: (control / "before-restart").exists(), "candidate preparation")
+            monitor("before_outage", True)
             stop_services()
             wait_until(lambda: status("/api/health") in {502, 503, 504}, "API outage")
+            outage = monitor("api_outage", False)
+            incidents = outage["events"]
+            if len(incidents) != 1 or incidents[0]["check"] != "readiness":
+                raise RuntimeError(
+                    "Operational monitor did not open the expected readiness incident."
+                )
             marker("services-stopped")
             wait_until(lambda: (control / "draft-preserved").exists(), "local draft preservation")
             start_api()
@@ -98,10 +124,20 @@ def run_browser_with_restarts(
             # Let the configured 30-second worker heartbeat expire naturally. The
             # gateway/API remain alive while readiness reports the stopped worker.
             wait_until(lambda: status("/api/health/ready") == 503, "worker failure detection", 50)
+            degraded = monitor("worker_outage", False)
+            if degraded["events"] or degraded["active_incidents"] != outage["active_incidents"]:
+                raise RuntimeError("Operational monitor duplicated or lost the readiness incident.")
             marker("api-restarted")
             wait_until(lambda: (control / "api-recovery-verified").exists(), "answer recovery")
             start_worker()
             wait_until(lambda: status("/api/health/ready") == 200, "worker recovery")
+            recovery = monitor("services_recovered", True)
+            if (
+                len(recovery["events"]) != 1
+                or recovery["events"][0]["event"] != "MONITOR_RECOVERED"
+                or recovery["events"][0]["incident_id"] != incidents[0]["incident_id"]
+            ):
+                raise RuntimeError("Operational monitor did not close the original incident.")
             marker("worker-restarted")
             if browser.wait(timeout=180) != 0:
                 # Never echo raw browser errors, responses, tokens or answer text.
@@ -131,14 +167,26 @@ def run_browser_with_restarts(
                         "worker_readiness_recovery": "verified",
                         "draft_sync_and_deadline": "verified",
                         "relogin_resume": "verified",
+                        "monitoring_failure_and_recovery": "verified",
                         "production_capacity_certified": False,
                     },
                     indent=2,
                 )
                 + "\n"
             )
+            (directory / "monitoring-report.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "LOCAL_SYNTHETIC_MONITORING_REHEARSAL",
+                        "observations": monitoring_observations,
+                    },
+                    indent=2,
+                )
+                + "\n"
+            )
+            (directory / "monitoring-report.json").chmod(0o600)
             print(
-                "PASS: API/worker restart, readiness signals, draft recovery and re-login",
+                "PASS: API/worker restart, incident/recovery signals, draft recovery and re-login",
                 flush=True,
             )
         finally:
@@ -182,7 +230,7 @@ def main() -> None:
             lambda: command("up", "-d", "--no-deps", "api"),
             lambda: command("up", "-d", "--no-deps", "expiry-worker"),
         )
-    except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
+    except (MonitorError, OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
         parser.exit(1, f"Restart rehearsal failed: {type(error).__name__}: {error}\n")
 
 

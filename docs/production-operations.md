@@ -95,6 +95,13 @@ counts, gateway 429/503 rates, request latency, CPU/RAM, database connections/lo
 backup freshness, free disk space, and certificate expiry. Container health status
 alone does not notify anyone. Establish a named primary operator and backup operator.
 
+The operator-only `python -m app.monitoring` command now provides direct readiness,
+verified TLS/expiry, optional storage and encrypted-backup freshness checks, with
+persistent incident/recovery signals. The [monitoring guide](operational-monitoring.md)
+documents local commands, actual-mount configuration, thresholds and safe JSON output.
+It sends no notifications; external collection, alert delivery and monitoring of the
+monitor itself still require deployment configuration and acceptance testing.
+
 `/api/health` is process liveness. Readiness checks the actual migration head and,
 when `REQUIRE_EXPIRY_WORKER=true`, the expiry worker's last successful DB heartbeat
 (stale after 30 seconds). API container probes call its HTTP readiness endpoint;

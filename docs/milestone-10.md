@@ -116,6 +116,12 @@ same-count changes to answers, revisions, deadlines, grades, audit history or
 result visibility fail verification. The native aggregate report also records
 the duration of backup, restore and verification without claiming a production RTO.
 
+The [operational monitor](operational-monitoring.md) adds read-only readiness,
+verified TLS/expiry, disk and backup freshness probes, persistent incident/recovery
+records, safe JSON output, and failure/recovery verification during the disposable
+restart rehearsal. It is an operator CLI, not an external notification service.
+The existing CCK templates and application behavior remain in place.
+
 ## Acceptance gaps
 
 The domain needs institutional DNS control, a deployment host, and valid renewable

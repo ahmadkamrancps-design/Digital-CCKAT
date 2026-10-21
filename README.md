@@ -374,6 +374,7 @@ exclude keys, accepted values, and grading configuration. See
 - [Milestone 9 handover, security review, and verification results](docs/milestone-9.md)
 - [Milestone 10 handover and remaining acceptance gates](docs/milestone-10.md)
 - [Production deployment, monitoring, and recovery](docs/production-operations.md)
+- [Operator monitoring, incident signals, and local verification](docs/operational-monitoring.md)
 - [Capacity profiles and supervised mock examination](docs/capacity-and-rehearsal.md)
 - [GitHub setup and progress history](docs/version-control.md)
 

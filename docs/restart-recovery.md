@@ -49,6 +49,14 @@ do not publish this file, the manifest, secrets or browser storage. Successful r
 write `restart-report.json` with aggregate check outcomes and no answers/tokens.
 The native aggregate report also records `restart_recovery`.
 
+The [operational monitor](operational-monitoring.md) now observes the same outage:
+it must open one readiness incident during API failure, preserve that incident
+while the recovered API reports a stale worker, then close the original incident
+when the worker recovers. TLS remains verified against the local rehearsal CA.
+Safe observations are recorded in `monitoring-report.json`. No notification is sent.
+The helper uses explicit one-failure/one-recovery thresholds; unit tests cover the
+normal three-failure/two-recovery defaults and persistent state across invocations.
+
 This verifies graceful service restarts and a real API outage at small functional
 load. It does not certify abrupt host power loss, database/storage failure, WAL/PITR,
 failover, alert delivery to operators, a three-hour soak or 7,000-candidate capacity.
