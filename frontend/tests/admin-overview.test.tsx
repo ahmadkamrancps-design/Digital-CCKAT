@@ -78,6 +78,42 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
+it.each([
+  { dev: true, enabled: true, visible: true },
+  { dev: false, enabled: true, visible: false },
+  { dev: true, enabled: false, visible: false },
+])(
+  "shows local management entry only when development=$dev and enabled=$enabled",
+  async ({ dev, enabled, visible }) => {
+    vi.stubEnv("DEV", dev);
+    vi.stubEnv("VITE_MANAGEMENT_SANDBOX", String(enabled));
+    const fetcher = vi.fn(async (_path: string) =>
+      json({ detail: "Sign in." }, 401),
+    );
+    vi.stubGlobal("fetch", fetcher);
+    renderPage("/");
+    await screen.findByLabelText("Roll number");
+    const entry = screen.queryByRole("link", {
+      name: "Open test administration →",
+    });
+    if (visible) {
+      expect(entry).toHaveAttribute("href", "/api/local-management");
+      expect(
+        screen.getByText(/Local management sandbox · Test data only/),
+      ).toBeInTheDocument();
+    } else {
+      expect(entry).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(/Local management sandbox · Test data only/),
+      ).not.toBeInTheDocument();
+    }
+    expect(screen.getByLabelText("Session role")).toHaveTextContent(
+      "Anonymous",
+    );
+    expect(fetcher.mock.calls.every(([path]) => path === "/api/me")).toBe(true);
+  },
+);
+
 it("loads administrator totals from one aggregate API without downloading candidate records", async () => {
   const fetcher = vi.fn(async (path: string) =>
     json(path === "/api/me" ? profile : summary),

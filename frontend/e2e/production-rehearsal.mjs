@@ -44,6 +44,9 @@ try {
   expect(initial.headers()['content-security-policy']).toContain("script-src 'self'");
   await expect(page.getByLabel('Roll number')).toBeVisible();
   await expect(page.getByText(/Development preview/)).toHaveCount(0);
+  await expect(page.getByText(/Local management sandbox/)).toHaveCount(0);
+  await api(candidate, 'GET', '/local-management', undefined, undefined, [404]);
+  await api(candidate, 'POST', '/local-management', { nonce: 'not-a-sandbox' }, undefined, [404]);
   const credentials = manifest.candidates[0];
   await page.getByLabel('Roll number').fill(credentials.roll_number);
   await page.getByLabel('Full name').fill(credentials.full_name);

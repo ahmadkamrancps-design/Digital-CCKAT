@@ -93,6 +93,14 @@ registration/import, subjects, the question bank, exam building, and action hist
 Exam pages group scheduling, papers, staff assignments, publication, starts, and
 results into clearly labeled sections. See the [administration guide](docs/administration-portal.md).
 
+To test **real management writes locally without Google**, launch the separate
+[management sandbox](docs/management-sandbox.md) from the repository root:
+`PYTHONPATH=backend backend/.venv/bin/python ops/management_sandbox.py`.
+Open **http://localhost:5175/api/local-management**, click **Open test administration**,
+then use **Question bank → Edit question** for marks and grading rules. Changes
+persist in its separate synthetic PostgreSQL database. Normal development and
+production authentication remain in place.
+
 After pulling Milestone 7, run `alembic upgrade head` to apply
 `0005_proctor_monitoring`. Provision approved proctor staff once:
 

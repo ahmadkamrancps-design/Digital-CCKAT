@@ -551,8 +551,8 @@ function QuestionEditor({
                 </label>
               ) : (
                 <p>
-                  Responses will need an authorized examiner in the grading
-                  milestone.
+                  An assigned examiner grades these responses in the grading
+                  workspace.
                 </p>
               )}
             </fieldset>

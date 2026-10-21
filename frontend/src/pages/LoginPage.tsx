@@ -25,6 +25,7 @@ export default function LoginPage() {
 
       <section className="login-card" aria-labelledby="sign-in-heading">
         <h2 id="sign-in-heading">Welcome</h2>
+        {import.meta.env.DEV && import.meta.env.VITE_MANAGEMENT_SANDBOX === 'true' && <p><a className="primary-button preview-entry" href="/api/local-management">Open test administration →</a></p>}
         <p>
           Sign in to continue to
           <br />

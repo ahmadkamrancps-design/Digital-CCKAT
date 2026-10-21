@@ -62,6 +62,7 @@ export default function App() {
     ? content
     : <Layout>{content}</Layout>;
   return <ExamSessions>
+    {import.meta.env.DEV && import.meta.env.VITE_MANAGEMENT_SANDBOX === 'true' && <div className="preview-notice" role="note">Local management sandbox · Test data only · Changes saved in a separate test database</div>}
     {isPreview && <div className="preview-notice" role="note">Development preview · Sample data · No sign-in required</div>}
     {error && profile && <div className="session-warning" role="alert">Session check: {error} <button onClick={() => { void refresh(); }}>Try again</button></div>}
     {page}

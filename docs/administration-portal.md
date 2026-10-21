@@ -6,6 +6,13 @@ exam, submission and login templates retain their existing behavior.
 
 ## Access and preview
 
+For **editable local management testing without Google**, use the
+[management sandbox](management-sandbox.md) at
+**http://localhost:5175/api/local-management**. Click **Open test administration**,
+then open **Question bank → Edit question** to change marks, answer keys, accepted
+answers and grading rules. It uses the actual APIs with a separate persistent
+test database. Its launcher command and security boundaries are documented in the guide.
+
 For the local design review, enable `VITE_ENABLE_UI_PREVIEW=true` in
 `frontend/.env`, run the frontend, and open `http://localhost:5173/preview/admin`.
 The current development workspace already enables this flag. Use the sidebar to
