@@ -284,6 +284,14 @@ startup side effects. Logout/rotation continue to revoke sessions immediately.
 Both lockfiles were audited with no known vulnerabilities reported on 14 October
 2026; CI now runs npm audit and pip-audit against pinned production/development
 dependencies. This is an advisory check, not a guarantee against unknown issues.
+
+On 21 October 2026, CI identified the newly indexed bundled `launch-editor`
+advisories affecting Vite 7.3.6. Vite was updated to 7.3.7, the patched version
+listed in the [upstream advisory](https://github.com/advisories/GHSA-587h-7wmj-h5pm),
+and the minimum supported Vite 7 version was raised accordingly. The resulting
+frontend dependency audit reports zero known vulnerabilities. No audit exceptions
+or major-version migration were needed.
+
 Dependencies are pinned but Python artifact hashes and a full supply-chain attestation
 are not yet enforced. Build contexts already exclude real .env files; the tracked-file
 review found no credential-pattern matches. Production secrets must come from the
