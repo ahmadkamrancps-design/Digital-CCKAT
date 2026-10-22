@@ -1,0 +1,2756 @@
+{
+  "pack_id": "cck-class8-original-practice-v1",
+  "title": "Original Class 8 admission practice — calibrated to CCK 2020–2023 paper skills",
+  "version": 1,
+  "review_status": "DRAFT_REQUIRES_SUBJECT_TEACHER_REVIEW",
+  "copyright_note": "Original practice questions, not reproduced CCK papers and not endorsed by CCK. Difficulty is an editorial estimate, not a measured equivalence.",
+  "sources": [
+    {
+      "role": "official_download_listing",
+      "url": "https://www.cck.edu.pk/resources/download_center/",
+      "access_note": "Search-indexed official listing found; direct official server requests timed out or failed."
+    },
+    {
+      "role": "official_syllabus_listing",
+      "url": "https://www.cck.edu.pk/web/sites/default/files/2025-06/FSYLLABUS.pdf",
+      "access_note": "Official indexed syllabus located; direct official PDF unavailable during review."
+    },
+    {
+      "role": "paper_scan_reviewed",
+      "url": "https://gotest.com.pk/wp-content/uploads/2025/09/cadet-college-kohat-8th-class-papers.pdf",
+      "sha256": "39b4158f0338e6055b3bb09a1abced9de5e70337d82a01de59cfa23999f90c9c",
+      "pages": 14,
+      "access_note": "All scanned pages read visually. College-headed 2020–2023 Class 8 papers on a third-party mirror; byte identity with official host unverified."
+    },
+    {
+      "role": "syllabus_scan_reviewed",
+      "url": "https://gotest.com.pk/wp-content/uploads/2025/09/cadet-college-kohat-SYLLABUS.pdf",
+      "sha256": "014eba9f8d180bd27852ca6ce0a6275786ecdd166ec0f86937031aa56e9297b9",
+      "pages": 2,
+      "access_note": "Both scanned pages read visually. Urdu/Islamiat is 70/30 in the reviewed syllabus."
+    }
+  ],
+  "page_map": {
+    "2023": {
+      "English": [1, 2],
+      "Mathematics": [3],
+      "Urdu_Islamiat": [4]
+    },
+    "2022": {
+      "English": [5],
+      "Urdu_Islamiat": [6],
+      "Mathematics": [7]
+    },
+    "2021": {
+      "English": [8],
+      "Urdu_Islamiat": [9],
+      "Mathematics": [10]
+    },
+    "2020": {
+      "English": [11, 12],
+      "Urdu_Islamiat": [13],
+      "Mathematics": [14]
+    }
+  },
+  "subjects": {
+    "TEST_ENG": "English",
+    "TEST_MATH": "Mathematics",
+    "TEST_UR": "Urdu (includes separately labelled Islamiat practice)"
+  },
+  "items": [
+    {
+      "key": "E01",
+      "subject_code": "TEST_ENG",
+      "topic": "Contextual prepositions",
+      "difficulty": "FOUNDATION",
+      "source_pages": [1, 2, 5, 8, 11, 12],
+      "rationale": "The verb insist takes on before a noun or gerund.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "Choose the correct word: The guide insisted ___ checking every ticket before departure.",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "at",
+            "is_correct": false
+          },
+          {
+            "text": "on",
+            "is_correct": true
+          },
+          {
+            "text": "for",
+            "is_correct": false
+          },
+          {
+            "text": "to",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "E02",
+      "subject_code": "TEST_ENG",
+      "topic": "General awareness: basic science",
+      "difficulty": "FOUNDATION",
+      "source_pages": [1],
+      "rationale": "Evaporation changes liquid water into vapour at its surface; condensation is the reverse change.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "Which process changes liquid water into water vapour at its surface?",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "Freezing",
+            "is_correct": false
+          },
+          {
+            "text": "Condensation",
+            "is_correct": false
+          },
+          {
+            "text": "Evaporation",
+            "is_correct": true
+          },
+          {
+            "text": "Melting",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "E03",
+      "subject_code": "TEST_ENG",
+      "topic": "Homophones in context",
+      "difficulty": "FOUNDATION",
+      "source_pages": [1, 2, 5, 8, 11, 12],
+      "rationale": "Principal names the head of a school; principle means a rule or belief.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "Choose the correct word: The school ___ welcomed the new pupils.",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "principal",
+            "is_correct": true
+          },
+          {
+            "text": "principle",
+            "is_correct": false
+          },
+          {
+            "text": "principally",
+            "is_correct": false
+          },
+          {
+            "text": "principled",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "E04",
+      "subject_code": "TEST_ENG",
+      "topic": "Spelling",
+      "difficulty": "FOUNDATION",
+      "source_pages": [1, 2, 5, 8, 11, 12],
+      "rationale": "Accommodate has double c and double m.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "Which word is spelled correctly?",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "acommodate",
+            "is_correct": false
+          },
+          {
+            "text": "accomodate",
+            "is_correct": false
+          },
+          {
+            "text": "accommadate",
+            "is_correct": false
+          },
+          {
+            "text": "accommodate",
+            "is_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "key": "E05",
+      "subject_code": "TEST_ENG",
+      "topic": "Irregular plurals",
+      "difficulty": "FOUNDATION",
+      "source_pages": [1, 2, 5, 8, 11, 12],
+      "rationale": "The plural is analyses, with the ending -ses.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "Choose the plural of analysis.",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "analysises",
+            "is_correct": false
+          },
+          {
+            "text": "analyses",
+            "is_correct": true
+          },
+          {
+            "text": "analysies",
+            "is_correct": false
+          },
+          {
+            "text": "analysis",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "E06",
+      "subject_code": "TEST_ENG",
+      "topic": "Parts of speech",
+      "difficulty": "FOUNDATION",
+      "source_pages": [1, 2, 5, 8, 11, 12],
+      "rationale": "Almost modifies the verb phrase and is an adverb.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "In “The team almost missed the bus”, which part of speech is almost?",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "adjective",
+            "is_correct": false
+          },
+          {
+            "text": "conjunction",
+            "is_correct": false
+          },
+          {
+            "text": "adverb",
+            "is_correct": true
+          },
+          {
+            "text": "pronoun",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "E07",
+      "subject_code": "TEST_ENG",
+      "topic": "Subject–verb agreement",
+      "difficulty": "STANDARD",
+      "source_pages": [1, 2, 5, 8, 11, 12],
+      "rationale": "Each is singular, so the finite verb is has.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "Choose the correct form: Each of the runners ___ a numbered badge.",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "has",
+            "is_correct": true
+          },
+          {
+            "text": "have",
+            "is_correct": false
+          },
+          {
+            "text": "are having",
+            "is_correct": false
+          },
+          {
+            "text": "were having",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "E08",
+      "subject_code": "TEST_ENG",
+      "topic": "Word formation",
+      "difficulty": "STANDARD",
+      "source_pages": [1, 2, 5, 8, 11, 12],
+      "rationale": "The adjective careful requires a noun here: observation.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "Choose the correct form: His careful ___ prevented an accident. (observe)",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "observed",
+            "is_correct": false
+          },
+          {
+            "text": "observing",
+            "is_correct": false
+          },
+          {
+            "text": "observant",
+            "is_correct": false
+          },
+          {
+            "text": "observation",
+            "is_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "key": "E09",
+      "subject_code": "TEST_ENG",
+      "topic": "Idioms in context",
+      "difficulty": "STANDARD",
+      "source_pages": [1, 2, 5, 8, 11, 12],
+      "rationale": "The phrase describes an apparent disadvantage that later proves beneficial.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "When Sara said that the extra practice was “a blessing in disguise”, what did she mean?",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "It was helpful from the very beginning.",
+            "is_correct": false
+          },
+          {
+            "text": "It seemed unwelcome but later proved helpful.",
+            "is_correct": true
+          },
+          {
+            "text": "It was a secret that nobody understood.",
+            "is_correct": false
+          },
+          {
+            "text": "It remained harmful despite her efforts.",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "E10",
+      "subject_code": "TEST_ENG",
+      "topic": "Antonyms in context",
+      "difficulty": "STANDARD",
+      "source_pages": [1, 2, 5, 8, 11, 12],
+      "rationale": "Abundant means present in plentiful quantities.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "The word scarce means “not plentiful”. Which word is its opposite?",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "rare",
+            "is_correct": false
+          },
+          {
+            "text": "limited",
+            "is_correct": false
+          },
+          {
+            "text": "abundant",
+            "is_correct": true
+          },
+          {
+            "text": "costly",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "E11",
+      "subject_code": "TEST_ENG",
+      "topic": "Synonyms in context",
+      "difficulty": "STANDARD",
+      "source_pages": [1, 2, 5, 8, 11, 12],
+      "rationale": "Precise means exact or accurate in this context.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "In “The witness gave a precise account of the event”, precise most nearly means:",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "accurate",
+            "is_correct": true
+          },
+          {
+            "text": "lengthy",
+            "is_correct": false
+          },
+          {
+            "text": "uncertain",
+            "is_correct": false
+          },
+          {
+            "text": "hurried",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "E12",
+      "subject_code": "TEST_ENG",
+      "topic": "Past perfect tense",
+      "difficulty": "STANDARD",
+      "source_pages": [1, 2, 5, 8, 11, 12],
+      "rationale": "The earlier of two completed past actions takes the past perfect.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "Choose the correct completion: By the time the bell rang, the pupils ___ their work.",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "finish",
+            "is_correct": false
+          },
+          {
+            "text": "have finished",
+            "is_correct": false
+          },
+          {
+            "text": "are finishing",
+            "is_correct": false
+          },
+          {
+            "text": "had finished",
+            "is_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "key": "E13",
+      "subject_code": "TEST_ENG",
+      "topic": "Sentence structure",
+      "difficulty": "STANDARD",
+      "source_pages": [1, 2, 5, 8, 11, 12],
+      "rationale": "Despite is followed by a noun or gerund, rather than a clause introduced by the rain was.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "Which sentence is grammatically correct?",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "Despite of the rain, the match continued.",
+            "is_correct": false
+          },
+          {
+            "text": "Despite the rain, the match continued.",
+            "is_correct": true
+          },
+          {
+            "text": "Despite the rain was heavy, the match continued.",
+            "is_correct": false
+          },
+          {
+            "text": "Despite it rained, the match continued.",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "E14",
+      "subject_code": "TEST_ENG",
+      "topic": "Indirect questions",
+      "difficulty": "CHALLENGING",
+      "source_pages": [1, 2, 5, 8, 11, 12],
+      "rationale": "The reporting verb becomes asked, the question takes statement word order, and are backshifts to was.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "Choose the correct reported form of: The teacher said to Ali, “Why are you absent?”",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "The teacher asked Ali why was he absent.",
+            "is_correct": false
+          },
+          {
+            "text": "The teacher asked Ali why is he absent.",
+            "is_correct": false
+          },
+          {
+            "text": "The teacher asked Ali why he was absent.",
+            "is_correct": true
+          },
+          {
+            "text": "The teacher asked Ali that why he is absent.",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "E15",
+      "subject_code": "TEST_ENG",
+      "topic": "Passive voice: past perfect",
+      "difficulty": "CHALLENGING",
+      "source_pages": [1, 2, 5, 8, 11, 12],
+      "rationale": "Past perfect passive is had been + past participle; the time phrase is retained.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "Choose the passive form of: The workers had repaired the bridge before noon.",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "The bridge had been repaired by the workers before noon.",
+            "is_correct": true
+          },
+          {
+            "text": "The bridge has been repaired by the workers before noon.",
+            "is_correct": false
+          },
+          {
+            "text": "The bridge was being repaired by the workers before noon.",
+            "is_correct": false
+          },
+          {
+            "text": "The bridge had repaired the workers before noon.",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "E16",
+      "subject_code": "TEST_ENG",
+      "topic": "Reported commands",
+      "difficulty": "CHALLENGING",
+      "source_pages": [1, 2, 5, 8, 11, 12],
+      "rationale": "A negative command is reported with told + object + not to + verb.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "Choose the reported form of: The captain said to the players, “Do not leave the field.”",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "The captain said the players do not leave the field.",
+            "is_correct": false
+          },
+          {
+            "text": "The captain told the players that do not leave the field.",
+            "is_correct": false
+          },
+          {
+            "text": "The captain told the players to not left the field.",
+            "is_correct": false
+          },
+          {
+            "text": "The captain told the players not to leave the field.",
+            "is_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "key": "E17",
+      "subject_code": "TEST_ENG",
+      "topic": "Third conditional",
+      "difficulty": "CHALLENGING",
+      "source_pages": [1, 2, 5, 8, 11, 12],
+      "rationale": "An unreal past condition takes would have + past participle in the result clause.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "Choose the correct completion: If he had checked the address, he ___ the wrong bus.",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "will not board",
+            "is_correct": false
+          },
+          {
+            "text": "would not have boarded",
+            "is_correct": true
+          },
+          {
+            "text": "would not board",
+            "is_correct": false
+          },
+          {
+            "text": "had not boarded",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "E18",
+      "subject_code": "TEST_ENG",
+      "topic": "Reading inference",
+      "difficulty": "CHALLENGING",
+      "source_pages": [1, 2, 5, 8, 11, 12],
+      "rationale": "Her decision to use the waiting time for revision supports purposeful use of time; the other claims are not established.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "Read: “Nadia reached the library before it opened. Instead of leaving, she revised her notes on the steps. When the doors opened, she borrowed the reference book she needed.” Which inference is best supported?",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "Nadia disliked studying indoors.",
+            "is_correct": false
+          },
+          {
+            "text": "Nadia had forgotten the opening time.",
+            "is_correct": false
+          },
+          {
+            "text": "Nadia used her waiting time productively.",
+            "is_correct": true
+          },
+          {
+            "text": "Nadia had already read every library book.",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "E19",
+      "subject_code": "TEST_ENG",
+      "topic": "Word formation",
+      "difficulty": "STANDARD",
+      "source_pages": [1, 2, 5, 8, 11, 12],
+      "rationale": "Decision is the noun required after a.",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "Complete with the correct noun form of decide: After a long discussion, the committee reached a ___. Write one word.",
+        "marks": "2",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "grading": {
+          "mode": "EXACT",
+          "unicode_normalization": "NFC",
+          "trim_whitespace": true,
+          "collapse_whitespace": true,
+          "case_sensitive": false
+        },
+        "accepted_answers": ["decision"]
+      }
+    },
+    {
+      "key": "E20",
+      "subject_code": "TEST_ENG",
+      "topic": "Irregular plurals",
+      "difficulty": "STANDARD",
+      "source_pages": [1, 2, 5, 8, 11, 12],
+      "rationale": "Phenomenon becomes phenomena.",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "Write the plural of phenomenon. Write one word.",
+        "marks": "2",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "grading": {
+          "mode": "EXACT",
+          "unicode_normalization": "NFC",
+          "trim_whitespace": true,
+          "collapse_whitespace": true,
+          "case_sensitive": false
+        },
+        "accepted_answers": ["phenomena"]
+      }
+    },
+    {
+      "key": "E21",
+      "subject_code": "TEST_ENG",
+      "topic": "Irregular verbs",
+      "difficulty": "STANDARD",
+      "source_pages": [1, 2, 5, 8, 11, 12],
+      "rationale": "The forms are choose, chose, chosen; has requires chosen.",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "Complete with the past participle of choose: The prefect has ___ two volunteers. Write one word.",
+        "marks": "2",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "grading": {
+          "mode": "EXACT",
+          "unicode_normalization": "NFC",
+          "trim_whitespace": true,
+          "collapse_whitespace": true,
+          "case_sensitive": false
+        },
+        "accepted_answers": ["chosen"]
+      }
+    },
+    {
+      "key": "E22",
+      "subject_code": "TEST_ENG",
+      "topic": "Homophones in context",
+      "difficulty": "STANDARD",
+      "source_pages": [1, 2, 5, 8, 11, 12],
+      "rationale": "Stationery means writing materials; stationary means not moving.",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "Complete with stationary or stationery: The office ordered paper and other ___. Write one word.",
+        "marks": "2",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "grading": {
+          "mode": "EXACT",
+          "unicode_normalization": "NFC",
+          "trim_whitespace": true,
+          "collapse_whitespace": true,
+          "case_sensitive": false
+        },
+        "accepted_answers": ["stationery"]
+      }
+    },
+    {
+      "key": "E23",
+      "subject_code": "TEST_ENG",
+      "topic": "Spelling correction",
+      "difficulty": "STANDARD",
+      "source_pages": [1, 2, 5, 8, 11, 12],
+      "rationale": "Embarrassment has double r and double s.",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "Correct the spelling: embarassment. Write only the corrected word.",
+        "marks": "2",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "grading": {
+          "mode": "EXACT",
+          "unicode_normalization": "NFC",
+          "trim_whitespace": true,
+          "collapse_whitespace": true,
+          "case_sensitive": false
+        },
+        "accepted_answers": ["embarrassment"]
+      }
+    },
+    {
+      "key": "E24",
+      "subject_code": "TEST_ENG",
+      "topic": "Contextual prepositions",
+      "difficulty": "STANDARD",
+      "source_pages": [1, 2, 5, 8, 11, 12],
+      "rationale": "Responsible is followed by for when naming a duty.",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "Complete: The captain is responsible ___ maintaining discipline. Write one word.",
+        "marks": "2",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "grading": {
+          "mode": "EXACT",
+          "unicode_normalization": "NFC",
+          "trim_whitespace": true,
+          "collapse_whitespace": true,
+          "case_sensitive": false
+        },
+        "accepted_answers": ["for"]
+      }
+    },
+    {
+      "key": "E25",
+      "subject_code": "TEST_ENG",
+      "topic": "Proverbs",
+      "difficulty": "STANDARD",
+      "source_pages": [1, 2, 5, 8, 11, 12],
+      "rationale": "The conventional proverb ends with nine.",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "Complete the proverb: A stitch in time saves ___. Write one word.",
+        "marks": "2",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "grading": {
+          "mode": "EXACT",
+          "unicode_normalization": "NFC",
+          "trim_whitespace": true,
+          "collapse_whitespace": true,
+          "case_sensitive": false
+        },
+        "accepted_answers": ["nine"]
+      }
+    },
+    {
+      "key": "E26",
+      "subject_code": "TEST_ENG",
+      "topic": "General awareness: Pakistan geography",
+      "difficulty": "STANDARD",
+      "source_pages": [1],
+      "rationale": "Peshawar is the provincial capital of Khyber Pakhtunkhwa.",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "Which city is the capital of Khyber Pakhtunkhwa? Write only the city name.",
+        "marks": "2",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "grading": {
+          "mode": "EXACT",
+          "unicode_normalization": "NFC",
+          "trim_whitespace": true,
+          "collapse_whitespace": true,
+          "case_sensitive": false
+        },
+        "accepted_answers": ["Peshawar"]
+      }
+    },
+    {
+      "key": "E27",
+      "subject_code": "TEST_ENG",
+      "topic": "Reported speech production",
+      "difficulty": "CHALLENGING",
+      "source_pages": [1, 2, 5, 8, 11, 12],
+      "rationale": "2 marks: asked the boy if/whether (1); he had finished his homework with correct statement order (1). Accept equivalent grammatical wording and ordinary punctuation variants.",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "Rewrite as reported speech, using asked and the usual past-tense backshift: Mary said to the boy, “Have you finished your homework?” Write one sentence.",
+        "marks": "2",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "grading": {
+          "mode": "MANUAL"
+        },
+        "accepted_answers": []
+      }
+    },
+    {
+      "key": "E28",
+      "subject_code": "TEST_ENG",
+      "topic": "Passive voice production",
+      "difficulty": "CHALLENGING",
+      "source_pages": [1, 2, 5, 8, 11, 12],
+      "rationale": "2 marks: the plants as subject and are being watered (1); by the gardener with meaning and tense preserved (1). Do not penalize harmless punctuation differences.",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "Rewrite in the passive voice: The gardener is watering the plants. Write one sentence.",
+        "marks": "2",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "grading": {
+          "mode": "MANUAL"
+        },
+        "accepted_answers": []
+      }
+    },
+    {
+      "key": "E29",
+      "subject_code": "TEST_ENG",
+      "topic": "Urdu–English translation",
+      "difficulty": "CHALLENGING",
+      "source_pages": [1, 2, 5, 8, 11, 12],
+      "rationale": "2 marks: if it rains (1); we will/shall stay at home (1). Accept natural equivalent wording with the same conditional meaning. No exact-string grading.",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "Translate into English: اگر بارش ہوئی تو ہم گھر میں رہیں گے۔ Write one sentence.",
+        "marks": "2",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "grading": {
+          "mode": "MANUAL"
+        },
+        "accepted_answers": []
+      }
+    },
+    {
+      "key": "E30",
+      "subject_code": "TEST_ENG",
+      "topic": "Brief comprehension explanation",
+      "difficulty": "CHALLENGING",
+      "source_pages": [1, 2, 5, 8, 11, 12],
+      "rationale": "2 marks: regular practice (1); reviewing/learning from mistakes (1). Accept a concise sentence expressing both ideas; do not require the source wording.",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "Read: “The team lost its first match. It practised regularly, reviewed its mistakes, and won the next match.” In one sentence, explain what the team did to improve.",
+        "marks": "2",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "grading": {
+          "mode": "MANUAL"
+        },
+        "accepted_answers": []
+      }
+    },
+    {
+      "key": "M01",
+      "subject_code": "TEST_MATH",
+      "topic": "Signed fractions",
+      "difficulty": "FOUNDATION",
+      "source_pages": [3, 7, 10, 14],
+      "rationale": "Use denominator 8: −6/8 + 5/8 = −1/8.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "Evaluate −3/4 + 5/8.",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "1/8",
+            "is_correct": false
+          },
+          {
+            "text": "−1/8",
+            "is_correct": true
+          },
+          {
+            "text": "−1/4",
+            "is_correct": false
+          },
+          {
+            "text": "1/4",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "M02",
+      "subject_code": "TEST_MATH",
+      "topic": "Decimal square roots",
+      "difficulty": "FOUNDATION",
+      "source_pages": [3, 7, 10, 14],
+      "rationale": "0.09 × 0.09 = 0.0081.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "What is the positive square root of 0.0081?",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "0.9",
+            "is_correct": false
+          },
+          {
+            "text": "0.009",
+            "is_correct": false
+          },
+          {
+            "text": "0.09",
+            "is_correct": true
+          },
+          {
+            "text": "0.0009",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "M03",
+      "subject_code": "TEST_MATH",
+      "topic": "Equivalent ratios",
+      "difficulty": "FOUNDATION",
+      "source_pages": [3, 7, 10, 14],
+      "rationale": "Multiply both terms by 8 to obtain 6 : 5.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "Simplify the ratio (3/4) : (5/8).",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "6 : 5",
+            "is_correct": true
+          },
+          {
+            "text": "3 : 5",
+            "is_correct": false
+          },
+          {
+            "text": "5 : 6",
+            "is_correct": false
+          },
+          {
+            "text": "15 : 32",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "M04",
+      "subject_code": "TEST_MATH",
+      "topic": "Percentage conversion",
+      "difficulty": "FOUNDATION",
+      "source_pages": [3, 7, 10, 14],
+      "rationale": "Multiply by 100: 7 × 5 = 35%.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "Express 7/20 as a percentage.",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "7%",
+            "is_correct": false
+          },
+          {
+            "text": "20%",
+            "is_correct": false
+          },
+          {
+            "text": "28%",
+            "is_correct": false
+          },
+          {
+            "text": "35%",
+            "is_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "key": "M05",
+      "subject_code": "TEST_MATH",
+      "topic": "Exponents",
+      "difficulty": "FOUNDATION",
+      "source_pages": [3, 7, 10, 14],
+      "rationale": "Add and subtract exponents: 2^(3+4−5) = 4.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "Evaluate 2³ × 2⁴ ÷ 2⁵.",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "2",
+            "is_correct": false
+          },
+          {
+            "text": "4",
+            "is_correct": true
+          },
+          {
+            "text": "8",
+            "is_correct": false
+          },
+          {
+            "text": "16",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "M06",
+      "subject_code": "TEST_MATH",
+      "topic": "Angle facts",
+      "difficulty": "FOUNDATION",
+      "source_pages": [3, 7, 10, 14],
+      "rationale": "Angles on a straight line sum to 180°; 180 − 68 = 112.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "Two angles form a straight angle. One is 68°. What is the other?",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "22°",
+            "is_correct": false
+          },
+          {
+            "text": "68°",
+            "is_correct": false
+          },
+          {
+            "text": "112°",
+            "is_correct": true
+          },
+          {
+            "text": "122°",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "M07",
+      "subject_code": "TEST_MATH",
+      "topic": "Sets: complement of intersection",
+      "difficulty": "STANDARD",
+      "source_pages": [3, 7, 10, 14],
+      "rationale": "A ∩ B = {3, 4}; remove those elements from U.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "Let U = {1, 2, 3, 4, 5, 6, 7, 8}, A = {1, 2, 3, 4} and B = {3, 4, 5}. Which set is the complement of A ∩ B in U?",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "{1, 2, 5, 6, 7, 8}",
+            "is_correct": true
+          },
+          {
+            "text": "{3, 4}",
+            "is_correct": false
+          },
+          {
+            "text": "{6, 7, 8}",
+            "is_correct": false
+          },
+          {
+            "text": "{1, 2, 3, 4, 5}",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "M08",
+      "subject_code": "TEST_MATH",
+      "topic": "Algebraic factorisation",
+      "difficulty": "STANDARD",
+      "source_pages": [3, 7, 10, 14],
+      "rationale": "The factors have sum −7 and product 12: −3 and −4.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "Which expression is equal to x² − 7x + 12?",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "(x + 3)(x + 4)",
+            "is_correct": false
+          },
+          {
+            "text": "(x − 2)(x − 6)",
+            "is_correct": false
+          },
+          {
+            "text": "(x + 3)(x − 4)",
+            "is_correct": false
+          },
+          {
+            "text": "(x − 3)(x − 4)",
+            "is_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "key": "M09",
+      "subject_code": "TEST_MATH",
+      "topic": "Median",
+      "difficulty": "STANDARD",
+      "source_pages": [3, 7, 10, 14],
+      "rationale": "Ordered data are 7, 7, 9, 12, 15; the middle value is 9.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "Find the median of 12, 7, 15, 9, 7.",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "7",
+            "is_correct": false
+          },
+          {
+            "text": "9",
+            "is_correct": true
+          },
+          {
+            "text": "10",
+            "is_correct": false
+          },
+          {
+            "text": "12",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "M10",
+      "subject_code": "TEST_MATH",
+      "topic": "Triangle construction reasoning",
+      "difficulty": "STANDARD",
+      "source_pages": [3, 7, 10, 14],
+      "rationale": "A non-degenerate triangle requires the sum of any two sides to exceed the third; 4 + 5 = 9 fails.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "Which three lengths cannot form a non-degenerate triangle?",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "5 cm, 5 cm, 6 cm",
+            "is_correct": false
+          },
+          {
+            "text": "3 cm, 4 cm, 5 cm",
+            "is_correct": false
+          },
+          {
+            "text": "4 cm, 5 cm, 9 cm",
+            "is_correct": true
+          },
+          {
+            "text": "6 cm, 7 cm, 8 cm",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "M11",
+      "subject_code": "TEST_MATH",
+      "topic": "Area unit conversion",
+      "difficulty": "STANDARD",
+      "source_pages": [3, 7, 10, 14],
+      "rationale": "1 m² = 10,000 cm², so 0.024 × 10,000 = 240.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "Convert 0.024 m² to cm².",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "240 cm²",
+            "is_correct": true
+          },
+          {
+            "text": "24 cm²",
+            "is_correct": false
+          },
+          {
+            "text": "2.4 cm²",
+            "is_correct": false
+          },
+          {
+            "text": "2,400 cm²",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "M12",
+      "subject_code": "TEST_MATH",
+      "topic": "Number patterns",
+      "difficulty": "STANDARD",
+      "source_pages": [3, 7, 10, 14],
+      "rationale": "Substitute n = 5: 25 + 10 = 35.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "The nth term of a sequence is n² + 2n. What is its fifth term?",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "25",
+            "is_correct": false
+          },
+          {
+            "text": "30",
+            "is_correct": false
+          },
+          {
+            "text": "32",
+            "is_correct": false
+          },
+          {
+            "text": "35",
+            "is_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "key": "M13",
+      "subject_code": "TEST_MATH",
+      "topic": "Rational number ordering",
+      "difficulty": "STANDARD",
+      "source_pages": [3, 7, 10, 14],
+      "rationale": "With denominator 24, the values are −14/24, −15/24, −16/24 and −12/24. The most negative is −2/3.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "Which is the smallest number?",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "−7/12",
+            "is_correct": false
+          },
+          {
+            "text": "−5/8",
+            "is_correct": false
+          },
+          {
+            "text": "−2/3",
+            "is_correct": true
+          },
+          {
+            "text": "−1/2",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "M14",
+      "subject_code": "TEST_MATH",
+      "topic": "Profit and loss",
+      "difficulty": "STANDARD",
+      "source_pages": [3, 7, 10, 14],
+      "rationale": "Profit = 120; 120/800 × 100 = 15%.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "A bag costs Rs 800 and is sold for Rs 920. What is the profit as a percentage of cost?",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "12%",
+            "is_correct": false
+          },
+          {
+            "text": "15%",
+            "is_correct": true
+          },
+          {
+            "text": "20%",
+            "is_correct": false
+          },
+          {
+            "text": "25%",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "M15",
+      "subject_code": "TEST_MATH",
+      "topic": "Simultaneous linear equations",
+      "difficulty": "STANDARD",
+      "source_pages": [3, 7, 10, 14],
+      "rationale": "Adding gives 3x = 18, so x = 6 and y = 5; x − y = 1.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "If x + y = 11 and 2x − y = 7, what is x − y?",
+        "marks": "1",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "options": [
+          {
+            "text": "1",
+            "is_correct": true
+          },
+          {
+            "text": "5",
+            "is_correct": false
+          },
+          {
+            "text": "6",
+            "is_correct": false
+          },
+          {
+            "text": "11",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "M16",
+      "subject_code": "TEST_MATH",
+      "topic": "Fraction arithmetic",
+      "difficulty": "STANDARD",
+      "source_pages": [3, 7, 10, 14],
+      "rationale": "1.25/0.05 = 25 and 3 × 2/3 = 2, so the result is 23.",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "Calculate 1.25 ÷ 0.05 − 3 × (2/3). Enter a number only.",
+        "marks": "2",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "grading": {
+          "mode": "NUMERIC",
+          "absolute_tolerance": "0"
+        },
+        "accepted_answers": ["23"]
+      }
+    },
+    {
+      "key": "M17",
+      "subject_code": "TEST_MATH",
+      "topic": "LCM in a word problem",
+      "difficulty": "STANDARD",
+      "source_pages": [3, 7, 10, 14],
+      "rationale": "The least common multiple of 12 and 18 is 36 minutes.",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "Two bells ring every 12 minutes and 18 minutes. They ring together at 09:00. After how many minutes will they next ring together? Enter a number only.",
+        "marks": "2",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "grading": {
+          "mode": "NUMERIC",
+          "absolute_tolerance": "0"
+        },
+        "accepted_answers": ["36"]
+      }
+    },
+    {
+      "key": "M18",
+      "subject_code": "TEST_MATH",
+      "topic": "Mean and missing data",
+      "difficulty": "STANDARD",
+      "source_pages": [3, 7, 10, 14],
+      "rationale": "Total = 5 × 18 = 90; known sum = 68; missing value = 22.",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "The mean of five numbers is 18. Four of them are 12, 16, 19 and 21. Find the fifth. Enter a number only.",
+        "marks": "2",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "grading": {
+          "mode": "NUMERIC",
+          "absolute_tolerance": "0"
+        },
+        "accepted_answers": ["22"]
+      }
+    },
+    {
+      "key": "M19",
+      "subject_code": "TEST_MATH",
+      "topic": "Pie charts",
+      "difficulty": "STANDARD",
+      "source_pages": [3, 7, 10, 14],
+      "rationale": "75/360 × 120 = 25 pupils.",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "A school has 120 pupils. A pie-chart sector of 75° represents pupils travelling by bus. How many pupils travel by bus? Enter a whole number.",
+        "marks": "2",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "grading": {
+          "mode": "NUMERIC",
+          "absolute_tolerance": "0"
+        },
+        "accepted_answers": ["25"]
+      }
+    },
+    {
+      "key": "M20",
+      "subject_code": "TEST_MATH",
+      "topic": "Algebraic identities",
+      "difficulty": "STANDARD",
+      "source_pages": [3, 7, 10, 14],
+      "rationale": "Use a² − b² = (a − b)(a + b): 6 × 200 = 1200.",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "Find 103² − 97² without expanding both squares. Enter a number only.",
+        "marks": "2",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "grading": {
+          "mode": "NUMERIC",
+          "absolute_tolerance": "0"
+        },
+        "accepted_answers": ["1200"]
+      }
+    },
+    {
+      "key": "M21",
+      "subject_code": "TEST_MATH",
+      "topic": "Dividing in a ratio",
+      "difficulty": "STANDARD",
+      "source_pages": [3, 7, 10, 14],
+      "rationale": "There are 7 parts; each is 120; the larger share is 5 × 120 = 600.",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "Divide Rs 840 in the ratio 2 : 5. How many rupees are in the larger share? Enter a number only.",
+        "marks": "2",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "grading": {
+          "mode": "NUMERIC",
+          "absolute_tolerance": "0"
+        },
+        "accepted_answers": ["600"]
+      }
+    },
+    {
+      "key": "M22",
+      "subject_code": "TEST_MATH",
+      "topic": "Compound fractions",
+      "difficulty": "CHALLENGING",
+      "source_pages": [3, 7, 10, 14],
+      "rationale": "9/4 − 5/6 = 17/12; divide by 7/12 to get 17/7; add 1/14 to get 35/14 = 2.5.",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "Evaluate [(2 1/4 − 5/6) ÷ (7/12)] + 1/14. Here 2 1/4 is a mixed number. Give the answer as an exact decimal, with no units.",
+        "marks": "2",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "grading": {
+          "mode": "NUMERIC",
+          "absolute_tolerance": "0"
+        },
+        "accepted_answers": ["2.5"]
+      }
+    },
+    {
+      "key": "M23",
+      "subject_code": "TEST_MATH",
+      "topic": "Fractional linear equations",
+      "difficulty": "CHALLENGING",
+      "source_pages": [3, 7, 10, 14],
+      "rationale": "Multiply by 12: 9x − 6 − 2x − 2 = 20; 7x = 28, so x = 4.",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "Solve (3x − 2)/4 − (x + 1)/6 = 5/3. Enter the value of x as a number only.",
+        "marks": "2",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "grading": {
+          "mode": "NUMERIC",
+          "absolute_tolerance": "0"
+        },
+        "accepted_answers": ["4"]
+      }
+    },
+    {
+      "key": "M24",
+      "subject_code": "TEST_MATH",
+      "topic": "Reverse percentage",
+      "difficulty": "CHALLENGING",
+      "source_pages": [3, 7, 10, 14],
+      "rationale": "The original is 2800/1.12 = 2500; subtracting 12% of the new amount would be incorrect.",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "After a 12% increase, a monthly allowance is Rs 2,800. What was the allowance before the increase? Enter rupees as a number only.",
+        "marks": "2",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "grading": {
+          "mode": "NUMERIC",
+          "absolute_tolerance": "0"
+        },
+        "accepted_answers": ["2500"]
+      }
+    },
+    {
+      "key": "M25",
+      "subject_code": "TEST_MATH",
+      "topic": "Polynomial division and evaluation",
+      "difficulty": "CHALLENGING",
+      "source_pages": [3, 7, 10, 14],
+      "rationale": "The quotient is 2x² + x − 6; at x = 3 it is 18 + 3 − 6 = 15.",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "The polynomial 2x³ − 3x² − 8x + 12 is divided exactly by x − 2. Find the value of the quotient when x = 3. Enter a number only.",
+        "marks": "2",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "grading": {
+          "mode": "NUMERIC",
+          "absolute_tolerance": "0"
+        },
+        "accepted_answers": ["15"]
+      }
+    },
+    {
+      "key": "M26",
+      "subject_code": "TEST_MATH",
+      "topic": "Circular area and cost",
+      "difficulty": "CHALLENGING",
+      "source_pages": [3, 7, 10, 14],
+      "rationale": "Area = (22/7) × 49 = 154 m²; cost = 154 × 18 = 2772.",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "A circular lawn has radius 7 m. Grass costs Rs 18 per m². Using π = 22/7, find the total cost in rupees. Enter a number only.",
+        "marks": "2",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "grading": {
+          "mode": "NUMERIC",
+          "absolute_tolerance": "0"
+        },
+        "accepted_answers": ["2772"]
+      }
+    },
+    {
+      "key": "M27",
+      "subject_code": "TEST_MATH",
+      "topic": "Cylinder capacity",
+      "difficulty": "CHALLENGING",
+      "source_pages": [3, 7, 10, 14],
+      "rationale": "Volume = (22/7) × 35² × 80 = 308000 cm³ = 308 litres.",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "A cylindrical tank has internal radius 35 cm and internal height 80 cm. Using π = 22/7 and 1 litre = 1000 cm³, find its capacity in litres. Enter a number only.",
+        "marks": "2",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "grading": {
+          "mode": "NUMERIC",
+          "absolute_tolerance": "0"
+        },
+        "accepted_answers": ["308"]
+      }
+    },
+    {
+      "key": "M28",
+      "subject_code": "TEST_MATH",
+      "topic": "Ages and simultaneous equations",
+      "difficulty": "CHALLENGING",
+      "source_pages": [3, 7, 10, 14],
+      "rationale": "Let the son be s; 3s + 8 = 2(s + 8), so s = 8.",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "A father is three times as old as his son. In 8 years, he will be twice his son’s age. How old is the son now? Enter years as a number only.",
+        "marks": "2",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "grading": {
+          "mode": "NUMERIC",
+          "absolute_tolerance": "0"
+        },
+        "accepted_answers": ["8"]
+      }
+    },
+    {
+      "key": "M29",
+      "subject_code": "TEST_MATH",
+      "topic": "Rectangle word problem",
+      "difficulty": "CHALLENGING",
+      "source_pages": [3, 7, 10, 14],
+      "rationale": "2(w + w + 5) = 46 gives w = 9 and length = 14; area = 126.",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "A rectangle’s length is 5 cm greater than its width. Its perimeter is 46 cm. Find its area in cm². Enter a number only.",
+        "marks": "2",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "grading": {
+          "mode": "NUMERIC",
+          "absolute_tolerance": "0"
+        },
+        "accepted_answers": ["126"]
+      }
+    },
+    {
+      "key": "M30",
+      "subject_code": "TEST_MATH",
+      "topic": "Fractional proportions",
+      "difficulty": "CHALLENGING",
+      "source_pages": [3, 7, 10, 14],
+      "rationale": "10A = 12B, so A : B = 6 : 5; A = 99 × 6/11 = 54.",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "If (2/3) of A equals (4/5) of B and A + B = 99, find A. Enter a number only.",
+        "marks": "2",
+        "direction": "ltr",
+        "language": "en",
+        "is_active": true,
+        "grading": {
+          "mode": "NUMERIC",
+          "absolute_tolerance": "0"
+        },
+        "accepted_answers": ["54"]
+      }
+    },
+    {
+      "key": "U01",
+      "subject_code": "TEST_UR",
+      "topic": "اسم کی پہچان",
+      "difficulty": "FOUNDATION",
+      "source_pages": [4, 6, 9, 13],
+      "rationale": "باغ ایک جگہ کا نام ہے، اس لیے اسم ہے۔",
+      "question": {
+        "type": "MCQ",
+        "prompt": "جملے «بچے باغ میں کھیل رہے ہیں» میں «باغ» کیا ہے؟",
+        "marks": "1",
+        "direction": "rtl",
+        "language": "ur",
+        "is_active": true,
+        "options": [
+          {
+            "text": "فعل",
+            "is_correct": false
+          },
+          {
+            "text": "حرف",
+            "is_correct": false
+          },
+          {
+            "text": "اسم",
+            "is_correct": true
+          },
+          {
+            "text": "صفت",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "U02",
+      "subject_code": "TEST_UR",
+      "topic": "واحد اور جمع",
+      "difficulty": "FOUNDATION",
+      "source_pages": [4, 6, 9, 13],
+      "rationale": "تصویر کی جمع تصویریں ہے۔",
+      "question": {
+        "type": "MCQ",
+        "prompt": "«تصویر» کی جمع منتخب کریں۔",
+        "marks": "1",
+        "direction": "rtl",
+        "language": "ur",
+        "is_active": true,
+        "options": [
+          {
+            "text": "تصویریں",
+            "is_correct": true
+          },
+          {
+            "text": "تصور",
+            "is_correct": false
+          },
+          {
+            "text": "تصویری",
+            "is_correct": false
+          },
+          {
+            "text": "تصویراتیں",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "U03",
+      "subject_code": "TEST_UR",
+      "topic": "متضاد الفاظ",
+      "difficulty": "FOUNDATION",
+      "source_pages": [4, 6, 9, 13],
+      "rationale": "عارضی کے مقابل مستقل استعمال ہوتا ہے۔",
+      "question": {
+        "type": "MCQ",
+        "prompt": "«عارضی» کا متضاد کون سا ہے؟",
+        "marks": "1",
+        "direction": "rtl",
+        "language": "ur",
+        "is_active": true,
+        "options": [
+          {
+            "text": "مختصر",
+            "is_correct": false
+          },
+          {
+            "text": "فوری",
+            "is_correct": false
+          },
+          {
+            "text": "قریب",
+            "is_correct": false
+          },
+          {
+            "text": "مستقل",
+            "is_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "key": "U04",
+      "subject_code": "TEST_UR",
+      "topic": "درست املا",
+      "difficulty": "FOUNDATION",
+      "source_pages": [4, 6, 9, 13],
+      "rationale": "ضرورت میں ض اور ت درست ہیں۔",
+      "question": {
+        "type": "MCQ",
+        "prompt": "درست املا والا لفظ منتخب کریں۔",
+        "marks": "1",
+        "direction": "rtl",
+        "language": "ur",
+        "is_active": true,
+        "options": [
+          {
+            "text": "ظرورت",
+            "is_correct": false
+          },
+          {
+            "text": "ضرورت",
+            "is_correct": true
+          },
+          {
+            "text": "ضرورط",
+            "is_correct": false
+          },
+          {
+            "text": "زرورت",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "U05",
+      "subject_code": "TEST_UR",
+      "topic": "فعل کا زمانہ",
+      "difficulty": "STANDARD",
+      "source_pages": [4, 6, 9, 13],
+      "rationale": "ماضی بعید ایسے کام کو ظاہر کرتا ہے جو ماضی میں پہلے ہی مکمل ہو چکا تھا۔",
+      "question": {
+        "type": "MCQ",
+        "prompt": "جملے «وہ خط لکھ چکا تھا» میں فعل کا زمانہ پہچانیں۔",
+        "marks": "1",
+        "direction": "rtl",
+        "language": "ur",
+        "is_active": true,
+        "options": [
+          {
+            "text": "حال جاری",
+            "is_correct": false
+          },
+          {
+            "text": "مستقبل",
+            "is_correct": false
+          },
+          {
+            "text": "ماضی بعید",
+            "is_correct": true
+          },
+          {
+            "text": "ماضی استمراری",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "U06",
+      "subject_code": "TEST_UR",
+      "topic": "حروفِ ربط",
+      "difficulty": "STANDARD",
+      "source_pages": [4, 6, 9, 13],
+      "rationale": "لیکن دو جملوں کے درمیان تعلق قائم کرتا ہے، اس لیے حرفِ ربط ہے۔",
+      "question": {
+        "type": "MCQ",
+        "prompt": "جملے «وہ آیا لیکن زیادہ دیر نہ ٹھہرا» میں «لیکن» کیا ہے؟",
+        "marks": "1",
+        "direction": "rtl",
+        "language": "ur",
+        "is_active": true,
+        "options": [
+          {
+            "text": "حرفِ ربط",
+            "is_correct": true
+          },
+          {
+            "text": "اسمِ اشارہ",
+            "is_correct": false
+          },
+          {
+            "text": "فعلِ امر",
+            "is_correct": false
+          },
+          {
+            "text": "صفت",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "U07",
+      "subject_code": "TEST_UR",
+      "topic": "محاورے کا مفہوم",
+      "difficulty": "STANDARD",
+      "source_pages": [4, 6, 9, 13],
+      "rationale": "یہ محاورہ ایسے پوشیدہ دشمن کے لیے ہے جو دوست بن کر نقصان پہنچائے۔",
+      "question": {
+        "type": "MCQ",
+        "prompt": "«آستین کا سانپ» کس شخص کے لیے کہا جاتا ہے؟",
+        "marks": "1",
+        "direction": "rtl",
+        "language": "ur",
+        "is_active": true,
+        "options": [
+          {
+            "text": "بہت بہادر شخص",
+            "is_correct": false
+          },
+          {
+            "text": "بہت محنتی دوست",
+            "is_correct": false
+          },
+          {
+            "text": "انجان مسافر",
+            "is_correct": false
+          },
+          {
+            "text": "دوست بن کر نقصان پہنچانے والا دشمن",
+            "is_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "key": "U08",
+      "subject_code": "TEST_UR",
+      "topic": "مرکبِ اضافی",
+      "difficulty": "STANDARD",
+      "source_pages": [4, 6, 9, 13],
+      "rationale": "اس ترکیب میں کتاب کی نسبت تاریخ سے ہے، اس لیے مرکبِ اضافی ہے۔",
+      "question": {
+        "type": "MCQ",
+        "prompt": "«کتابِ تاریخ» کس قسم کا مرکب ہے؟",
+        "marks": "1",
+        "direction": "rtl",
+        "language": "ur",
+        "is_active": true,
+        "options": [
+          {
+            "text": "مرکبِ عطفی",
+            "is_correct": false
+          },
+          {
+            "text": "مرکبِ اضافی",
+            "is_correct": true
+          },
+          {
+            "text": "مرکبِ عددی",
+            "is_correct": false
+          },
+          {
+            "text": "مرکبِ اشاری",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "U09",
+      "subject_code": "TEST_UR",
+      "topic": "مرکبِ عطفی",
+      "difficulty": "STANDARD",
+      "source_pages": [4, 6, 9, 13],
+      "rationale": "دو اسم حرفِ عطف و سے ملے ہیں۔",
+      "question": {
+        "type": "MCQ",
+        "prompt": "«صبح و شام» کس قسم کا مرکب ہے؟",
+        "marks": "1",
+        "direction": "rtl",
+        "language": "ur",
+        "is_active": true,
+        "options": [
+          {
+            "text": "مرکبِ توصیفی",
+            "is_correct": false
+          },
+          {
+            "text": "مرکبِ اضافی",
+            "is_correct": false
+          },
+          {
+            "text": "مرکبِ عطفی",
+            "is_correct": true
+          },
+          {
+            "text": "مرکبِ عددی",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "U10",
+      "subject_code": "TEST_UR",
+      "topic": "مترادف الفاظ",
+      "difficulty": "STANDARD",
+      "source_pages": [4, 6, 9, 13],
+      "rationale": "شجاعت کے معنی بہادری ہیں۔",
+      "question": {
+        "type": "MCQ",
+        "prompt": "جملے «اس نے شجاعت کا مظاہرہ کیا» میں «شجاعت» کا قریب ترین مطلب کیا ہے؟",
+        "marks": "1",
+        "direction": "rtl",
+        "language": "ur",
+        "is_active": true,
+        "options": [
+          {
+            "text": "بہادری",
+            "is_correct": true
+          },
+          {
+            "text": "خاموشی",
+            "is_correct": false
+          },
+          {
+            "text": "ہمدردی",
+            "is_correct": false
+          },
+          {
+            "text": "احتیاط",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "U11",
+      "subject_code": "TEST_UR",
+      "topic": "اسمِ صفت",
+      "difficulty": "STANDARD",
+      "source_pages": [4, 6, 9, 13],
+      "rationale": "بہادر، سپاہی کی خوبی بتاتا ہے۔",
+      "question": {
+        "type": "MCQ",
+        "prompt": "جملے «بہادر سپاہی واپس آیا» میں صفت کون سی ہے؟",
+        "marks": "1",
+        "direction": "rtl",
+        "language": "ur",
+        "is_active": true,
+        "options": [
+          {
+            "text": "سپاہی",
+            "is_correct": false
+          },
+          {
+            "text": "واپس",
+            "is_correct": false
+          },
+          {
+            "text": "آیا",
+            "is_correct": false
+          },
+          {
+            "text": "بہادر",
+            "is_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "key": "U12",
+      "subject_code": "TEST_UR",
+      "topic": "متشابہ الفاظ",
+      "difficulty": "STANDARD",
+      "source_pages": [4, 6, 9, 13],
+      "rationale": "قدر کرنا، اہمیت پہچاننے کے معنی میں درست ترکیب ہے؛ قید، قہر اور قبر یہاں درست نہیں۔",
+      "question": {
+        "type": "MCQ",
+        "prompt": "درست لفظ سے جملہ مکمل کریں: ہمیں وقت کی ___ کرنی چاہیے۔",
+        "marks": "1",
+        "direction": "rtl",
+        "language": "ur",
+        "is_active": true,
+        "options": [
+          {
+            "text": "قید",
+            "is_correct": false
+          },
+          {
+            "text": "قدر",
+            "is_correct": true
+          },
+          {
+            "text": "قہر",
+            "is_correct": false
+          },
+          {
+            "text": "قبر",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "U13",
+      "subject_code": "TEST_UR",
+      "topic": "فاعل اور مفعول",
+      "difficulty": "STANDARD",
+      "source_pages": [4, 6, 9, 13],
+      "rationale": "دینے کا کام استاد نے کیا ہے؛ وہ فاعل ہے۔",
+      "question": {
+        "type": "MCQ",
+        "prompt": "جملے «استاد نے طالب علم کو انعام دیا» میں کام کرنے والا کون ہے؟",
+        "marks": "1",
+        "direction": "rtl",
+        "language": "ur",
+        "is_active": true,
+        "options": [
+          {
+            "text": "انعام",
+            "is_correct": false
+          },
+          {
+            "text": "طالب علم",
+            "is_correct": false
+          },
+          {
+            "text": "استاد",
+            "is_correct": true
+          },
+          {
+            "text": "کو",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "U14",
+      "subject_code": "TEST_UR",
+      "topic": "محاورہ: سیاق کے مطابق استعمال",
+      "difficulty": "CHALLENGING",
+      "source_pages": [4, 6, 9, 13],
+      "rationale": "یہ محاورہ گھبرا جانے کے معنی میں آتا ہے، جسمانی پھولنے کے معنی میں نہیں۔",
+      "question": {
+        "type": "MCQ",
+        "prompt": "«ہاتھ پاؤں پھول جانا» کے درست استعمال والا جملہ منتخب کریں۔",
+        "marks": "1",
+        "direction": "rtl",
+        "language": "ur",
+        "is_active": true,
+        "options": [
+          {
+            "text": "اچانک مشکل سوال دیکھ کر اس کے ہاتھ پاؤں پھول گئے۔",
+            "is_correct": true
+          },
+          {
+            "text": "ورزش کے بعد اس کے ہاتھ پاؤں خوشی سے پھول گئے۔",
+            "is_correct": false
+          },
+          {
+            "text": "مالی نے پودوں کے ہاتھ پاؤں پھلا دیے۔",
+            "is_correct": false
+          },
+          {
+            "text": "وہ روز صبح ہاتھ پاؤں پھولنے کا سبق پڑھتا ہے۔",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "U15",
+      "subject_code": "TEST_UR",
+      "topic": "جمع بنانا",
+      "difficulty": "STANDARD",
+      "source_pages": [4, 6, 9, 13],
+      "rationale": "درست عام جمع قوانین ہے۔",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "«قانون» کی عام جمع لکھیں۔ صرف ایک لفظ لکھیں۔",
+        "marks": "2",
+        "direction": "rtl",
+        "language": "ur",
+        "is_active": true,
+        "grading": {
+          "mode": "EXACT",
+          "unicode_normalization": "NFC",
+          "trim_whitespace": true,
+          "collapse_whitespace": true,
+          "case_sensitive": false
+        },
+        "accepted_answers": ["قوانین"]
+      }
+    },
+    {
+      "key": "U16",
+      "subject_code": "TEST_UR",
+      "topic": "مذکر و مؤنث",
+      "difficulty": "STANDARD",
+      "source_pages": [4, 6, 9, 13],
+      "rationale": "شاعر کی مؤنث شاعرہ ہے۔",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "«شاعر» کی مؤنث لکھیں۔ صرف ایک لفظ لکھیں۔",
+        "marks": "2",
+        "direction": "rtl",
+        "language": "ur",
+        "is_active": true,
+        "grading": {
+          "mode": "EXACT",
+          "unicode_normalization": "NFC",
+          "trim_whitespace": true,
+          "collapse_whitespace": true,
+          "case_sensitive": false
+        },
+        "accepted_answers": ["شاعرہ"]
+      }
+    },
+    {
+      "key": "U17",
+      "subject_code": "TEST_UR",
+      "topic": "سابقہ لگا کر متضاد بنانا",
+      "difficulty": "STANDARD",
+      "source_pages": [4, 6, 9, 13],
+      "rationale": "بے + وفا سے بے وفا بنتا ہے؛ فاصلہ موجود یا نہ ہونے دونوں صورتیں قبول ہیں۔ سوال مخصوص لفظ سازی کا ہے، اس لیے خودکار جانچ کے لیے جواب متعین ہے۔",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "«بے» کو «وفا» کے ساتھ ملا کر «وفادار» کا متضاد بنائیں۔ جواب میں بنا ہوا لفظ لکھیں۔",
+        "marks": "2",
+        "direction": "rtl",
+        "language": "ur",
+        "is_active": true,
+        "grading": {
+          "mode": "EXACT",
+          "unicode_normalization": "NFC",
+          "trim_whitespace": true,
+          "collapse_whitespace": true,
+          "case_sensitive": false
+        },
+        "accepted_answers": ["بے وفا", "بےوفا"]
+      }
+    },
+    {
+      "key": "U18",
+      "subject_code": "TEST_UR",
+      "topic": "فعلِ امر",
+      "difficulty": "STANDARD",
+      "source_pages": [4, 6, 9, 13],
+      "rationale": "کھولو، حکم دینے والا فعل ہے۔",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "جملے «دروازہ کھولو» میں فعل لکھیں۔ صرف ایک لفظ لکھیں۔",
+        "marks": "2",
+        "direction": "rtl",
+        "language": "ur",
+        "is_active": true,
+        "grading": {
+          "mode": "EXACT",
+          "unicode_normalization": "NFC",
+          "trim_whitespace": true,
+          "collapse_whitespace": true,
+          "case_sensitive": false
+        },
+        "accepted_answers": ["کھولو"]
+      }
+    },
+    {
+      "key": "U19",
+      "subject_code": "TEST_UR",
+      "topic": "ضرب المثل مکمل کرنا",
+      "difficulty": "STANDARD",
+      "source_pages": [4, 6, 9, 13],
+      "rationale": "معروف تکمیل بھرنی ہے، یعنی عمل کے مطابق نتیجہ ملتا ہے۔",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "ضرب المثل مکمل کریں: جیسی کرنی ویسی ___۔ صرف ایک لفظ لکھیں۔",
+        "marks": "2",
+        "direction": "rtl",
+        "language": "ur",
+        "is_active": true,
+        "grading": {
+          "mode": "EXACT",
+          "unicode_normalization": "NFC",
+          "trim_whitespace": true,
+          "collapse_whitespace": true,
+          "case_sensitive": false
+        },
+        "accepted_answers": ["بھرنی"]
+      }
+    },
+    {
+      "key": "U20",
+      "subject_code": "TEST_UR",
+      "topic": "مختصر مفہوم نویسی",
+      "difficulty": "CHALLENGING",
+      "source_pages": [4, 6, 9, 13],
+      "rationale": "۲ نمبر: وقت کی قدر یا ذمہ داری کا مفہوم ۱؛ وقت ضائع نہ کرنے یا اچھے استعمال کی وضاحت ۱۔ ایک مناسب مختصر جملہ کافی ہے۔ الفاظ کی لفظی یکسانیت ضروری نہیں۔",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "«وقت ایک قیمتی امانت ہے» کا مطلب ایک مختصر جملے میں اپنے الفاظ میں لکھیں۔",
+        "marks": "2",
+        "direction": "rtl",
+        "language": "ur",
+        "is_active": true,
+        "grading": {
+          "mode": "MANUAL"
+        },
+        "accepted_answers": []
+      }
+    },
+    {
+      "key": "U21",
+      "subject_code": "TEST_UR",
+      "topic": "جملے کی تبدیلی",
+      "difficulty": "CHALLENGING",
+      "source_pages": [4, 6, 9, 13],
+      "rationale": "۲ نمبر: لڑکے بطور جمع فاعل ۱؛ پڑھتے ہیں کی درست مطابقت ۱۔ متوقع جواب: لڑکے سبق پڑھتے ہیں۔ رموزِ اوقاف کی معمولی تبدیلی قابل قبول ہے۔",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "جملے «لڑکا سبق پڑھتا ہے» کو جمع میں تبدیل کریں۔ صرف ایک جملہ لکھیں۔",
+        "marks": "2",
+        "direction": "rtl",
+        "language": "ur",
+        "is_active": true,
+        "grading": {
+          "mode": "MANUAL"
+        },
+        "accepted_answers": []
+      }
+    },
+    {
+      "key": "I01",
+      "subject_code": "TEST_UR",
+      "topic": "اسلامیات: ارکانِ اسلام",
+      "difficulty": "FOUNDATION",
+      "source_pages": [4, 6, 9, 13],
+      "rationale": "اسلام کے پانچ بنیادی ارکان ہیں۔",
+      "question": {
+        "type": "MCQ",
+        "prompt": "اسلامیات: اسلام کے بنیادی ارکان کتنے ہیں؟",
+        "marks": "1",
+        "direction": "rtl",
+        "language": "ur",
+        "is_active": true,
+        "options": [
+          {
+            "text": "تین",
+            "is_correct": false
+          },
+          {
+            "text": "چار",
+            "is_correct": false
+          },
+          {
+            "text": "چھ",
+            "is_correct": false
+          },
+          {
+            "text": "پانچ",
+            "is_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "key": "I02",
+      "subject_code": "TEST_UR",
+      "topic": "اسلامیات: نماز",
+      "difficulty": "FOUNDATION",
+      "source_pages": [4, 6, 9, 13],
+      "rationale": "فرض نمازیں فجر، ظہر، عصر، مغرب اور عشاء ہیں، یعنی پانچ۔",
+      "question": {
+        "type": "MCQ",
+        "prompt": "اسلامیات: دن رات میں فرض نمازیں کتنی ہیں؟",
+        "marks": "1",
+        "direction": "rtl",
+        "language": "ur",
+        "is_active": true,
+        "options": [
+          {
+            "text": "چار",
+            "is_correct": false
+          },
+          {
+            "text": "پانچ",
+            "is_correct": true
+          },
+          {
+            "text": "چھ",
+            "is_correct": false
+          },
+          {
+            "text": "سات",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "I03",
+      "subject_code": "TEST_UR",
+      "topic": "اسلامیات: زکوٰۃ کا مقصد",
+      "difficulty": "STANDARD",
+      "source_pages": [4, 6, 9, 13],
+      "rationale": "زکوٰۃ کے ذریعے مستحق افراد کی مدد ہوتی ہے۔ یہاں نصاب یا فقہی شرح کا سوال نہیں ہے۔",
+      "question": {
+        "type": "MCQ",
+        "prompt": "اسلامیات: زکوٰۃ کے معاشرتی فائدے کی درست مثال منتخب کریں۔",
+        "marks": "1",
+        "direction": "rtl",
+        "language": "ur",
+        "is_active": true,
+        "options": [
+          {
+            "text": "فضول خرچی میں اضافہ",
+            "is_correct": false
+          },
+          {
+            "text": "دولت چھپانا",
+            "is_correct": false
+          },
+          {
+            "text": "مستحق افراد کی مدد",
+            "is_correct": true
+          },
+          {
+            "text": "دوسروں کا حق روکنا",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "I04",
+      "subject_code": "TEST_UR",
+      "topic": "اسلامیات: صلح حدیبیہ",
+      "difficulty": "STANDARD",
+      "source_pages": [4, 6, 9, 13],
+      "rationale": "صلح حدیبیہ مسلمانوں اور قریش کے درمیان ایک معاہدہ تھا۔",
+      "question": {
+        "type": "MCQ",
+        "prompt": "اسلامیات: صلح حدیبیہ کے بارے میں درست بیان منتخب کریں۔",
+        "marks": "1",
+        "direction": "rtl",
+        "language": "ur",
+        "is_active": true,
+        "options": [
+          {
+            "text": "یہ مسلمانوں اور قریش کے درمیان معاہدہ تھا۔",
+            "is_correct": true
+          },
+          {
+            "text": "یہ مدینہ میں تعمیر ہونے والی مسجد کا نام تھا۔",
+            "is_correct": false
+          },
+          {
+            "text": "یہ فرض نمازوں میں سے ایک نماز کا نام تھا۔",
+            "is_correct": false
+          },
+          {
+            "text": "یہ زکوٰۃ کی ایک قسم تھی۔",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "I05",
+      "subject_code": "TEST_UR",
+      "topic": "اسلامیات: سورۃ الاخلاص کا مرکزی مضمون",
+      "difficulty": "STANDARD",
+      "source_pages": [4, 6, 9, 13],
+      "rationale": "سورۃ الاخلاص اللہ تعالیٰ کی وحدانیت بیان کرتی ہے۔ آیات کی نقل یا لفظی ترجمہ یہاں مطلوب نہیں۔",
+      "question": {
+        "type": "MCQ",
+        "prompt": "اسلامیات: سورۃ الاخلاص کا مرکزی مضمون کیا ہے؟",
+        "marks": "1",
+        "direction": "rtl",
+        "language": "ur",
+        "is_active": true,
+        "options": [
+          {
+            "text": "تجارتی معاملات کی تفصیل",
+            "is_correct": false
+          },
+          {
+            "text": "وراثت کے حصے",
+            "is_correct": false
+          },
+          {
+            "text": "سفر کے آداب",
+            "is_correct": false
+          },
+          {
+            "text": "اللہ تعالیٰ کی وحدانیت",
+            "is_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "key": "I06",
+      "subject_code": "TEST_UR",
+      "topic": "اسلامیات: امانت داری",
+      "difficulty": "STANDARD",
+      "source_pages": [4, 6, 9, 13],
+      "rationale": "امانت محفوظ رکھ کر ذمہ دار شخص کے ذریعے مالک تک پہنچانا درست طرزِ عمل ہے۔",
+      "question": {
+        "type": "MCQ",
+        "prompt": "اسلامیات: ایک طالب علم کو راستے میں کسی کی رقم ملتی ہے۔ امانت داری کے مطابق اسے کیا کرنا چاہیے؟",
+        "marks": "1",
+        "direction": "rtl",
+        "language": "ur",
+        "is_active": true,
+        "options": [
+          {
+            "text": "رقم فوراً خرچ کر دے۔",
+            "is_correct": false
+          },
+          {
+            "text": "رقم محفوظ رکھ کر ذمہ دار شخص کے ذریعے مالک تک پہنچانے کی کوشش کرے۔",
+            "is_correct": true
+          },
+          {
+            "text": "رقم دوستوں میں تقسیم کر دے۔",
+            "is_correct": false
+          },
+          {
+            "text": "رقم ملنے سے انکار کر دے۔",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "I07",
+      "subject_code": "TEST_UR",
+      "topic": "اسلامیات: سیرت: ہجرت",
+      "difficulty": "STANDARD",
+      "source_pages": [4, 6, 9, 13],
+      "rationale": "مدینہ، مدینہ منورہ، یثرب اور املا مدينہ کی عام صورتیں قبول ہیں۔",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "اسلامیات: ہجرت کے موقع پر رسول اللہ ﷺ مکہ سے کس شہر تشریف لے گئے؟ صرف شہر کا نام لکھیں۔",
+        "marks": "2",
+        "direction": "rtl",
+        "language": "ur",
+        "is_active": true,
+        "grading": {
+          "mode": "EXACT",
+          "unicode_normalization": "NFC",
+          "trim_whitespace": true,
+          "collapse_whitespace": true,
+          "case_sensitive": false
+        },
+        "accepted_answers": ["مدینہ", "مدینہ منورہ", "یثرب", "مدينہ"]
+      }
+    },
+    {
+      "key": "I08",
+      "subject_code": "TEST_UR",
+      "topic": "اسلامیات: حقوق العباد",
+      "difficulty": "STANDARD",
+      "source_pages": [4, 6, 9, 13],
+      "rationale": "۲ نمبر: پڑوسی کے ایک معتبر حق کی درست نشاندہی ۱؛ ایک واضح مثال یا مکمل مختصر بیان ۱۔ مثلاً تکلیف نہ پہنچانا، ضرورت میں مدد یا حسنِ سلوک۔ مختلف درست مثالیں قبول کریں۔",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "اسلامیات: پڑوسی کا ایک حق ایک مختصر جملے میں لکھیں۔",
+        "marks": "2",
+        "direction": "rtl",
+        "language": "ur",
+        "is_active": true,
+        "grading": {
+          "mode": "MANUAL"
+        },
+        "accepted_answers": []
+      }
+    },
+    {
+      "key": "I09",
+      "subject_code": "TEST_UR",
+      "topic": "اسلامیات: حسنِ اخلاق",
+      "difficulty": "STANDARD",
+      "source_pages": [4, 6, 9, 13],
+      "rationale": "۲ نمبر: رنجش یا دشمنی کم ہونے کا مفہوم ۱؛ اعتماد، محبت یا صلح میں بہتری کی وضاحت ۱۔ درست ہم معنی جواب قبول کریں، لفظی مماثلت ضروری نہیں۔",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "اسلامیات: کسی سے غلطی ہو جائے تو معاف کر دینا باہمی تعلقات کو کیسے بہتر بناتا ہے؟ ایک مختصر جملہ لکھیں۔",
+        "marks": "2",
+        "direction": "rtl",
+        "language": "ur",
+        "is_active": true,
+        "grading": {
+          "mode": "MANUAL"
+        },
+        "accepted_answers": []
+      }
+    }
+  ],
+  "retire_examples": [
+    {
+      "key": "DENG1",
+      "subject_code": "TEST_ENG",
+      "topic": "Local sandbox demo",
+      "difficulty": "FOUNDATION",
+      "source_pages": [1],
+      "rationale": "Archive only if this complete original demo snapshot is unchanged and unassigned; never delete the record.",
+      "question": {
+        "type": "MCQ",
+        "prompt": "Select the opposite of creation.",
+        "marks": "1",
+        "options": [
+          {
+            "text": "Destruction",
+            "is_correct": true
+          },
+          {
+            "text": "Development",
+            "is_correct": false
+          }
+        ]
+      }
+    },
+    {
+      "key": "DENG2",
+      "subject_code": "TEST_ENG",
+      "topic": "Local sandbox demo",
+      "difficulty": "FOUNDATION",
+      "source_pages": [1],
+      "rationale": "Archive only if this complete original demo snapshot is unchanged and unassigned; never delete the record.",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "Complete: From darkness unto _____.",
+        "marks": "2",
+        "grading": {
+          "mode": "EXACT",
+          "trim_whitespace": true,
+          "case_sensitive": false
+        },
+        "accepted_answers": ["light"]
+      }
+    },
+    {
+      "key": "DMATH",
+      "subject_code": "TEST_MATH",
+      "topic": "Local sandbox demo",
+      "difficulty": "FOUNDATION",
+      "source_pages": [1],
+      "rationale": "Archive only if this complete original demo snapshot is unchanged and unassigned; never delete the record.",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "Find x: 3(x + 5) = 24.",
+        "marks": "2",
+        "grading": {
+          "mode": "NUMERIC",
+          "absolute_tolerance": "0"
+        },
+        "accepted_answers": ["3"]
+      }
+    },
+    {
+      "key": "DURDU",
+      "subject_code": "TEST_UR",
+      "topic": "Local sandbox demo",
+      "difficulty": "FOUNDATION",
+      "source_pages": [1],
+      "rationale": "Archive only if this complete original demo snapshot is unchanged and unassigned; never delete the record.",
+      "question": {
+        "type": "SHORT_ANSWER",
+        "prompt": "اپنی پسندیدہ کتاب کا نام لکھیں۔",
+        "marks": "2",
+        "language": "ur",
+        "direction": "rtl",
+        "grading": {
+          "mode": "MANUAL"
+        },
+        "accepted_answers": []
+      }
+    }
+  ]
+}

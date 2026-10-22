@@ -21,6 +21,11 @@ They are initially unassigned to papers so their editing controls are usable.
 Existing rules still prevent editing questions already used in a paper; remove
 them from an editable draft paper first, or create a new question.
 
+For a larger practice bank informed by CCK's scanned 2020–2023 papers, see the
+[90-question calibration pack and safe import commands](question-bank-calibration.md).
+It includes original English, Mathematics, Urdu and labelled Islamiat practice,
+with keys and marking guidance. It requires subject-teacher review before real use.
+
 The other sidebar pages support candidate registration/import, subjects, exam
 creation, ordered papers, staff assignments, publication/start controls and history.
 The sample exam starts as an unpublished draft with no papers; configure it through

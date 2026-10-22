@@ -1,5 +1,8 @@
 # CCK Digital Entry Test
 
+Original Class 8 practice content and local management import commands are documented
+in the [question-bank calibration guide](docs/question-bank-calibration.md).
+
 Foundation, exam domain, attempt engine, candidate interface, recovery, administration,
 proctor monitoring, grading/results, security hardening, and Milestone 10 deployment/recovery rehearsals for Cadet College Kohat's entry-test platform. React +
 TypeScript, FastAPI, SQLAlchemy 2, PostgreSQL, and Alembic. Candidates sign in with
