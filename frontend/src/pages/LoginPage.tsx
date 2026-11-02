@@ -27,7 +27,7 @@ export default function LoginPage() {
         <h2 id="sign-in-heading">Welcome</h2>
         {import.meta.env.DEV && import.meta.env.VITE_MANAGEMENT_SANDBOX === 'true' && <p><a className="primary-button preview-entry" href="/api/local-management">Open test administration →</a></p>}
         <p>
-          Sign in to continue to
+          Enter your admissions details to continue to
           <br />
           CCK Online Entry Test 2026
         </p>
@@ -51,7 +51,7 @@ export default function LoginPage() {
           <p>
             Only registered candidates can access the test.
             <br />
-            Use your admission roll number, full name, and father’s name.
+            We verify your roll number, full name, and father’s name with your admission record.
           </p>
         </div>
       </section>

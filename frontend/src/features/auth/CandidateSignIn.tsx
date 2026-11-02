@@ -22,7 +22,10 @@ export function CandidateSignIn() {
     }).finally(() => { inFlight.current = false; setPending(false); });
   }}>
     <fieldset disabled={pending}>
-      <legend className="sr-only">Your admissions details</legend>
+      <legend>
+        <span>Candidate sign-in</span>
+        <small>Enter the details exactly as they appear in your admission record.</small>
+      </legend>
       <label htmlFor="candidate-roll">Roll number</label>
       <input id="candidate-roll" name="roll_number" required maxLength={64}
         autoComplete="username" autoCapitalize="none" spellCheck={false}
