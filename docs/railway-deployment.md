@@ -26,6 +26,8 @@ for 7,000 simultaneous candidates. Existing local data is not uploaded automatic
   deadlines, submission and rejection of post-submission edits. Candidate responses
   contained no keys; results remained withheld. The separate verification candidate
   was disabled after testing and its submitted evidence was retained.
+- A private `auth-maintenance` job runs every five minutes. Its first run completed
+  successfully and confirmed that no active sessions needed removal.
 
 The administrator account is provisioned, but **public staff Google sign-in still
 requires a Google OAuth web client ID**, configured with the exact HTTPS origin in
