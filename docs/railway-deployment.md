@@ -4,6 +4,37 @@ This adapts the existing CCK application for Railway. It is preparation for a li
 staging deployment, not approval for admission examinations or a claim of capacity
 for 7,000 simultaneous candidates. Existing local data is not uploaded automatically.
 
+## Staging deployment record — 15 November 2026
+
+- Public HTTPS address: https://web-staging-f483f7e6.up.railway.app
+- [Railway project dashboard](https://railway.com/project/45d57217-e4fc-435e-a29b-2edbf22e32a0),
+  environment `staging`. The separately created default `production` environment is empty.
+- Web and expiry-worker were built from repository commit `178c985` using CLI uploads.
+  GitHub-triggered automatic deployments are not configured. Future source updates
+  must be deliberately deployed to both services after passing checks.
+- Railway's current PostgreSQL template provisioned PostgreSQL 18 with persistent
+  storage. All Alembic migrations completed on that instance. Runtime traffic uses
+  `cck_runtime`, without schema-creation or audit-update privileges; migrations use
+  the distinct `cck_owner` account. The database has no public TCP endpoint.
+- The cloud bank contains the 90 original practice items. A separately labelled
+  six-question practice demo has English, Mathematics and Urdu/Islamiat sections,
+  each configured for 60 minutes. The previously supplied demo candidate is assigned
+  and its attempt was left unstarted. Local candidate records, edited exams and
+  existing attempts were not copied from WSL.
+- Live HTTPS API verification covered readiness, login/secure cookies, three subject
+  starts, answer saving and idempotent retries, review flags, refresh with unchanged
+  deadlines, submission and rejection of post-submission edits. Candidate responses
+  contained no keys; results remained withheld. The separate verification candidate
+  was disabled after testing and its submitted evidence was retained.
+
+The administrator account is provisioned, but **public staff Google sign-in still
+requires a Google OAuth web client ID**, configured with the exact HTTPS origin in
+Google Cloud and both Railway client-ID variables. Rebuild web after setting its
+frontend client ID. Candidate admissions-details login works without Google.
+The localhost-only free-administration entry does not exist on the public site.
+No institutional custom domain, external alerts, backup/PITR acceptance, full-scale
+load test or real-exam approval is implied by this staging deployment.
+
 ## Services
 
 | Service       | Source                                               | Start command                                                  | Public domain |
