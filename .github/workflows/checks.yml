@@ -73,6 +73,59 @@ jobs:
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+  railway-image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build Railway runtime
+        run: docker build -f Dockerfile.railway -t cck-railway-check .
+      - name: Verify assigned port, frontend and API boundaries
+        run: |
+          docker run --detach --name cck-railway-check \
+            --publish 127.0.0.1:5180:9000 \
+            --env PORT=9000 --env ENVIRONMENT=production \
+            --env DATABASE_URL=postgresql://ci:ci_only_password@unconfigured-db/ci \
+            --env SESSION_COOKIE_SECURE=true \
+            --env FRONTEND_ORIGIN=https://cck.example \
+            --env 'ALLOWED_HOSTS=["localhost","healthcheck.railway.app"]' \
+            cck-railway-check
+          python3 - <<'PY'
+          import time
+          import urllib.error
+          import urllib.request
+
+          def request(path):
+              try:
+                  return urllib.request.urlopen('http://localhost:5180' + path, timeout=3)
+              except urllib.error.HTTPError as response:
+                  return response
+
+          for attempt in range(30):
+              try:
+                  if request('/api/health').status == 200:
+                      break
+              except (OSError, urllib.error.URLError):
+                  pass
+              time.sleep(1)
+          else:
+              raise RuntimeError('Railway image did not start on its assigned PORT')
+
+          for path, status in [('/', 200), ('/admin/questions', 200), ('/api/me', 401),
+                               ('/api/admin/questions', 401), ('/api/missing', 404),
+                               ('/.env', 404), ('/preview/admin', 404),
+                               ('/api/local-management', 404)]:
+              with request(path) as response:
+                  assert response.status == status, (path, response.status)
+                  assert response.headers['X-Frame-Options'] == 'DENY'
+                  assert "default-src 'self'" in response.headers['Content-Security-Policy']
+          print('Railway image smoke checks passed')
+          PY
+      - name: Runtime diagnostics
+        if: failure()
+        run: docker logs cck-railway-check
   dependency-audit:
     runs-on: ubuntu-latest
     timeout-minutes: 10
