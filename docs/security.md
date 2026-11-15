@@ -292,6 +292,13 @@ and the minimum supported Vite 7 version was raised accordingly. The resulting
 frontend dependency audit reports zero known vulnerabilities. No audit exceptions
 or major-version migration were needed.
 
+Railway deployment preparation on 15 November 2026 also raised Vitest to the
+patched 4.1.12 release for the
+[manual mock injection](https://github.com/advisories/GHSA-qxg6-89mg-rqv8) and
+[Windows redirect traversal](https://github.com/advisories/GHSA-xp26-3454-mjgp)
+advisories. These concern development tooling, which is excluded from the final
+Python runtime image. The updated npm audit reports zero known vulnerabilities.
+
 Dependencies are pinned but Python artifact hashes and a full supply-chain attestation
 are not yet enforced. Build contexts already exclude real .env files; the tracked-file
 review found no credential-pattern matches. Production secrets must come from the
