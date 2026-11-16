@@ -9,7 +9,7 @@ for 7,000 simultaneous candidates. Existing local data is not uploaded automatic
 - Public HTTPS address: https://web-staging-f483f7e6.up.railway.app
 - [Railway project dashboard](https://railway.com/project/45d57217-e4fc-435e-a29b-2edbf22e32a0),
   environment `staging`. The separately created default `production` environment is empty.
-- Web and expiry-worker were built from repository commit `178c985` using CLI uploads.
+- The initial web and expiry-worker release used commit `178c985` via CLI uploads.
   GitHub-triggered automatic deployments are not configured. Future source updates
   must be deliberately deployed to both services after passing checks.
 - Railway's current PostgreSQL template provisioned PostgreSQL 18 with persistent
@@ -37,6 +37,28 @@ Candidate admissions-details login works independently.
 The localhost-only free-administration entry does not exist on the public site.
 No institutional custom domain, external alerts, backup/PITR acceptance, full-scale
 load test or real-exam approval is implied by this staging deployment.
+
+### Staff password release
+
+Commit `5c1ebf1` replaces the Google staff UI with email/password login at
+`/admin/login`. Web, expiry-worker and auth-maintenance were redeployed successfully;
+the migration ran on PostgreSQL 18. The existing approved administrator received a
+unique password through private stdin, with no password committed to source control.
+Google login is disabled in all three services. Password reset instructions are below.
+
+All five [CI jobs](https://github.com/ahmadkamrancps-design/Digital-CCKAT/actions/runs/43733780904)
+passed: backend (361 quick tests, 13 PostgreSQL-only skips; 374 PostgreSQL tests),
+frontend (153 unit tests, 22 browser tests), Railway image, dependency audit and
+production rehearsal. Local PostgreSQL password/migration checks also passed.
+Live HTTPS checks confirmed wrong-password denial, approved administrator access,
+secure cookies, session refresh, protected management APIs, CSRF and logout, Google
+endpoint rejection, unchanged candidate login and candidate denial of staff APIs.
+The practice question bank still contains 90 questions; the candidate demo attempt
+was not started by these checks.
+The live UI workflow also passed login, question-bank navigation, refresh and logout.
+WSL Chromium reported `ERR_NETWORK_CHANGED` during direct checks; the completed
+workflow used Playwright's HTTP transport to forward actual Railway responses,
+without mock data. Browser tests in GitHub CI passed normally.
 
 ## Services
 
