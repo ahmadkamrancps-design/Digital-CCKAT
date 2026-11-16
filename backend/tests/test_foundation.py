@@ -172,7 +172,9 @@ def test_postgres_migration_roundtrip_and_model_match(db_engine: Engine) -> None
         "alembic_version",
     }
     with Session(db_engine) as db:
-        assert db.get(User, user_id) is not None
+        # The historical users table predates password_hash; select only a column
+        # that exists at this migration rather than loading the current ORM shape.
+        assert db.scalar(select(User.id).where(User.id == user_id)) == user_id
     command.upgrade(config, "head")
     command.check(config)
     command.downgrade(config, "base")

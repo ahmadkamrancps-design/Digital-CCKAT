@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     require_expiry_worker: bool = False
     expiry_worker_stale_seconds: int = Field(default=30, ge=5, le=300)
     google_client_id: str = ""
+    google_login_enabled: bool = True
     frontend_origin: str = "http://localhost:5173"
     allowed_hosts: list[str] = ["localhost", "127.0.0.1"]
     session_cookie_name: str = Field(default="cck_session", pattern=r"^[A-Za-z0-9_-]+$")
@@ -33,6 +34,8 @@ class Settings(BaseSettings):
     candidate_login_roll_limit: int = Field(default=10, ge=1, le=100)
     candidate_login_ip_limit: int = Field(default=1000, ge=10, le=100000)
     google_login_ip_limit: int = Field(default=120, ge=1, le=100000)
+    staff_login_ip_limit: int = Field(default=120, ge=1, le=100000)
+    staff_login_email_limit: int = Field(default=10, ge=1, le=100)
     max_request_bytes: int = Field(default=2097152, ge=65536, le=10485760)
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
 

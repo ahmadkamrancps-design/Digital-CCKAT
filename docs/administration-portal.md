@@ -23,16 +23,19 @@ is saved, no session is issued, and no backend request is made. The preview is
 excluded from production routing even when its environment flag is true.
 
 For real administration, set the flag to `false`, restart Vite, and use an approved
-ADMIN staff account at `/admin`. Provision staff using the existing backend command:
+ADMIN staff account at `/admin/login`. Provision staff using the backend commands:
 
 ```bash
 cd backend
 source .venv/bin/activate
 python -m app.cli register-staff \
   --email "approved-staff@gmail.com" --name "Staff Member" --role ADMIN
+python -m app.cli set-staff-password --email "approved-staff@gmail.com"
 ```
 
-Configure staff Google sign-in as described in the root README. Candidate preview,
+The password command prompts securely and can also reset a forgotten password.
+Google configuration is unnecessary; disable its legacy API with `GOOGLE_LOGIN_ENABLED=false`.
+Candidate preview,
 candidate accounts, proctors and examiners cannot access real administration APIs.
 
 ## Recommended workflow

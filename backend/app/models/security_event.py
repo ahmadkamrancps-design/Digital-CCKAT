@@ -16,7 +16,7 @@ class SecurityEvent(Base):
             "event_type IN ('LOGIN_SUCCESS','LOGIN_FAILURE','LOGIN_THROTTLED','LOGOUT')",
             name="event_type",
         ),
-        CheckConstraint("method IN ('ADMISSIONS','GOOGLE','SESSION')", name="method"),
+        CheckConstraint("method IN ('ADMISSIONS','GOOGLE','SESSION','PASSWORD')", name="method"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)

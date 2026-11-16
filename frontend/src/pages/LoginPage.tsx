@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import CCKLogo from '../components/CCKLogo';
-import { GoogleSignIn } from '../features/auth/GoogleSignIn';
+import { StaffSignIn } from '../features/auth/StaffSignIn';
 import { useAuth } from '../features/auth/AuthProvider';
 import { CandidateSignIn } from '../features/auth/CandidateSignIn';
 
-export default function LoginPage() {
+export default function LoginPage({ staffOnly = false }: { staffOnly?: boolean }) {
   const { profile, loading, error, refresh, isPreview } = useAuth();
   const [staffOpen, setStaffOpen] = useState(false);
-  if (profile && !loading && !error) return <Navigate to="/dashboard" replace />;
+  if (profile && !loading && !error) return <Navigate to={profile.user.role === 'ADMIN' ? '/admin' : '/dashboard'} replace />;
   return (
     <main className="login-page" id="main" tabIndex={-1}>
       <div className="login-overlay" aria-hidden="true" />
@@ -24,10 +24,10 @@ export default function LoginPage() {
       </section>
 
       <section className="login-card" aria-labelledby="sign-in-heading">
-        <h2 id="sign-in-heading">Welcome</h2>
+        <h2 id="sign-in-heading">{staffOnly ? 'Administration' : 'Welcome'}</h2>
         {import.meta.env.DEV && import.meta.env.VITE_MANAGEMENT_SANDBOX === 'true' && <p><a className="primary-button preview-entry" href="/api/local-management">Open test administration →</a></p>}
         <p>
-          Enter your admissions details to continue to
+          {staffOnly ? 'Sign in with your staff email and password' : 'Enter your admissions details to continue to'}
           <br />
           CCK Online Entry Test 2026
         </p>
@@ -39,19 +39,22 @@ export default function LoginPage() {
               <p>{error}</p>
               <button className="secondary-button" type="button" onClick={() => { void refresh(); }}>Try again</button>
             </div>}
-            <CandidateSignIn />
+            {staffOnly ? <StaffSignIn /> : <><CandidateSignIn />
             <details className="staff-sign-in" onToggle={(event) => setStaffOpen(event.currentTarget.open)}>
               <summary>Staff sign-in</summary>
-              {staffOpen && <GoogleSignIn />}
+              {staffOpen && <StaffSignIn />}
             </details>
+            </>}
           </>}
+
+        {staffOnly && <p><Link to="/">Candidate sign-in</Link></p>}
 
         <div className="login-info">
           <span aria-hidden="true">ⓘ</span>
           <p>
-            Only registered candidates can access the test.
+            {staffOnly ? 'Access is restricted to approved staff accounts.' : 'Only registered candidates can access the test.'}
             <br />
-            We verify your roll number, full name, and father’s name with your admission record.
+            {staffOnly ? 'Your account role determines which management tools you can access.' : 'We verify your roll number, full name, and father’s name with your admission record.'}
           </p>
         </div>
       </section>

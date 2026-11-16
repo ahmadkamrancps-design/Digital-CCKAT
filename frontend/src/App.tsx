@@ -22,10 +22,11 @@ import { ResultsPage } from './features/grading/ResultsPage';
 export default function App() {
   const { loading, error, refresh, profile, isPreview } = useAuth();
   const { pathname } = useLocation();
-  const publicLogin = pathname === '/' || pathname === '/login';
+  const publicLogin = pathname === '/' || pathname === '/login' || pathname === '/admin/login';
   const routes = <Routes>
     <Route path="/" element={<LoginPage />} />
     <Route path="/login" element={<Navigate to="/" replace />} />
+    <Route path="/admin/login" element={<LoginPage staffOnly />} />
     <Route path="/dashboard" element={<DashboardPage />} />
     <Route path="/exam" element={<ExamPage />} />
     <Route path="/submission" element={<SubmissionPage />} />

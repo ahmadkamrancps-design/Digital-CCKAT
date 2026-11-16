@@ -43,6 +43,7 @@ SPA_ROUTES = {
     "results",
     "admin",
     "admin/candidates",
+    "admin/login",
     "admin/subjects",
     "admin/questions",
     "admin/exams",

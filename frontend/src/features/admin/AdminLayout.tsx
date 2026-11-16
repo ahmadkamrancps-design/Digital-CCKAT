@@ -20,7 +20,7 @@ export function AdminLayout() {
         </Link>
       </main>
     ) : (
-      <Navigate to="/" replace />
+      <Navigate to="/admin/login" replace />
     );
   if (profile.user.role !== "ADMIN")
     return <Navigate to="/dashboard" replace />;

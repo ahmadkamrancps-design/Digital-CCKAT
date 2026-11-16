@@ -13,7 +13,12 @@ from app.api.dependencies import (
 )
 from app.core.security import token_hash
 from app.models import AuthSession, SecurityEvent
-from app.schemas.auth import CandidateLoginRequest, GoogleLoginRequest, MeResponse
+from app.schemas.auth import (
+    CandidateLoginRequest,
+    GoogleLoginRequest,
+    MeResponse,
+    StaffLoginRequest,
+)
 from app.services.auth_service import login, profile
 from app.services.candidate_login_service import candidate_login
 from app.services.google_identity import (
@@ -22,6 +27,7 @@ from app.services.google_identity import (
     InvalidGoogleCredential,
 )
 from app.services.login_throttle_service import reserve_login
+from app.services.staff_login_service import staff_login
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -56,6 +62,24 @@ def admissions_login(
     return profile(context)
 
 
+@router.post("/staff", response_model=MeResponse, dependencies=[Depends(require_origin)])
+def password_login(
+    body: StaffLoginRequest, request: Request, response: Response, db: Db, settings: Config
+) -> MeResponse:
+    try:
+        context, raw_token = staff_login(
+            db, body, settings, request.client.host if request.client else "unknown"
+        )
+    except HTTPException as exc:
+        if exc.status_code == 401:
+            db.rollback()
+            db.add(SecurityEvent(event_type="LOGIN_FAILURE", method="PASSWORD"))
+            db.commit()
+        raise
+    set_session_cookie(response, raw_token, settings)
+    return profile(context)
+
+
 @router.post("/google", response_model=MeResponse, dependencies=[Depends(require_origin)])
 def google_login(
     body: GoogleLoginRequest,
@@ -65,6 +89,8 @@ def google_login(
     settings: Config,
     verifier: Annotated[IdentityVerifier, Depends(get_identity_verifier)],
 ) -> MeResponse:
+    if not settings.google_login_enabled:
+        raise HTTPException(404, "Not found.")
     reserve_login(
         db,
         [

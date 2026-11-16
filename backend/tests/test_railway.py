@@ -25,7 +25,9 @@ def railway_client(settings: Settings, static_directory: Path, db_factory):
         yield client
 
 
-@pytest.mark.parametrize("path", ["/", "/dashboard", "/admin", "/admin/exams/123", "/exam"])
+@pytest.mark.parametrize(
+    "path", ["/", "/dashboard", "/admin", "/admin/login", "/admin/exams/123", "/exam"]
+)
 def test_frontend_routes_survive_direct_navigation(railway_client, path):
     response = railway_client.get(path)
     assert response.status_code == 200

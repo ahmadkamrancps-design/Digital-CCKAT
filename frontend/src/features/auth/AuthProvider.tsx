@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { api, ApiError } from '../../services/api';
-import type { CandidateCredentials, SessionProfile } from '../../types/auth';
+import type { CandidateCredentials, SessionProfile, StaffCredentials } from '../../types/auth';
 import { uiPreviewEnabled } from '../preview/preview';
 import { clearUserRecovery } from '../../storage/recovery';
 
@@ -10,8 +10,8 @@ interface AuthState {
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
-  signIn: (credential: string) => Promise<void>;
   signInCandidate: (credentials: CandidateCredentials) => Promise<void>;
+  signInStaff: (credentials: StaffCredentials) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -63,17 +63,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [refresh]);
 
-  const signIn = useCallback(async (credential: string) => {
-    if (isPreview) throw new Error('Disable UI preview before signing in.');
-    const result = await api<SessionProfile>('/auth/google', {
-      method: 'POST', body: JSON.stringify({ credential }),
-    });
-    ++requestVersion.current;
-    setLoading(false);
-    setError(null);
-    setProfile(result);
-  }, [isPreview]);
-
   const signInCandidate = useCallback(async (credentials: CandidateCredentials) => {
     if (isPreview) throw new Error('Disable UI preview before signing in.');
     const result = await api<SessionProfile>('/auth/candidate', {
@@ -95,7 +84,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!(cause instanceof ApiError && cause.status === 401)) throw cause;
       // An expired session no longer has server access. A CSRF failure must be shown.
     }
-    window.google?.accounts.id.disableAutoSelect();
     const version = ++requestVersion.current;
     setLoading(false);
     setProfile(null);
@@ -106,7 +94,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [isPreview, profile]);
 
-  return <AuthContext.Provider value={{ isPreview, profile, loading, error, refresh, signIn, signInCandidate, signOut }}>
+  const signInStaff = useCallback(async (credentials: StaffCredentials) => {
+    if (isPreview) throw new Error('Disable UI preview before signing in.');
+    const result = await api<SessionProfile>('/auth/staff', {
+      method: 'POST', body: JSON.stringify(credentials),
+    });
+    ++requestVersion.current;
+    setLoading(false);
+    setError(null);
+    setProfile(result);
+  }, [isPreview]);
+
+  return <AuthContext.Provider value={{ isPreview, profile, loading, error, refresh, signInCandidate, signInStaff, signOut }}>
     {children}
   </AuthContext.Provider>;
 }

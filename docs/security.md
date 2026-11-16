@@ -36,9 +36,25 @@ carefully; never trust arbitrary incoming forwarded headers. Malformed requests
 are rejected before the limiter, so deployment still needs proxy request limits.
 See [OWASP authentication guidance](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html).
 
-Staff retain the existing Google login below. The backend Google route remains
-compatible with previously approved candidate identities; it is no longer offered
-as candidate login in the UI. Candidate email is nullable, with no generated fake
+Staff use email/password via `POST /api/auth/staff`, restricted to active,
+preapproved ADMIN/PROCTOR/EXAMINER users. Candidate users cannot authenticate here.
+Passwords use salted Argon2id (64 MiB, three passes, one lane, 32-byte output), using
+the existing cryptography dependency. Unknown, disabled, candidate and unset-password
+accounts receive the same generic 401 with dummy KDF work. KDF concurrency is bounded
+to two operations per process. Database throttle buckets limit each email to ten
+and each ingress IP to 120 requests per 15 minutes before KDF work, including successes.
+Passwords never enter diagnostic/audit logs, public schemas, URLs, or browser storage.
+
+The trusted `set-staff-password` CLI requires an existing active staff account,
+enforces a 15–128 character passphrase without composition rules, creates a fresh
+salt, revokes all account sessions, and appends a STAFF_PASSWORD_SET audit event.
+It cannot grant roles or create users. There is no public password reset endpoint;
+resets require an authorized operator. No shared/default password is shipped.
+See [OWASP password storage guidance](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html).
+
+The Google API described below is retained for legacy integrations and regression
+tests only. `GOOGLE_LOGIN_ENABLED=false` disables it with 404 on Railway; the staff
+UI never loads Google's sign-in script. Candidate email is nullable, with no generated fake
 email address. Changes to any candidate login field revoke existing sessions
 without changing exam attempts or deadlines. The portal has no automatic admissions
 integration: trusted staff must verify and enter/import official records.
@@ -74,8 +90,8 @@ scoped to `/api`, with SameSite=Lax. PostgreSQL stores hashes, not raw cookie
 credentials. New sign-in revokes the previous session. Logout revokes the database
 record and clears the cookie. Session expiry now uses database time, matching the
 exam timing authority. Production validation requires Secure cookies,
-HTTPS frontend origin and separate database credentials. Staff Google login requires
-a configured Google client ID; candidate login does not.
+HTTPS frontend origin and separate database credentials. Staff password login and
+candidate login do not require Google configuration.
 No app signing secret is required because these sessions are database-backed,
 not signed self-contained tokens.
 

@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 from app.models import CandidateStatus, Role
 
@@ -9,6 +9,24 @@ from app.models import CandidateStatus, Role
 class GoogleLoginRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     credential: str = Field(min_length=1, max_length=8192)
+
+
+class StaffLoginRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    email: EmailStr = Field(max_length=254)
+    password: str = Field(min_length=1, max_length=128, repr=False)
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalize_email(cls, value: object) -> object:
+        return value.strip().lower() if isinstance(value, str) else value
+
+    @field_validator("password")
+    @classmethod
+    def validate_password_encoding(cls, value: str) -> str:
+        if len(value.encode("utf-8")) > 512:
+            raise ValueError("Password is too long.")
+        return value
 
 
 class CandidateLoginRequest(BaseModel):

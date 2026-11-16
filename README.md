@@ -10,7 +10,7 @@ deployment verification are required before a public URL is available.
 Foundation, exam domain, attempt engine, candidate interface, recovery, administration,
 proctor monitoring, grading/results, security hardening, and Milestone 10 deployment/recovery rehearsals for Cadet College Kohat's entry-test platform. React +
 TypeScript, FastAPI, SQLAlchemy 2, PostgreSQL, and Alembic. Candidates sign in with
-their admissions roll number, full name, and father's name. Staff use Google Identity Services.
+their admissions roll number, full name, and father's name. Staff use approved email/password accounts.
 The supplied CCK frontend now supports real assigned exams, server-derived timers,
 revisioned autosave, persistent answer recovery, reconnection, navigation/review, and confirmed submission. A separate
 development preview remains available without login.
@@ -22,7 +22,7 @@ The system is not approved for real examinations.
 - Node.js 22.12+; Node 24 LTS is recommended, with npm.
 - Git.
 - Docker Engine/Desktop with Compose v2, or an existing PostgreSQL 17 instance.
-- A Google Cloud OAuth web client for staff sign-in; candidate sign-in needs no Google setup.
+- An approved staff account and a securely provisioned password for administration.
 
 In WSL, open Docker Desktop → Settings → Resources → WSL Integration, enable
 this distro, and choose Apply & restart. Verify `docker compose version` afterward.
@@ -71,6 +71,7 @@ are rejected. It has no public registration endpoint. To provision a staff accou
 ```bash
 python -m app.cli register-staff \
   --email "approved-staff@gmail.com" --name "Staff Member" --role ADMIN
+python -m app.cli set-staff-password --email "approved-staff@gmail.com"
 ```
 
 Apply migration `0006_candidate_login` with `alembic upgrade head` before using the
@@ -222,37 +223,23 @@ cannot be uploaded. The live exam requires IndexedDB and Web Locks on localhost
 or HTTPS. Wait for **Saved** before signing out: explicit sign-out clears local
 recovery copies. See [Milestone 5 handover](docs/milestone-5.md) for recovery limits.
 
-## Configure staff Google sign-in
+## Configure staff password sign-in
 
-Open **Staff sign-in** below the candidate form. Candidates do not need these steps.
+Apply `alembic upgrade head` (including `0010_staff_password`), register the approved
+staff account as shown above, then run `set-staff-password`. It prompts twice without
+echoing the password. Use a unique passphrase of 15–128 characters. The same command
+resets a forgotten password and revokes all existing sessions for that account.
+There is no default password, public staff registration, or password-reset bypass.
 
-1. Open [Google Cloud Console](https://console.cloud.google.com/) and create or
-   select a dedicated project.
-2. In Google Auth Platform, configure Branding, Audience, and Data Access for
-   sign-in profile/email identity. If the project is in testing mode, add the
-   candidate/staff Google accounts as test users where required.
-3. Create an OAuth client with application type **Web application**.
-4. Add Authorized JavaScript origins `http://localhost` and
-   `http://localhost:5173`. This implementation uses a popup callback; no redirect
-   URI or Google client secret is needed.
-5. Put the same public web client ID in `backend/.env` as `GOOGLE_CLIENT_ID` and
-   in `frontend/.env` as `VITE_GOOGLE_CLIENT_ID`.
-6. Restart both development servers and approve a staff account with the CLI.
+Open `/admin/login`, or expand **Staff sign-in** on the candidate login page.
+Enter the approved email and password. Administrators go directly to `/admin`;
+other approved staff use their role-specific workspace. Candidates keep using
+their admission details. Passwords are Argon2id hashed; login is rate limited.
 
-Never place a client secret or database credential in a `VITE_` variable. Vite
-variables are public browser configuration. Missing Google configuration leaves
-the app showing a disabled Continue with Google button and setup message;
-sign-in becomes available after you configure the matching client IDs and restart
-both servers. The configured button opens Google's account selection popup and
-exchanges the returned credential with `/api/auth/google`. Backend approval is
-still required. Missing Google configuration does not block candidate sign-in.
-
-Google's [setup instructions](https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid)
-and [verification guidance](https://developers.google.com/identity/gsi/web/guides/verify-google-id-token)
-explain web origins, audience validation, and stable Google `sub` identifiers.
-For accounts outside Gmail/Workspace, preapprove the independently verified stable
-Google subject using the CLI's `--google-subject` option. Email matching alone is
-deliberately insufficient for those accounts. See [security design](docs/security.md).
+Set `GOOGLE_LOGIN_ENABLED=false` in deployed backend configuration (as on Railway).
+No Google client ID is required. The old Google API remains optional for legacy
+integrations and automated regression fixtures; the public UI does not use it.
+Never put a password, client secret, or database credential in a `VITE_` variable.
 
 ## Verify candidate sign-in
 
@@ -265,8 +252,8 @@ deliberately insufficient for those accounts. See [security design](docs/securit
    new user/candidate/session created.
 7. Confirm only assigned exams appear and no result data is exposed.
 
-These manual steps require PostgreSQL and approved admissions records. Staff Google sign-in
-additionally requires your actual Google client and accounts. Automated
+These manual steps require PostgreSQL and approved admissions records. Staff sign-in
+requires a preapproved account with a provisioned password. Legacy Google automated
 tests substitute Google's certificate retrieval or verifier at explicit dependency
 boundaries; there is no development bypass in the application.
 

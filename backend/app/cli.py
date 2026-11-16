@@ -1,6 +1,8 @@
 """Trusted local provisioning; no public registration or privilege escalation endpoint."""
 
 import argparse
+import getpass
+import sys
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, ValidationError
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -8,6 +10,23 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from app.config import load_settings
 from app.db.session import create_db_engine, create_session_factory
 from app.models import Candidate, Role, User
+from app.services.staff_login_service import set_staff_password
+
+
+def provision_password(email: str, from_stdin: bool) -> None:
+    if from_stdin:
+        # A bounded single line permits secure pipes without exposing shell arguments.
+        password = sys.stdin.readline(1026).removesuffix("\n")
+    else:
+        password = getpass.getpass("New staff password (15–128 characters): ")
+        if password != getpass.getpass("Confirm new password: "):
+            raise ValueError("Passwords did not match.")
+    engine = create_db_engine(load_settings())
+    try:
+        with create_session_factory(engine)() as db:
+            set_staff_password(db, email, password)
+    finally:
+        engine.dispose()
 
 
 class Registration(BaseModel):
@@ -24,6 +43,11 @@ def main() -> None:
     subcommands = parser.add_subparsers(dest="command", required=True)
     candidate = subcommands.add_parser("register-candidate", help="Approve a candidate account")
     staff = subcommands.add_parser("register-staff", help="Approve a staff account")
+    password_command = subcommands.add_parser(
+        "set-staff-password", help="Set/reset an approved staff password and revoke old sessions"
+    )
+    password_command.add_argument("--email", required=True)
+    password_command.add_argument("--password-stdin", action="store_true")
     for command in (candidate, staff):
         command.add_argument("--email", required=command is staff)
         command.add_argument("--name", required=True)
@@ -34,6 +58,15 @@ def main() -> None:
     candidate.add_argument("--father-name", required=True)
     staff.add_argument("--role", choices=["ADMIN", "PROCTOR", "EXAMINER"], required=True)
     args = parser.parse_args()
+    if args.command == "set-staff-password":
+        try:
+            provision_password(args.email, args.password_stdin)
+        except ValueError as exc:
+            parser.exit(2, str(exc) + "\n")
+        except SQLAlchemyError:
+            parser.exit(2, "Unable to update password. Check configuration and migrations.\n")
+        print("Staff password updated. Existing sessions have been revoked.")
+        return
     try:
         data = Registration(
             email=args.email.strip().lower() if args.email else None,

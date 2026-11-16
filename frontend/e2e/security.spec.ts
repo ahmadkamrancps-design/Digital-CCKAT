@@ -29,7 +29,7 @@ for (const path of ['/admin', '/proctor', '/grading', '/preview/admin']) {
       return route.fulfill({ status: 401, json: { detail: 'Please sign in.' } });
     });
     await page.goto(path);
-    await expect(page.getByLabel('Roll number')).toBeVisible();
+    await expect(page.getByLabel(path === '/admin' ? 'Email address' : 'Roll number')).toBeVisible();
     expect(requested.length).toBeGreaterThan(0);
     expect(requested.every((request) => request === '/api/me')).toBe(true);
   });

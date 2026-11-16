@@ -1,10 +1,10 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, MemoryRouter, RouterProvider } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../src/App';
 import { AuthProvider } from '../src/features/auth/AuthProvider';
-import type { GoogleCredentialResponse, SessionProfile } from '../src/types/auth';
+import type { SessionProfile } from '../src/types/auth';
 
 // This suite isolates authentication. Live exam API requests have their own integration suite.
 vi.mock('../src/services/exam', () => ({ examApi: { assigned: vi.fn(async () => []) } }));
@@ -32,7 +32,6 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
-  delete window.google;
 });
 
 describe('protected dashboard', () => {
@@ -115,67 +114,50 @@ describe('protected dashboard', () => {
   });
 });
 
-describe('Google credential exchange', () => {
-  function fakeGoogle() {
-    let callback: ((data: GoogleCredentialResponse) => void) | undefined;
-    window.google = { accounts: { id: {
-      initialize: (config) => { callback = config.callback; },
-      renderButton: vi.fn((element: HTMLElement) => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.textContent = 'Continue with Google';
-        button.addEventListener('click', () => callback?.({ credential: 'test-google-id-token' }));
-        element.replaceChildren(button);
-      }), disableAutoSelect: vi.fn(),
-    } } };
-    return async () => {
-      await userEvent.click(await screen.findByText('Staff sign-in'));
-      await waitFor(() => expect(callback).toBeDefined());
-      await waitFor(() => expect(screen.getByRole('button', { name: 'Continue with Google' })).toBeEnabled());
-      await userEvent.click(await screen.findByRole('button', { name: 'Continue with Google' }));
-    };
+describe('staff password sign-in', () => {
+  async function fillStaffDetails() {
+    await userEvent.type(await screen.findByLabelText('Email address'), 'staff@cck.edu.pk');
+    await userEvent.type(screen.getByLabelText('Password'), 'A long staff passphrase');
   }
 
-  it('exchanges a Google credential then opens the approved dashboard', async () => {
-    const submitGoogle = fakeGoogle();
-    const fetcher = vi.fn().mockResolvedValueOnce(response({ detail: 'Sign in' }, 401)).mockResolvedValueOnce(response(profile));
+  it('signs in without Google and keeps credentials out of browser storage', async () => {
+    vi.stubEnv('VITE_GOOGLE_CLIENT_ID', '');
+    const staff = { ...profile, user: { ...profile.user, role: 'PROCTOR' }, candidate: null };
+    const fetcher = vi.fn().mockResolvedValueOnce(response({ detail: 'Sign in' }, 401))
+      .mockResolvedValueOnce(response(staff));
     vi.stubGlobal('fetch', fetcher);
-    renderApp('/login');
-    await submitGoogle();
-    expect(await screen.findByText('CCK-104')).toBeInTheDocument();
-    expect(fetcher).toHaveBeenLastCalledWith('/api/auth/google', expect.objectContaining({
-      method: 'POST', body: JSON.stringify({ credential: 'test-google-id-token' }),
+    renderApp('/admin/login');
+    await fillStaffDetails();
+    expect(screen.queryByRole('button', { name: 'Continue with Google' })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Roll number')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'password');
+    await userEvent.click(screen.getByRole('button', { name: 'Sign in to staff portal' }));
+    expect(await screen.findByRole('heading', { name: 'Staff workspace' })).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith('/api/auth/staff', expect.objectContaining({
+      method: 'POST', body: JSON.stringify({ email: 'staff@cck.edu.pk', password: 'A long staff passphrase' }),
     }));
     expect(localStorage.length).toBe(0);
     expect(sessionStorage.length).toBe(0);
-    expect(window.google?.accounts.id.renderButton).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
-      theme: 'filled_blue', text: 'continue_with',
-    }));
   });
 
-  it('shows the Google button but prevents login when its client ID is missing', async () => {
-    vi.stubEnv('VITE_GOOGLE_CLIENT_ID', '');
-    const fetcher = vi.fn().mockResolvedValue(response({ detail: 'Sign in' }, 401));
-    vi.stubGlobal('fetch', fetcher);
+  it('offers the same password form beneath candidate sign-in', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({ detail: 'Sign in' }, 401)));
     renderApp('/');
     await userEvent.click(await screen.findByText('Staff sign-in'));
-    const button = await screen.findByRole('button', { name: 'Continue with Google' });
-    expect(button).toBeDisabled();
-    await userEvent.click(button);
-    expect(fetcher).toHaveBeenCalledTimes(1);
-    expect(fetcher).toHaveBeenCalledWith('/api/me', expect.anything());
-    expect(screen.queryByText('CCK-104')).not.toBeInTheDocument();
+    expect(await screen.findByLabelText('Email address')).toBeVisible();
+    expect(screen.getByLabelText('Roll number')).toBeVisible();
   });
 
-  it('keeps an unregistered Google identity outside the dashboard', async () => {
-    const submitGoogle = fakeGoogle();
-    vi.stubGlobal('fetch', vi.fn()
-      .mockResolvedValueOnce(response({ detail: 'Sign in' }, 401))
-      .mockResolvedValueOnce(response({ detail: 'This account is not authorized. Contact admissions.' }, 403)));
-    renderApp('/login');
-    await submitGoogle();
-    expect(await screen.findByRole('alert')).toHaveTextContent('This account is not authorized');
-    expect(screen.queryByText('CCK-104')).not.toBeInTheDocument();
+  it('shows login errors and clears the rejected password', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(response({ detail: 'Sign in' }, 401))
+      .mockResolvedValueOnce(response({ detail: 'Unable to sign in. Check your email and password.' }, 401)));
+    renderApp('/admin');
+    await fillStaffDetails();
+    await userEvent.click(screen.getByRole('button', { name: 'Sign in to staff portal' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Check your email and password');
+    expect(screen.getByLabelText('Email address')).toHaveValue('staff@cck.edu.pk');
+    expect(screen.getByLabelText('Password')).toHaveValue('');
+    expect(screen.getByRole('heading', { name: 'Administration' })).toBeInTheDocument();
   });
 });
 

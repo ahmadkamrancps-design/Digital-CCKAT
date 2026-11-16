@@ -29,10 +29,11 @@ for 7,000 simultaneous candidates. Existing local data is not uploaded automatic
 - A private `auth-maintenance` job runs every five minutes. Its first run completed
   successfully and confirmed that no active sessions needed removal.
 
-The administrator account is provisioned, but **public staff Google sign-in still
-requires a Google OAuth web client ID**, configured with the exact HTTPS origin in
-Google Cloud and both Railway client-ID variables. Rebuild web after setting its
-frontend client ID. Candidate admissions-details login works without Google.
+Public staff sign-in uses **email and password** at `/admin/login`. Migration
+`0010_staff_password` adds nullable Argon2id credentials to existing users;
+trusted operators provision/reset passwords through `set-staff-password` below.
+Set `GOOGLE_LOGIN_ENABLED=false` so the legacy Google endpoint cannot issue sessions.
+Candidate admissions-details login works independently.
 The localhost-only free-administration entry does not exist on the public site.
 No institutional custom domain, external alerts, backup/PITR acceptance, full-scale
 load test or real-exam approval is implied by this staging deployment.
@@ -50,7 +51,7 @@ serves the built assets and application routes on the same origin as `/api`.
 Candidate roll/name/father-name authentication, HttpOnly secure cookies, CSRF,
 roles, timing, grading and result-release checks use the existing implementation.
 The local free-administration helper is excluded. Real administration requires an
-approved staff account and configured Google sign-in.
+approved staff account with a provisioned password.
 
 Railway supplies TLS at its public ingress; the container listens on `PORT` without
 requiring certificate files. The existing Nginx/Compose deployment remains available
@@ -114,19 +115,20 @@ REQUIRE_EXPIRY_WORKER=true
 DATABASE_POOL_SIZE=5
 DATABASE_MAX_OVERFLOW=0
 CANDIDATE_LOGIN_IP_LIMIT=20000
-GOOGLE_CLIENT_ID=<approved staff OAuth web client ID>
+GOOGLE_LOGIN_ENABLED=false
+STAFF_LOGIN_IP_LIMIT=120
+STAFF_LOGIN_EMAIL_LIMIT=10
 ```
 
 Additionally, on web only:
 
 ```text
 CCK_MIGRATION_DATABASE_URL=<private owner URL, used by pre-deploy only>
-VITE_GOOGLE_CLIENT_ID=<same staff OAuth client ID, available at build time>
 ```
 
 Set worker `DATABASE_POOL_SIZE=1`. Do not set `DATABASE_URL_FILE` in this adapter.
 Variables must contain actual private values, not these placeholders. Railway
-reference variables can share the origin/client ID and refer to the database
+reference variables can share the origin and refer to the database
 service's host/port/database; ensure generated passwords are properly URL encoded.
 Keep worker and web in the same environment and region.
 
@@ -152,15 +154,20 @@ trusted client-IP handling before public admission use. Per-roll limits still ap
 
 ## First staff account and smoke test
 
-Configure the staff OAuth client with the exact public HTTPS origin, then rebuild
-web if its frontend client ID changed. Through an authorized Railway service shell,
+Apply migrations and deploy the password-enabled image. Through an authorized Railway service shell,
 run the trusted CLI (replace with institution-approved staff details):
 
 ```text
 python -m app.railway cli register-staff --email APPROVED_EMAIL --name "Approved Administrator" --role ADMIN
+python -m app.railway cli set-staff-password --email APPROVED_EMAIL
 ```
 
-Open the public domain, expand **Staff sign-in**, authenticate and confirm `/admin`
+Register only if the account does not already exist. The password command prompts
+without echoing; for noninteractive operator automation, `--password-stdin` reads a
+bounded line from private stdin. Never pass the password as a shell argument or
+put it in Railway/frontend variables. Resetting it revokes existing account sessions.
+
+Open `/admin/login`, enter the approved email and password, and confirm `/admin`
 loads. Register a synthetic candidate through the portal, configure a small paper,
 assign/publish/enable starts, then test candidate login, refresh/resume, autosave,
 expiry, submission and released/withheld results on HTTPS. Confirm anonymous and

@@ -4,6 +4,12 @@ PostgreSQL with UTF-8 encoding is the application database. SQLAlchemy 2 maps
 models; Alembic controls schema changes. No table creation occurs during startup.
 SQLite is used only by the quick unit-test suite, never as the application database.
 
+Migration `0010_staff_password` adds nullable `users.password_hash` and permits
+PASSWORD authentication events. Existing users, identity mappings, candidate
+records and exam data are preserved; passwords are provisioned separately through
+the trusted CLI. Downgrade removes the credential column but retains the widened
+security-event method check to preserve append-only password-login history.
+
 The admissions-login update `0006_candidate_login` adds nullable candidate father's
 name, optional candidate email, a unique `lower(btrim(roll_number))` login index,
 and persistent rate-limit buckets. Existing attempts and answers are untouched.
