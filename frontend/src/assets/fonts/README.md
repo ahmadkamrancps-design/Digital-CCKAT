@@ -3,7 +3,8 @@
 The existing Inter and Libre Baskerville families are bundled locally to avoid a
 render-blocking third-party stylesheet and extra font-provider connections.
 These are the Google Fonts Latin variable WOFF2 files, downloaded 24 November 2026,
-with their SIL Open Font License files alongside them. CSS uses font-display: swap.
+with their SIL Open Font License files in `public/assets/fonts/` so the licenses
+also ship in the runtime image. CSS uses font-display: swap.
 The existing Noto Naskh Arabic font and Urdu rendering are unchanged.
 
 - Inter v20: https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2
