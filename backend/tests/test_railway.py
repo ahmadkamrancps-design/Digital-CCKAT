@@ -15,6 +15,7 @@ def static_directory(tmp_path: Path) -> Path:
     (tmp_path / "assets/app.js").write_text("console.log('CCK');")
     (tmp_path / "assets/app-1234abcd.js").write_text("console.log('CCK');\n" * 200)
     (tmp_path / "assets/campus-1234abcd.webp").write_bytes(b"RIFF" + b"x" * 1000)
+    (tmp_path / "assets/font-1234abcd.woff2").write_bytes(b"wOF2" + b"x" * 1000)
     (tmp_path / ".env").write_text("PRIVATE_VALUE=not-public")
     return tmp_path
 
@@ -83,9 +84,14 @@ def test_public_assets_cache_compress_and_revalidate_without_caching_api(railway
         assert "content-encoding" not in private.headers
 
 
-def test_already_compressed_image_is_not_gzipped(railway_client):
-    response = railway_client.get("/assets/campus-1234abcd.webp")
+@pytest.mark.parametrize(
+    ("filename", "content_type"),
+    [("campus-1234abcd.webp", "image/webp"), ("font-1234abcd.woff2", "font/woff2")],
+)
+def test_already_compressed_media_is_not_gzipped(railway_client, filename, content_type):
+    response = railway_client.get("/assets/" + filename)
     assert response.status_code == 200
+    assert response.headers["content-type"] == content_type
     assert "content-encoding" not in response.headers
 
 

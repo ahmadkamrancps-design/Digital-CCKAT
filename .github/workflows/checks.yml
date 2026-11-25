@@ -93,13 +93,16 @@ jobs:
             --env 'ALLOWED_HOSTS=["localhost","healthcheck.railway.app"]' \
             cck-railway-check
           python3 - <<'PY'
+          import gzip
+          import re
           import time
           import urllib.error
           import urllib.request
 
-          def request(path):
+          def request(path, headers=None):
               try:
-                  return urllib.request.urlopen('http://localhost:5180' + path, timeout=3)
+                  req = urllib.request.Request('http://localhost:5180' + path, headers=headers or {})
+                  return urllib.request.urlopen(req, timeout=3)
               except urllib.error.HTTPError as response:
                   return response
 
@@ -121,6 +124,27 @@ jobs:
                   assert response.status == status, (path, response.status)
                   assert response.headers['X-Frame-Options'] == 'DENY'
                   assert "default-src 'self'" in response.headers['Content-Security-Policy']
+                  assert response.headers['Cache-Control'] == 'no-store'
+
+          with request('/') as response:
+              html = response.read().decode()
+          script = re.search(r'src="([^"]+\.js)"', html).group(1)
+          stylesheet = re.search(r'href="([^"]+\.css)"', html).group(1)
+          for path in (script, stylesheet):
+              with request(path, {'Accept-Encoding': 'gzip'}) as response:
+                  assert response.headers['Content-Encoding'] == 'gzip'
+                  assert 'immutable' in response.headers['Cache-Control']
+                  decoded = gzip.decompress(response.read()).decode()
+                  if path == stylesheet:
+                      css = decoded
+          assert 'fonts.googleapis.com' not in css
+          urls = [url.strip("\"'") for url in re.findall(r'url\(([^)]+)\)', css)]
+          for extension, mime in (('.webp', 'image/webp'), ('.woff2', 'font/woff2')):
+              path = next(url for url in urls if url.endswith(extension))
+              with request(path, {'Accept-Encoding': 'gzip', 'Range': 'bytes=0-1023'}) as response:
+                  assert response.headers['Content-Type'] == mime
+                  assert response.headers.get('Content-Encoding') is None
+                  assert 'immutable' in response.headers['Cache-Control']
           print('Railway image smoke checks passed')
           PY
       - name: Runtime diagnostics

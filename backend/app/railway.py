@@ -5,6 +5,7 @@ routes, sample admissions records or question keys are part of the static build.
 """
 
 import argparse
+import mimetypes
 import os
 import re
 import sys
@@ -128,6 +129,10 @@ def configure_environment(migration: bool = False) -> None:
 def create_web_app(settings: Settings | None = None, directory: Path | None = None) -> FastAPI:
     from app.main import create_app
 
+    # Slim container MIME databases may omit these. Correct types also prevent
+    # recompressing media that already has its own compression.
+    mimetypes.add_type("image/webp", ".webp")
+    mimetypes.add_type("font/woff2", ".woff2")
     root = (directory or ROOT / "static").resolve()
     if not (root / "index.html").is_file() or not (root / "assets").is_dir():
         raise RuntimeError("Built frontend is missing. Use Dockerfile.railway.")
