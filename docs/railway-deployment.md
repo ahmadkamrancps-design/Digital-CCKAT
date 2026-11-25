@@ -226,6 +226,11 @@ and `/api/health/ready` timings. Slow DNS/TLS or asset transfers do not establis
 that the database is slow. Warm-cache tests must leave caching enabled; API
 responses must continue returning no-store after deployment.
 
+The public login form is usable while its initial session check is in progress.
+A slow `/api/me` request therefore does not prevent credential entry. Protected
+routes still wait for verified access; request versions prevent a delayed initial
+session response from discarding a subsequently completed login.
+
 ## References
 
 - [Railway Dockerfiles](https://docs.railway.com/builds/dockerfiles)

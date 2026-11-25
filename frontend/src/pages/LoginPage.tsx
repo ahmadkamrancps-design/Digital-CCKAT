@@ -33,8 +33,8 @@ export default function LoginPage({ staffOnly = false }: { staffOnly?: boolean }
         </p>
 
         {isPreview ? <><Link className="primary-button preview-entry" to="/dashboard">Explore without login →</Link><Link className="admin-preview-entry" to="/preview/admin">Explore administration design →</Link></>
-          : loading ? <p className="login-session-status" role="status">Checking your session…</p>
           : <>
+            {loading && <p className="login-session-status" role="status">Checking your session… You can enter your details below.</p>}
             {error && <div className="login-session-error" role="alert">
               <p>{error}</p>
               <button className="secondary-button" type="button" onClick={() => { void refresh(); }}>Try again</button>

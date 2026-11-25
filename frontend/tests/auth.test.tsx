@@ -168,6 +168,22 @@ describe('admissions candidate sign-in', () => {
     await userEvent.type(screen.getByLabelText('Father’s name'), 'Test Father');
   }
 
+  it('allows sign-in during a slow initial session check and ignores its stale response', async () => {
+    let finishSession!: (value: Response) => void;
+    const fetcher = vi.fn()
+      .mockImplementationOnce(() => new Promise<Response>((resolve) => { finishSession = resolve; }))
+      .mockResolvedValueOnce(response(profile));
+    vi.stubGlobal('fetch', fetcher);
+    renderApp('/');
+    expect(screen.getByRole('status')).toHaveTextContent('You can enter your details below');
+    await fillDetails();
+    await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    expect(await screen.findByText('CCK-104')).toBeInTheDocument();
+    await act(async () => { finishSession(response({ detail: 'Please sign in.' }, 401)); });
+    expect(screen.getByText('CCK-104')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Roll number')).not.toBeInTheDocument();
+  });
+
   it('signs in without Google or email and restores the dashboard after refresh', async () => {
     vi.stubEnv('VITE_GOOGLE_CLIENT_ID', '');
     const approved = { ...profile, user: { ...profile.user, email: null } };
