@@ -6,6 +6,7 @@ routes, sample admissions records or question keys are part of the static build.
 
 import argparse
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -13,6 +14,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import ArgumentError
+from starlette.middleware.gzip import GZipMiddleware
 from starlette.staticfiles import StaticFiles
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
@@ -50,6 +52,7 @@ SPA_ROUTES = {
     "admin/exams/new",
     "admin/actions",
 }
+FINGERPRINTED_ASSET = re.compile(r".+-[A-Za-z0-9_-]{8,}\.(?:js|css|webp|woff2?)$")
 
 
 class WebSecurityHeaders:
@@ -66,6 +69,24 @@ class WebSecurityHeaders:
                     for key, value in message.get("headers", [])
                     if key.lower() != b"content-security-policy"
                 ]
+                if (
+                    scope["type"] == "http"
+                    and scope["path"].startswith("/assets/")
+                    and message["status"] in {200, 206, 304}
+                    and not any(key.lower() == b"set-cookie" for key, _ in values)
+                ):
+                    # This mount contains public build assets only. APIs, HTML and
+                    # errors retain no-store, including authenticated exam responses.
+                    values = [
+                        (key, value) for key, value in values if key.lower() != b"cache-control"
+                    ]
+                    filename = Path(scope["path"]).name
+                    cache = (
+                        b"public, max-age=31536000, immutable"
+                        if FINGERPRINTED_ASSET.fullmatch(filename)
+                        else b"public, max-age=3600"
+                    )
+                    values.append((b"cache-control", cache))
                 values.extend(
                     [
                         (b"content-security-policy", CONTENT_SECURITY_POLICY.encode()),
@@ -113,7 +134,11 @@ def create_web_app(settings: Settings | None = None, directory: Path | None = No
     app = create_app(settings)
     app.add_middleware(WebSecurityHeaders)
     # Only this directory is public. Do not mount the repository or backend source.
-    app.mount("/assets", StaticFiles(directory=root / "assets"), name="frontend-assets")
+    app.mount(
+        "/assets",
+        GZipMiddleware(StaticFiles(directory=root / "assets"), minimum_size=500, compresslevel=5),
+        name="frontend-assets",
+    )
 
     @app.get("/{path:path}", include_in_schema=False)
     def frontend(path: str) -> FileResponse:

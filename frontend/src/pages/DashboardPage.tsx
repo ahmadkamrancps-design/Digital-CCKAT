@@ -5,6 +5,7 @@ import CandidateSidebar from '../components/CandidateSidebar';
 import { useAuth } from '../features/auth/AuthProvider';
 import { previewCandidate } from '../features/preview/preview';
 import { AssignedExams } from '../features/exam/AssignedExams';
+import campusImage from '../assets/cck/dashboard-campus.webp';
 
 export default function DashboardPage() {
   const { profile, signOut, isPreview } = useAuth();
@@ -77,7 +78,7 @@ export default function DashboardPage() {
 
         <section className="campus-banner" aria-label="Cadet College Kohat campus">
           <img
-            src="/assets/cck/dashboard-campus.png"
+            src={campusImage}
             alt="Cadet College Kohat academic block"
           />
           <div className="campus-caption">

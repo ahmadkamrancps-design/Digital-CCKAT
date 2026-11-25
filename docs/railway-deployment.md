@@ -208,6 +208,24 @@ supervised candidate verification, teacher-reviewed questions, recovery testing,
 monitoring, host sizing and a realistic mock exam. A successful Railway build is
 not a completed production acceptance test.
 
+## Static asset performance
+
+The Railway adapter compresses public static assets such as JavaScript and CSS.
+Content-hashed Vite assets have a one-year immutable cache lifetime; other public
+assets have a one-hour lifetime. HTML, API responses, and errors retain no-store.
+Authentication, answer data and exam APIs are outside the compression/cache mount.
+
+The login and dashboard use smaller WebP derivatives of the approved campus photos.
+Inter and Libre Baskerville are served locally with font-display: swap, removing
+the external Google Fonts stylesheet from the critical loading path. The CCK layout,
+photo composition, Urdu font and exam behavior are preserved. Source and license
+details are under `frontend/src/assets/`.
+
+For diagnosis, compare browser network timings with in-container `/api/health`
+and `/api/health/ready` timings. Slow DNS/TLS or asset transfers do not establish
+that the database is slow. Warm-cache tests must leave caching enabled; API
+responses must continue returning no-store after deployment.
+
 ## References
 
 - [Railway Dockerfiles](https://docs.railway.com/builds/dockerfiles)

@@ -13,6 +13,8 @@ def static_directory(tmp_path: Path) -> Path:
     (tmp_path / "index.html").write_text("<!doctype html><title>CCK production frontend</title>")
     (tmp_path / "assets").mkdir()
     (tmp_path / "assets/app.js").write_text("console.log('CCK');")
+    (tmp_path / "assets/app-1234abcd.js").write_text("console.log('CCK');\n" * 200)
+    (tmp_path / "assets/campus-1234abcd.webp").write_bytes(b"RIFF" + b"x" * 1000)
     (tmp_path / ".env").write_text("PRIVATE_VALUE=not-public")
     return tmp_path
 
@@ -60,6 +62,56 @@ def test_no_source_secrets_preview_or_sandbox_routes(railway_client, path):
 def test_static_assets_and_host_boundary(railway_client):
     assert railway_client.get("/assets/app.js").status_code == 200
     assert railway_client.get("/", headers={"Host": "evil.example"}).status_code == 400
+
+
+def test_public_assets_cache_compress_and_revalidate_without_caching_api(railway_client):
+    response = railway_client.get("/assets/app-1234abcd.js", headers={"Accept-Encoding": "gzip"})
+    assert response.headers["content-encoding"] == "gzip"
+    assert int(response.headers["content-length"]) < len(response.content)
+    assert response.headers["cache-control"] == "public, max-age=31536000, immutable"
+    assert response.headers["x-content-type-options"] == "nosniff"
+    assert "Accept-Encoding" in response.headers["vary"]
+    cached = railway_client.get(
+        "/assets/app-1234abcd.js", headers={"If-None-Match": response.headers["etag"]}
+    )
+    assert cached.status_code == 304 and not cached.content
+    assert cached.headers["cache-control"] == "public, max-age=31536000, immutable"
+    assert railway_client.get("/assets/app.js").headers["cache-control"] == "public, max-age=3600"
+    for path in ("/", "/admin/login", "/api/health", "/api/me", "/assets/missing.js"):
+        private = railway_client.get(path)
+        assert private.headers["cache-control"] == "no-store"
+        assert "content-encoding" not in private.headers
+
+
+def test_already_compressed_image_is_not_gzipped(railway_client):
+    response = railway_client.get("/assets/campus-1234abcd.webp")
+    assert response.status_code == 200
+    assert "content-encoding" not in response.headers
+
+
+def test_authenticated_profile_remains_uncached_and_uncompressed(
+    railway_client, approved_user, db_factory, login_headers
+):
+    from sqlalchemy import select
+
+    from app.models import Candidate
+
+    name = "Candidate " * 20
+    with db_factory() as db:
+        candidate = db.scalar(select(Candidate).where(Candidate.user_id == approved_user.id))
+        candidate.full_name = name.strip()
+        candidate.father_name = "Verified Father"
+        db.commit()
+    login = railway_client.post(
+        "/api/auth/candidate",
+        json={"roll_number": "CCK-104", "full_name": name, "father_name": "Verified Father"},
+        headers=login_headers,
+    )
+    assert login.status_code == 200
+    response = railway_client.get("/api/me", headers={"Accept-Encoding": "gzip"})
+    assert response.status_code == 200 and len(response.content) > 500
+    assert response.headers["cache-control"] == "no-store"
+    assert "content-encoding" not in response.headers
 
 
 def test_missing_frontend_fails_closed(settings: Settings, tmp_path: Path):

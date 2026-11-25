@@ -1,4 +1,18 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Libre+Baskerville:wght@400;700&display=swap");
+@font-face {
+  font-family: "Inter";
+  src: url("./assets/fonts/InterLatin.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Libre Baskerville";
+  src: url("./assets/fonts/LibreBaskervilleLatin.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+}
 
 @font-face {
   font-family: "Noto Naskh Arabic";
@@ -119,7 +133,7 @@ button {
   min-height: 100vh;
 
   background:
-    url("/assets/cck/login-background.png")
+    url("./assets/cck/login-background.webp")
     center / cover no-repeat;
 
   display: flex;
