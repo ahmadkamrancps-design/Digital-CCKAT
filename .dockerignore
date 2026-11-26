@@ -15,3 +15,6 @@ exports
 *.pem
 *.cms
 *.dump
+# Full-resolution campus sources stay in Git; containers serve the bundled WebP derivatives.
+frontend/public/assets/cck/login-background.png
+frontend/public/assets/cck/dashboard-campus.png

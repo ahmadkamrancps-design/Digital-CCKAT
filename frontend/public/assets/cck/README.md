@@ -7,10 +7,11 @@ Available image filenames:
 - `dashboard-campus.png`: approved photograph of the actual campus.
 
 All three PNG images are present in this directory.
-`CCKLogo` loads `/assets/cck/logo.png` directly and accepts an optional `size` prop
-(default 52 pixels). The login background and candidate dashboard banner use
-optimized WebP derivatives from `src/assets/cck/`. The original PNGs remain the
-approved sources.
+`CCKLogo` accepts an optional `size` prop (default 52 pixels). The logo, login
+background and candidate dashboard banner use optimized, content-hashed WebP
+derivatives from `src/assets/cck/`. Replacing a source PNG requires regenerating
+its derivative; the commands are documented there. The white crest has a navy
+backing for visibility on light pages. The original PNGs remain the approved sources.
 
 Files under `public/` are publicly accessible. Do not put secrets, candidate data,
 exam exports, or answer keys here. The URL prefix is `/assets/cck/`, not `/public/`.
