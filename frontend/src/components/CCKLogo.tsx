@@ -13,9 +13,6 @@ export default function CCKLogo({ size = 52 }: Props) {
       height={size}
       style={{
         objectFit: "contain",
-        backgroundColor: "var(--navy-dark, #001d3d)",
-        borderRadius: 6,
-        padding: 4,
       }}
     />
   );
